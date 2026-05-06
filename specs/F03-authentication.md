@@ -50,7 +50,10 @@ Login, logout, JWT with refresh rotation, forced password change on first login,
 
 - [ ] Create LoginPage.jsx with email, password fields, Remember Me checkbox, login button
 - [ ] RTL layout, Hebrew labels
-- [ ] Handle login API call, store tokens (access in memory, refresh in httpOnly cookie or localStorage based on Remember Me)
+- [ ] Handle login API call:
+  - Access token → **always in memory** (React state / context) — never in localStorage or sessionStorage
+  - Refresh token → **always httpOnly; Secure; SameSite=Lax cookie** — never in localStorage
+  - "Remember Me" only changes cookie `maxAge`: checked = 30 days, unchecked = session cookie (deleted when browser closes)
 - [ ] Show error on invalid credentials
 - [ ] Show lockout message after 5 failures
 - [ ] Redirect to change-password page if must_change_password=true
@@ -75,7 +78,14 @@ Login, logout, JWT with refresh rotation, forced password change on first login,
 - [ ] Create AuthContext.jsx with login/logout/refresh functions
 - [ ] Create ProtectedRoute.jsx component
 - [ ] Implement auto-refresh: before access token expires, use refresh token to get new one
-- [ ] Implement inactivity timeout (30 min): auto-logout with warning dialog
+- [ ] Implement inactivity timeout (30 min) — exact implementation spec:
+  - Track last activity via `'mousemove','keydown','click','touchstart'` events on `window`
+  - Debounce reset: only reset timer if >10s since last reset (avoid thrashing)
+  - At T-2 min remaining: show modal `"אתה עומד להתנתק בעוד 2 דקות. האם להמשיך?"`
+    - `"כן, המשך"` button → reset timer
+    - Auto-dismiss after 2 min → `POST /auth/logout` → redirect to login
+  - On any authenticated API call: also reset the inactivity timer
+  - Edge case: if a form is dirty when auto-logout fires, emit `beforeAutoLogout` event so F09 autosave can persist draft before session ends
 - [ ] Handle 401 responses globally in axios interceptor
 
 ### 8. Tests
@@ -102,7 +112,7 @@ Login, logout, JWT with refresh rotation, forced password change on first login,
 
 ## Database Tables
 
-users table (password_hash, must_change_password, is_active). Optional: refresh_tokens table.
+users table (password_hash, must_change_password, is_active). refresh_tokens table — **required** (defined in F02 migration 016; mandatory for JWT rotation and session invalidation).
 
 ## Screens / UI
 

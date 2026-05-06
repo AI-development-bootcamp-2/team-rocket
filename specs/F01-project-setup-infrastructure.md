@@ -20,7 +20,42 @@ Set up the monorepo, Docker environment, CI/CD pipeline, and project scaffolding
 - [ ] Create client/ folder with Vite + React setup
 - [ ] Create server/ folder with Express setup
 - [ ] Create docs/ folder
-- [ ] Add .gitignore, .env.example, README skeleton
+- [ ] Create `.env.example` at repo root with the following keys (no real secrets — placeholder values only):
+
+  ```dotenv
+  # App
+  NODE_ENV=development
+  PORT=3001
+  TZ=Asia/Jerusalem
+  FRONTEND_URL=http://localhost:5173
+
+  # Database
+  DATABASE_URL=postgresql://user:password@localhost:5432/time_reporting
+
+  # JWT
+  JWT_ACCESS_SECRET=changeme_access_secret
+  JWT_REFRESH_SECRET=changeme_refresh_secret
+  JWT_ACCESS_EXPIRY=15m
+  JWT_REFRESH_EXPIRY=7d
+
+  # File storage
+  STORAGE_DRIVER=local           # 'local' | 's3'
+  AWS_BUCKET_NAME=
+  AWS_REGION=
+  AWS_ACCESS_KEY_ID=
+  AWS_SECRET_ACCESS_KEY=
+
+  # Email (nodemailer)
+  EMAIL_HOST=smtp.example.com
+  EMAIL_PORT=587
+  EMAIL_USER=
+  EMAIL_PASS=
+  EMAIL_FROM=noreply@example.com
+
+  # Business rules
+  DAILY_STANDARD_HOURS=9
+  MONTHLY_QUOTA_HOURS=186
+  ```
 
 ### 2. Docker environment
 
@@ -43,10 +78,11 @@ Set up the monorepo, Docker environment, CI/CD pipeline, and project scaffolding
 - [ ] Install `node-cron` (or equivalent)
 - [ ] Create `server/src/cron/index.js` — central cron registry
 - [ ] Register placeholder cron slots:
-  - `Sunday 23:59 IL` → weekly-submissions auto-flag (F13)
-  - `Thursday 09:00 IL` → reminder email dispatch (F19)
+  - `Sunday 23:59 Asia/Jerusalem` → weekly-submissions auto-flag (F13): `cron.schedule('59 23 * * 0', checkMissingSubmissions, { timezone: 'Asia/Jerusalem' })`
+  - `Thursday 09:00 Asia/Jerusalem` → reminder email dispatch (F19)
   - Every minute → active timer 12h auto-stop check (F10)
-  - On every time_entry save → quota warning check (F19)
+  - On every time_entry save → quota warning check (F09/F19)
+- [ ] Set `TZ=Asia/Jerusalem` in `.env.example` and ensure it is exported at process startup in `server.js` so all `Date` operations default to Israel time
 - [ ] All cron jobs must be idempotent (safe to re-run)
 
 ### 2d. File storage setup

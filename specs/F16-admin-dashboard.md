@@ -16,15 +16,16 @@ Admin overview showing submission status per user per week. The operational hear
 
 ### 1. Backend: Dashboard data endpoint
 
-- [ ] GET /admin/dashboard?year=&month= — returns matrix: rows=users, columns=weeks, cell=status (not_started/in_progress/submitted/approved/rejected/missing)
-- [ ] **Status distinction**: `not_started` = no entries AND Sunday deadline has not passed yet. `missing` = no entries AND Sunday 23:59 IL has passed (auto-flagged by F13 cron). Both appear as 'no data' but with different colors and labels.
+- [ ] GET /admin/dashboard?year=&month= — returns matrix: rows=users, columns=weeks, cell=status (`not_started`/`draft`/`submitted`/`approved`/`rejected`/`missing`)
+- [ ] **Status distinction**: `not_started` = no weekly_submission record AND Sunday deadline has not passed yet. `missing` = no submitted weekly_submission record AND `week_start_date + INTERVAL '7 days' < NOW() AT TIME ZONE 'Asia/Jerusalem'`. Both appear as 'no data' but with different colors and labels.
+  > **Live missing computation**: the dashboard service computes `missing` dynamically via SQL CASE (rather than relying solely on the Sunday cron having run). SQL logic: `CASE WHEN ws.status = 'draft' AND ws.week_start_date + INTERVAL '7 days' < NOW() AT TIME ZONE 'Asia/Jerusalem' THEN 'missing' ELSE ws.status END`. This avoids race conditions between the cron and the live dashboard.
 - [ ] Include summary counts: total users, submitted this week, missing, approved
 
 ### 2. Frontend: Admin dashboard
 
 - [ ] AdminDashboard.jsx — default admin screen
 - [ ] SubmissionStatusTable.jsx — matrix table with color-coded status per user per week
-- [ ] Status colors: grey (not_started), dark-grey (missing), yellow (in_progress), blue (submitted), green (approved), red (rejected)
+- [ ] Status colors: grey (not_started), dark-grey (missing), yellow (draft), blue (submitted), green (approved), red (rejected)
 - [ ] Click cell → navigate to that user's week in report review
 - [ ] Month selector
 - [ ] **Week quick-jump**: clicking a week column header scrolls the view to that week and highlights it. Weeks outside the selected month are greyed out.
@@ -90,7 +91,7 @@ AdminDashboard, SubmissionStatusTable
 | not_started | `#E5E7EB` | `#6B7280` | לא התחיל |
 | missing (auto-flagged) | `#D1D5DB` | `#374151` | חסר |
 | draft | `#FEF3C7` | `#D97706` | טיוטה |
-| submitted | `#DBEAFE` | `#2563EB` | הוגש |
+
 | approved | `#DCFCE7` | `#16A34A` | מאושר |
 | rejected | `#FEE2E2` | `#EF4444` | נדחה |
 

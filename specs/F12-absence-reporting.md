@@ -16,8 +16,9 @@ Report absences: vacation, sick, reserve duty, other. Date range with auto Frida
 
 ### 1. Backend: Absences module
 
-- [ ] GET /absences — list by user, month, type
-- [ ] POST /absences — create: type, start_date, end_date, is_partial, notes. Auto-exclude Fri/Sat from count. Validate against monthly quota.
+- [ ] GET /absences — list by user, month, type  > **Scoping**: User sees own absences only. Admin sees all users' absences; optionally filtered by `user_id`, `date_from`, `date_to`.- [ ] POST /absences — create: `type`, `start_date`, `end_date`, `is_partial`, `notes`. Status defaults to `draft`. Auto-exclude Fri/Sat from count. Validate against monthly quota.
+  > **Document validation**: POST/PUT without document → accept, return `{ data, warning: 'חובה לצרף מסמך עד להגשה' }`. Hard block only happens at weekly submission (F13): if week contains `sick`/`reserve` absence without a document, `POST /weekly-submissions/submit` returns 422.
+  > **Absence status lifecycle (Option A)**: absences use `status IN ('draft','submitted')` only — no independent approval flow. When a weekly submission is approved, all absences in that week are implicitly approved (their status becomes `submitted` on weekly submit, and approval is tracked via the weekly submission record).
 - [ ] PUT /absences/:id — update (only if week not submitted). **Requires `version` field. If DB.version !== body.version → 409 Conflict (same optimistic lock pattern as time_entries in F09).**
 - [ ] DELETE /absences/:id — soft delete (only if week not submitted)
 - [ ] POST /absences/:id/documents — upload file. Validate: PDF/JPG/JPEG/PNG/DOC/DOCX, max 10MB, server-side MIME check. Allowed even after submission/lock (audit logged).

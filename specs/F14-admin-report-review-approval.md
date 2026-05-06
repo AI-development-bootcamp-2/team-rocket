@@ -17,13 +17,13 @@ Admin reviews submitted weeks, approves or rejects individual entries with manda
 ### 1. Backend: Approvals module
 
 - [ ] GET /approvals/pending — list all submitted weeks across users, sorted by date
-- [ ] POST /weekly-submissions/:id/approve — approve entire week, update all entries status=approved
-- [ ] POST /time-entries/:id/reject — reject specific entry with mandatory reason. Entry status=rejected, returns to user for correction.
-- [ ] POST /weekly-submissions/:id/reject — reject entire week with reason
+- [ ] POST /weekly-submissions/:id/approve — approve entire week. Sets `status='approved'` for entries where `status IN ('submitted','rejected','draft')` for that weekly_submission. Sets weekly_submission `status='approved'`, populates `actioned_by` and `actioned_at`.
+- [ ] POST /time-entries/:id/reject — reject specific entry with mandatory reason. Sets `time_entries.status='rejected'`, stores `rejection_reason`. User can then edit the entry (status auto-reverts to `draft` on user edit, `rejection_reason` is cleared).
+- [ ] POST /weekly-submissions/:id/reject — reject entire week with reason. Sets `weekly_submissions.status='rejected'`, populates `actioned_by` and `actioned_at`.
 - [ ] Rejection must include reason field (validated, non-empty)
 - [ ] On reject: entry status → draft, user can edit and resubmit
 - [ ] **On reject: call `notificationsService.create({ type: 'WEEK_REJECTED', userId, reason, weekStartDate })` to trigger in-app notification (F19)**
-- [ ] **PUT /time-entries/:id (Admin role)**: Admin can directly edit any user's draft entry. Must include `version` field (optimistic lock from F09). On save: set `last_modified_by = admin_user_id`, `last_modified_by_role = 'admin'`. Audit log: action=ADMIN_EDIT, actor=admin, target=entry_id, old_value, new_value.
+- [ ] **PUT /time-entries/:id (Admin role)**: Admin can directly edit any user's entry (regardless of status). Must include `version` field (optimistic lock from F09). On save: set `last_modified_by = admin_user_id`, `last_modified_by_role = 'admin'`, `approved_by = admin_user_id`, `approved_at = NOW()`. Audit log: action=ADMIN_EDIT. Also call `await notificationsService.create({ type: 'ADMIN_EDIT', userId: entry.user_id, relatedEntityType: 'TIME_ENTRY', relatedEntityId: entry.id, body: 'המנהל ערך את הדיווח שלך לתאריך ' + entry.date })`.
 - [ ] All approve/reject actions audit logged with reason
 - [ ] Email notification sent on rejection
 
@@ -120,8 +120,13 @@ ReportReviewPage, WeeklyReviewCard, RejectReasonDialog
 **Content:**
 - Title: "סיבת דחייה" `22px weight 700`
 - Employee name + week label `13px #6B7280`
-- Rejection reason dropdown (predefined reasons): `height: 48px`, full-width
-- Free-text textarea: "הוספת הערה" placeholder, `min-height: 80px`
+- Rejection reason dropdown (predefined reasons, hardcoded list — Option A):
+  1. "שעות חסרות"
+  2. "פרויקט/משימה שגויים"
+  3. "חפיפה בשעות"
+  4. "תיאור חסר"
+  5. "אחר" — selecting "אחר" makes the free-text textarea **required** (validated before submit)
+- Free-text textarea: "הוספת הערה" placeholder, `min-height: 80px` (optional unless "אחר" selected)
 - Buttons: [Cancel `#6B7F9E`] + [Send rejection `#EF4444`]
   - Both `height: 44px`, `border-radius: 8px`
 

@@ -1133,7 +1133,8 @@ Keyboard: modal focus trap, Escape to close
 │   │   ├── Step 1: Time entry
 │   │   └── Step 2: Project entries
 │   └── Tab: "דיווח העדרות" (Absence)
-└── Month navigator → change month
+├── Month navigator → change month
+└── /reports/history  ← F11 (ReportHistoryPage — flat list/table of all past entries)
 ```
 
 ### 7.2 Management Flow

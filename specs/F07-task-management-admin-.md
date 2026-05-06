@@ -16,10 +16,11 @@ Admin CRUD for tasks. Each task belongs to one project. Status: open/closed.
 
 ### 1. Backend: Tasks module
 
-- [ ] GET /tasks — list, filter by project_id, status
+- [ ] GET /tasks — list, filter by `project_id`, `status`
+  > **User scoping**: User sees only tasks assigned to them (via `user_task_assignments`). Admin sees all tasks.
 - [ ] **GET /tasks/:id** — returns task details + parent project name + parent client name
-- [ ] POST /tasks — create (Admin only): project_id, name. Default status=open.
-- [ ] PUT /tasks/:id — update name, status
+- [ ] POST /tasks — create (Admin only): `project_id`, `name`, `start_date` (optional DATE), `end_date` (optional DATE), `description` (optional TEXT). Default `status=open`.
+- [ ] PUT /tasks/:id — update `name`, `status`, `start_date`, `end_date`, `description`
 - [ ] DELETE /tasks/:id — soft delete: set status=closed. **Existing user-task assignments remain in DB but the task is excluded from all reporting dropdowns (status filter). Historical time entries are preserved.**
 - [ ] All mutations audit logged
 

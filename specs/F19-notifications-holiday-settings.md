@@ -19,26 +19,31 @@ In-app notifications + 2 email triggers. Holiday calendar for admin to configure
 - [ ] Create notifications table — **defined in F02 migration 017**. Do not re-define here; import schema from F02.
 - [ ] POST /notifications — internal, created by system events (rejection, missing report, admin edit, timer 10h, quota warning)
 - [ ] GET /notifications — User's unread notifications
-- [ ] PUT /notifications/:id/read — mark as read
+- [ ] PUT /notifications/:id/read — mark single notification as read
+- [ ] PUT /notifications/read-all — mark **all** of the authenticated user's unread notifications as read. Response: `{ updated_count: N }`. Used by 'סמן הכל כנקרא' button in the notification panel.
 - [ ] Email sending (using nodemailer or similar):
 - [ ]   - Trigger 1: Thursday email if week not submitted
 - [ ]   - Trigger 2: Email on admin rejection
-- [ ] Cron job: Thursday check for unsubmitted weeks, send email reminders
+- [ ] Cron job: Thursday check for unsubmitted weeks, send email reminders.
+  > **Recipient scope**: all active users (`is_active=true`) where no `weekly_submission` record with `status='submitted'` (or `approved`) exists for the current week. Includes users who have no `weekly_submission` record at all for the week. Excludes users whose role is `admin` and who have no personal time entries for that week.
 - [ ] **Notification types** (full enum, matches F02 migration 017 ENUM):
   - `WEEK_REJECTED` — week rejected by admin (with reason). Created in F14.
   - `MISSING_REPORT` — week auto-flagged missing after Sunday deadline. Created by F13 cron.
   - `ADMIN_EDIT` — admin directly edited user's time entry. Created in F14 admin edit path.
   - `LOCKED_MONTH` — a month the user has entries in was locked. Created in F15 on lock.
-  - `TIMER_LONG_RUNNING` — timer has been running for 10+ hours. Created by F10 cron. Deduplicated per timer session.
+  - `TIMER_LONG_RUNNING` — timer has been running for 10+ hours. Created by F10 10h cron. Deduplicated per timer session via `active_timers.warning_sent_at`.
+  - `TIMER_AUTO_STOPPED` — timer was auto-stopped after 12 hours. Created by F10 12h cron (distinct from `TIMER_LONG_RUNNING`).
   - `QUOTA_WARNING` — user has reported ≥90% of monthly quota. Created on every time_entry save; deduplicated: max 1 per user per month.
 
 ### 2. Backend: Settings & holiday calendar
 
 - [ ] GET /settings/holidays?year= — list holidays for a year
-- [ ] POST /settings/holidays — create holiday (Admin only): date, name, type
+- [ ] POST /settings/holidays — create holiday (Admin only): `date`, `name`, `type` (`national` | `company` | `partial_day`).
+  > `partial_day` holidays reduce daily quota by 50% (`DAILY_STANDARD_HOURS / 2`). `national` and `company` holidays reduce by 100%.
 - [ ] DELETE /settings/holidays/:id — remove holiday (Admin only)
 - [ ] GET /settings — system settings (daily standard hours, etc.)
-- [ ] PUT /settings — update system settings (Admin only)
+- [ ] PUT /settings — update system settings (Admin only).
+  > Response: full settings object after update `{ settings: { DAILY_STANDARD_HOURS: 9, WEEKLY_SUBMISSION_DEADLINE_DAY: 0, ... } }`. Updates are atomic (single transaction). `DAILY_STANDARD_HOURS` changes apply to new entries only — not retroactive. `WEEKLY_SUBMISSION_DEADLINE_DAY` is **read-only after initial setup in v1** (Option A): changing it requires a server restart to reschedule the cron; dynamic rescheduling is not implemented.
 - [ ] **System settings keys** (all stored in system_settings table, key/value):
   - `DAILY_STANDARD_HOURS` — default: `9`
   - `WEEKLY_SUBMISSION_DEADLINE_DAY` — default: `0` (Sunday, JS day index)
@@ -79,15 +84,16 @@ In-app notifications + 2 email triggers. Holiday calendar for admin to configure
 ## API Endpoints
 
 
-| Method | Endpoint | Auth |
-|--------|----------|------|
-| GET | /notifications | User |
-| PUT | /notifications/:id/read | User |
-| GET | /settings/holidays | User/Admin |
-| POST | /settings/holidays | Admin |
-| DELETE | /settings/holidays/:id | Admin |
-| GET | /settings | Admin |
-| PUT | /settings | Admin |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | /notifications | User | User's unread notifications |
+| PUT | /notifications/:id/read | User | Mark single notification as read |
+| PUT | /notifications/read-all | User | Mark all user's notifications as read |
+| GET | /settings/holidays | User/Admin | List holidays for a year |
+| POST | /settings/holidays | Admin | Create holiday |
+| DELETE | /settings/holidays/:id | Admin | Remove holiday |
+| GET | /settings | Admin | Get all system settings |
+| PUT | /settings | Admin | Update settings (atomic); response = full settings object |
 
 ## Database Tables
 

@@ -19,13 +19,13 @@ Admin CRUD for users: create with initial password, edit details, toggle active/
 - [ ] GET /users — list all users (Admin only), with filters: active/inactive, role, search by name/email
 - [ ] GET /users/:id — single user details (Admin only)
 - [ ] GET /users/me — current user profile (any authenticated user)
-- [ ] POST /users — create user (Admin only): name, email, initial password, role. Set must_change_password=true
-- [ ] PUT /users/:id — update user (Admin only): name, email, role, is_active
-- [ ] DELETE /users/:id — soft delete: set is_active=false (Admin only). **Cannot deactivate self — returns 400 `{ error: 'Cannot deactivate your own account' }`**
+- [ ] POST /users — create user (Admin only): `first_name`, `last_name`, email, initial password, role (`'admin'|'user'` — no other values). Optional profile fields: `employee_number`, `employment_type` (`full_time|part_time|contractor`), `employment_percentage` (0–100, default 100), `department`, `daily_hours_override`. Set `must_change_password=true`
+- [ ] PUT /users/:id — update user (Admin only): `first_name`, `last_name`, email, role, `is_active`, `employee_number`, `employment_type`, `employment_percentage`, `department`, `daily_hours_override`
+- [ ] DELETE /users/:id — soft delete: set `is_active=false` (Admin only). **Cannot deactivate self — returns 403 `{ error: 'SELF_DEACTIVATION_FORBIDDEN', message: 'אינך יכול לבטל את הפעלת החשבון שלך' }`**
 - [ ] Validate: email uniqueness, password policy on create, cannot deactivate self
 - [ ] On deactivate: kill all active sessions for that user (delete from refresh_tokens)
 - [ ] All mutations audit logged
-- [ ] **PUT /users/me** — authenticated user can update own `full_name` only (email/role changes require Admin). Returns updated user profile.
+- [ ] **PUT /users/me** — authenticated user can update own `first_name` and `last_name` only (email/role changes require Admin). Note: UI sends `first_name` + `last_name` separately; server stores them as separate columns. Returns updated user profile.
 - [ ] **POST /users/me/sort-preference** — store `{ client_id, project_id, task_id }` frequency map per user. Stored as `sort_prefs JSONB` in users table (add column to F02 migration 001). Returns 204.
 
 ### 2. Backend: Permission flags
@@ -57,7 +57,8 @@ Admin CRUD for users: create with initial password, edit details, toggle active/
 ### 4. Frontend: User form
 
 - [ ] Create UserForm.jsx — used for both create and edit
-- [ ] Fields: full name, email, password (create only), role dropdown, is_active toggle
+- [ ] Fields: first name, last name (displayed concatenated as `"${first} ${last}"` everywhere in UI), email, password (create only), role dropdown (`משתמש` / `מנהל`), is_active toggle
+- [ ] Optional profile fields section: employee number, employment type, employment percentage, department, daily hours override
 - [ ] Permission flag section: toggle canAssignProjectTasks, multi-select for allowed projects
 - [ ] Validation: required fields, email format, password strength (create only)
 - [ ] Confirmation dialog on deactivate (warning about active sessions)

@@ -44,7 +44,8 @@ Monthly calendar with day status indicators (full/missing/irregular). Detailed r
 
 ### 3. Frontend: Report history page
 
-- [ ] ReportHistoryPage.jsx — separate screen (per original spec navigation)
+- [ ] ReportHistoryPage.jsx — separate screen at route **`/reports/history`** (per original spec navigation)
+  > Route should be registered in the app router as `/reports/history`.
 - [ ] Browse previous months with month picker
 - [ ] View all entries including locked months (read-only)
 - [ ] Filter/search by client, project, task
@@ -59,10 +60,11 @@ Monthly calendar with day status indicators (full/missing/irregular). Detailed r
 ## API Endpoints
 
 
-| Method | Endpoint | Auth |
-|--------|----------|------|
-| GET | /time-entries/monthly-summary | User/Admin |
-| GET | /time-entries/monthly-quota | User/Admin |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | /time-entries/monthly-summary | User/Admin | Per-day summary: date, total hours, status, entry count |
+| GET | /time-entries/monthly-quota | User/Admin | Quota: working days, holidays, absences, reported hours |
+| GET | /reports/monthly-summary | User/Admin | KPI summary: total hours, absences (vacation/sick/reserve/missing), week statuses, reported projects |
 
 ## Database Tables
 

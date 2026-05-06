@@ -18,9 +18,9 @@ Admin CRUD for projects. Each project belongs to one client. Tasks can be added 
 
 - [ ] GET /projects — list (Admin: all; User: only projects with assigned tasks). Filter by client_id, is_active
 - [ ] GET /projects/:id — single project with tasks list
-- [ ] POST /projects — create **(Admin only** — `canAssignProjectTasks` flag does NOT grant project creation): client_id, name. Default is_active=true. Warn on duplicate name under same client.
-- [ ] PUT /projects/:id — update **(Admin only)**
-- [ ] DELETE /projects/:id — soft delete. Warning if has active tasks. **Archiving a project removes all its tasks from user-facing reporting dropdowns (GET /tasks filters by project.is_active=true).**
+- [ ] POST /projects — create **(Admin only** — `canAssignProjectTasks` flag does NOT grant project creation): `client_id`, `name`, `manager_user_id` (optional, FK to users), `start_date` (optional DATE), `end_date` (optional DATE), `description` (optional TEXT). Default `is_active=true`. **If name already exists under same `client_id`: return 201 with `{ data: {...}, warning: 'פרויקט בשם זה כבר קיים תחת לקוח זה' }` — warn but allow.**
+- [ ] PUT /projects/:id — update **(Admin only)**: `name`, `client_id`, `manager_user_id`, `start_date`, `end_date`, `description`, `is_active`
+- [ ] DELETE /projects/:id — soft delete. Warning if has active tasks. **Archiving a project removes all its tasks from user-facing reporting dropdowns (GET /tasks filters by project.is_active=true). Also remove `projectId` from all `permission_flags.scoped_project_ids` arrays**: `UPDATE permission_flags SET scoped_project_ids = array_remove(scoped_project_ids, :projectId) WHERE :projectId = ANY(scoped_project_ids)`.
 - [ ] All mutations audit logged
 
 ### 2. Frontend: Project list page

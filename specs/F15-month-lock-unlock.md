@@ -16,10 +16,11 @@ Admin locks a month after approval. Locked months block all editing. Admin can r
 
 ### 1. Backend: Month locks module
 
-- [ ] POST /months/:year/:month/lock — lock month (Admin only). Records locked_by, locked_at. Sets is_locked=true.
-- [ ] POST /months/:year/:month/unlock — unlock (Admin only). Records unlocked_by, unlocked_at. **Requires reason (non-empty). Stores reason in `month_locks.unlock_reason` AND in `audit_logs.reason`.** Sets is_locked=false.
-- [ ] GET /months/:year/:month/status — return lock status, locked_by, locked_at
-- [ ] GET /months — list all months with their lock status
+- [ ] POST /admin/months/:year/:month/lock — lock month (Admin only). Records `locked_by`, `locked_at`. Sets `is_locked=true`. After locking: `await notificationsService.create({ type: 'LOCKED_MONTH', userId: null, monthYear: '${year}-${month}' })` — recipient scope = all active users (backend queries `SELECT id FROM users WHERE is_active=true` and creates one notification per user). This is a background fan-out, not blocking.
+  > **Pre-lock check (confirmation dialog, not hard block)**: if there are unapproved weeks in the month, the lock endpoint still succeeds BUT the frontend must first call `GET /admin/months/:year/:month/status` to fetch `unapproved_week_count`. If > 0, show a confirmation dialog listing the unapproved weeks — admin can proceed anyway. The backend does NOT return 422 for unapproved weeks.
+- [ ] POST /admin/months/:year/:month/unlock — unlock (Admin only). Records `unlocked_by`, `unlocked_at`. **Requires reason (non-empty). Stores reason in `month_locks.unlock_reason` AND in `audit_logs.reason`.** Sets `is_locked=false`.
+- [ ] GET /admin/months/:year/:month/status — return lock status, `locked_by`, `locked_at`, `unapproved_week_count`
+- [ ] GET /admin/months — list all months with their lock status
 - [ ] All lock/unlock actions audit logged with reason for unlock
 - [ ] All time entry/absence mutations check month lock status before allowing changes
 - [ ] **Shared service**: extract lock/unlock logic into `monthLocksService.lock(year, month, adminId)` and `monthLocksService.unlock(year, month, adminId, reason)`. Both this endpoint and the payroll export in F18 call the same service — do NOT duplicate lock logic.
@@ -60,10 +61,10 @@ Admin locks a month after approval. Locked months block all editing. Admin can r
 
 | Method | Endpoint | Auth |
 |--------|----------|------|
-| POST | /months/:year/:month/lock | Admin |
-| POST | /months/:year/:month/unlock | Admin |
-| GET | /months/:year/:month/status | User/Admin |
-| GET | /months | Admin |
+| POST | /admin/months/:year/:month/lock | Admin |
+| POST | /admin/months/:year/:month/unlock | Admin |
+| GET | /admin/months/:year/:month/status | User/Admin |
+| GET | /admin/months | Admin |
 
 ## Database Tables
 

@@ -19,8 +19,8 @@ Start/stop timer for real-time tracking. One timer at a time, auto-stop at 12h, 
 - [ ] POST /timer/start — create active_timer record. Validate no existing active timer.
 - [ ] POST /timer/stop — delete active_timer, return start/end times for entry creation
 - [ ] GET /timer/status — return current timer state (running/not, start_time, elapsed)
-- [ ] Cron job or scheduled check: auto-stop timers running > 12 hours. **On auto-stop: call `notificationsService.create({ type: 'TIMER_LONG_RUNNING', userId })` AND write audit log: actor=SYSTEM, action=TIMER_AUTO_STOPPED, old_value={ start_time }, new_value={ end_time, duration_minutes }.**
-- [ ] **10h warning cron**: when elapsed time crosses 10 hours, call `notificationsService.create({ type: 'TIMER_LONG_RUNNING', userId, body: 'Timer has been running for 10 hours' })` — deduplicate: only 1 notification per timer session.
+- [ ] Cron job or scheduled check: auto-stop timers running > 12 hours. **On auto-stop: call `notificationsService.create({ type: 'TIMER_AUTO_STOPPED', userId })` AND write audit log: actor=SYSTEM, action=TIMER_AUTO_STOPPED, old_value={ start_time }, new_value={ end_time, duration_minutes }.**
+- [ ] **10h warning cron**: `SELECT * FROM active_timers WHERE start_time < NOW() - INTERVAL '10 hours' AND warning_sent_at IS NULL`. For each result: call `notificationsService.create({ type: 'TIMER_LONG_RUNNING', userId, body: 'השעון שלך פעיל כבר 10 שעות' })`, then `UPDATE active_timers SET warning_sent_at = NOW() WHERE id = :id` — deduplication via `warning_sent_at` column (defined in F02 migration 014).
 - [ ] Timer state persisted in active_timers table (survives browser close)
 
 ### 2. Frontend: Timer UI

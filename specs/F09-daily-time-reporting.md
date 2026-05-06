@@ -19,8 +19,8 @@ The core user feature. Daily report form with cascading dropdowns, existing entr
 - [ ] GET /time-entries — list by user_id, date, week, month. User: own only. Admin: any user.
 - [ ] GET /time-entries/:id — single entry
 - [ ] POST /time-entries — create: date, start_time, end_time, client_id, project_id, task_id, location, description. Calculate duration_minutes automatically.
-- [ ] PUT /time-entries/:id — update **(only if status=draft AND month not locked AND week status is draft or rejected)**. **Requires `version` field in request body. If `DB.version !== body.version` → return 409 `{ error: 'CONFLICT', message: 'Entry was modified by someone else. Please reload and try again.' }`. On successful update, increment version.**
-- [ ] DELETE /time-entries/:id — soft delete (only if status=draft AND month not locked AND week status is draft or rejected)
+- [ ] PUT /time-entries/:id — update **(only if `status IN ('draft','rejected')` AND month not locked AND week status is `draft` or `rejected`)**. **Requires `version` field in request body. If `DB.version !== body.version` → return 409 `{ error: 'CONFLICT', message: 'Entry was modified by someone else. Please reload and try again.' }`. On successful update, increment version. If entry was previously `rejected`, auto-transition `status → 'draft'` and clear `rejection_reason`.**
+- [ ] DELETE /time-entries/:id — **soft delete** (only if `status IN ('draft','rejected')` AND month not locked): execute `UPDATE time_entries SET deleted_at = NOW() WHERE id = :id`. All GET queries add `WHERE deleted_at IS NULL`.
 - [ ] Implement overlap detection across all projects for same user+date
 - [ ] Implement cross-midnight duration calculation
 - [ ] **Manual duration override**: if request body includes `duration_override_minutes` without `end_time`, derive `end_time = start_time + duration_override_minutes`. If both `end_time` and `duration_override_minutes` are provided, `end_time` wins and `duration_override_minutes` is ignored.
@@ -33,9 +33,12 @@ The core user feature. Daily report form with cascading dropdowns, existing entr
 
 ### 2. Backend: Dropdown data endpoints
 
-- [ ] GET /time-entries/dropdown-data — returns user's available clients→projects→tasks tree based on assignments
-- [ ] Support sort parameter: alphabetical (default) or frequency (count of past reports)
-- [ ] Persist sort preference per user via `POST /users/me/sort-preference` (F04) — stored in `users.sort_prefs JSONB`
+- [ ] GET /time-entries/dropdown-data — returns user's available clients→projects→tasks tree based on assignments.
+  > Response shape: `{ clients: [...], sort_prefs: { client_id, project_id, task_id } }`. The `sort_prefs` field is read from `users.sort_prefs JSONB`.
+  > Clients, projects, and tasks sorted by past-usage frequency (derived from `sort_prefs`). Frontend pre-selects the `sort_prefs` values as the initial form defaults.
+  > **"No assignments" empty state**: if `clients` array is empty, frontend shows info banner: `'לא שוייכת עדיין למשימות. פנה למנהל המערכת לקבלת גישה.'` and disables the 'הוספת פרויקט' button.
+- [ ] GET /time-entries/daily-summary?date=&user_id= — returns `{ date, total_hours, standard_hours, remaining_hours, entry_count, status: 'full'|'partial'|'missing'|'day_off' }`. `standard_hours` respects `users.daily_hours_override` and holiday calendar. `status='day_off'` when date is a holiday or weekend.
+- [ ] After POST or PUT /time-entries: compute `monthlyTotal / monthlyQuota`. If ≥90% and no existing `QUOTA_WARNING` notification for this `user_id + month + year` → call `notificationsService.create({ type: 'QUOTA_WARNING', userId, month, year })`.
 
 ### 3. Frontend: Daily report page (default/home screen)
 
@@ -100,8 +103,8 @@ The core user feature. Daily report form with cascading dropdowns, existing entr
 | POST | /time-entries | User | Create entry (own only) |
 | PUT | /time-entries/:id | User/Admin | Update (with version check) |
 | DELETE | /time-entries/:id | User/Admin | Soft delete |
-| GET | /time-entries/dropdown-data | User | Cascading dropdown tree |
-| GET | /time-entries/daily-summary?date= | User | Hours reported, remaining, status |
+| GET | /time-entries/dropdown-data | User | Cascading dropdown tree + sort_prefs pre-selection defaults |
+| GET | /time-entries/daily-summary?date=&user_id= | User/Admin | Returns `{ date, total_hours, standard_hours, remaining_hours, entry_count, status: 'full'\|'partial'\|'missing'\|'day_off' }` |
 
 ## Database Tables
 

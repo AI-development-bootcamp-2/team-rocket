@@ -16,7 +16,8 @@ Admin exports reports in Excel or PDF format. By month, user, project, client. U
 
 ### 1. Backend: Export module
 
-- [ ] GET /exports?month=&year=&user_id=&client_id=&project_id=&format=xlsx|pdf — Admin only
+- [ ] GET /exports?month=&year=&user_id=&client_id=&project_id=&format=xlsx|pdf — Admin only.
+  > **Large export strategy**: use streaming response (`Transfer-Encoding: chunked`) to avoid timeout on large datasets. Set server-side route timeout to 30 seconds. If generation exceeds 30s, the stream is terminated and the frontend displays a toast: 'הייצוא נכשל עקב עומס — נסה שוב בפרק קטן יותר'.
 - [ ] Excel generation (using exceljs or xlsx library): date, start/end time, duration, client, project, task, location, description, absence type, approval status, **correction history**
 - [ ] **Correction history in export**: for each time_entry, JOIN audit_logs WHERE action IN ('ADMIN_EDIT','ENTRY_CORRECTED') AND target_entity_id = entry.id. If any corrections exist, add a 'Corrections' sub-row or notes column showing: correction date, actor, old value → new value.
 - [ ] PDF generation (using pdfkit or puppeteer)

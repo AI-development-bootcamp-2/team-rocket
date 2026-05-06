@@ -87,11 +87,23 @@ AuditLogPage
 - Rows: `height: 48px, border-bottom: 1px solid #E5E7EB`
 
 **Action type badges:**
+- LOGIN: `background: #F3F4F6, color: #374151`
 - CREATE: `background: #DCFCE7, color: #16A34A`
 - UPDATE: `background: #DBEAFE, color: #2563EB`
 - DELETE: `background: #FEE2E2, color: #EF4444`
-- LOGIN: `background: #F3F4F6, color: #374151`
+- SUBMIT: `background: #DBEAFE, color: #2563EB`
+- APPROVE: `background: #DCFCE7, color: #16A34A`
+- REJECT: `background: #FEE2E2, color: #EF4444`
+- LOCK: `background: #F3F4F6, color: #374151`
+- UNLOCK: `background: #FEF3C7, color: #D97706`
 - ADMIN_EDIT: `background: #FEF3C7, color: #D97706`
+- ENTRY_CORRECTED: `background: #EDE9FE, color: #7C3AED`
+  > Emitted when user edits a previously-rejected entry (auto-transition from `rejected` → `draft`). The `ENTRY_CORRECTED` action is distinct from `UPDATE` — it specifically marks the correction of a rejected entry.
+- EXPORT: `background: #F3F4F6, color: #374151`
+- PASSWORD_RESET: `background: #FEF3C7, color: #D97706`
+- DEACTIVATE: `background: #FEE2E2, color: #EF4444`
+- TIMER_AUTO_STOPPED: `background: #F3F4F6, color: #374151`
+- WEEK_RESUBMITTED: `background: #DBEAFE, color: #2563EB`
 
 **Details expand:**
 - "פרטים" button: small `#6B2FAA` text link or icon

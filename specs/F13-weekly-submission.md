@@ -18,10 +18,13 @@ Mandatory weekly submission. User submits when all days are allocated. Auto-flag
 
 - [ ] GET /weekly-submissions — list by user, month. Admin: all users. User: own.
 - [ ] GET /weekly-submissions/:id — details with linked entries
-- [ ] POST /weekly-submissions/:weekId/submit — validate all working days fully allocated (9h standard - absences), set status=submitted, set all entries status=submitted. Block if timer running. **Block if monthly total hours > system setting `MONTHLY_QUOTA_HOURS` — return 422 `{ error: 'QUOTA_EXCEEDED', monthly_total, quota }`. Note: admin exception path is not implemented in v1 — admin must unlock or adjust entries first.**
+- [ ] POST /weekly-submissions/:weekId/submit — validate all working days fully allocated (9h standard - absences), set status=submitted, set all entries status=submitted. Block if timer running. **Block if monthly total hours > system setting `MONTHLY_QUOTA_HOURS` — return 422 `{ error: 'QUOTA_EXCEEDED', monthly_total, quota }`.** **Partial-day absence validation gate**: for each day in the week with `is_partial=true` absence, verify that `SUM(time_entry.duration_minutes) + absence_hours >= DAILY_STANDARD_HOURS`. If not: return 422 `{ error: 'PARTIAL_ABSENCE_UNCOVERED', date, missing_hours }`. **Sick/reserve document gate**: if week contains any `sick` or `reserve` absence record without an attached document, return 422 `{ error: 'SICK_RESERVE_DOCUMENT_REQUIRED', absence_id }`. Note: admin exception path is not implemented in v1 — admin must unlock or adjust entries first.
 - [ ] **POST /weekly-submissions/:id/resubmit** — available when week status=rejected. Validates: all previously-rejected entries are now in status=draft (corrected). Sets week status back to 'submitted'. Audit logged: action=WEEK_RESUBMITTED.
 - [ ] **Weekly submission record creation**: record is created lazily on the first time_entry save for that Sun–Sat window. `week_start_date` is always the Sunday of that ISO week (JS: `date - date.getDay()` where Sunday=0). Upsert pattern — no duplicate records per user+week.
-- [ ] Cron job: **Sunday 23:59 Israel time** — auto-flag unsubmitted weeks as 'missing' for all users
+- [ ] Cron job: **Sunday 23:59 Israel time** (`cron.schedule('59 23 * * 0', checkMissingSubmissions, { timezone: 'Asia/Jerusalem' })`).
+  > The cron must query **all active users**: `SELECT id FROM users WHERE is_active = true`. For each user, check whether a `weekly_submission` record for the current week exists AND has `status` other than `draft`. If not: upsert a record with `status='missing'` for that user+week. Do NOT iterate only existing `weekly_submissions` rows — users who never created an entry would be skipped.
+  > After upserting: `await notificationsService.create({ type: 'MISSING_REPORT', userId, relatedEntityType: 'WEEKLY_SUBMISSION', relatedEntityId: weeklySubmission.id })`.
+  > `WEEKLY_SUBMISSION_DEADLINE_DAY` (system setting) specifies the deadline day. **Option A (v1)**: treat as read-only after initial setup; changing the value requires a server restart. Dynamic rescheduling is not implemented in v1.
 - [ ] **Week start day**: always Sunday (Israel work week). `week_start_date` column stores the Sunday date. All cron queries and UI week grouping use Sunday-to-Saturday window.
 - [ ] Validate: cannot submit if any day has validation errors (overlap, missing hours, invalid entries)
 - [ ] Submitted entries become read-only unless rejected by admin
@@ -98,6 +101,8 @@ Displayed **above** the daily row list, once per current week block.
 - Submitted: `background: #DBEAFE, color: #2563EB` — "הוגש לבדיקה"
 - Approved: `background: #DCFCE7, color: #16A34A` — "מאושר"
 - Rejected: `background: #FEE2E2, color: #EF4444` — "נדחה"
+- **Missing: `background: #FDB5BC, color: #991B1B` — "חסר — לא דווח במועד"**
+  > When status is `missing`: Submit button is **hidden** (not disabled). A dark-red banner is shown: `background: #FDB5BC, border: 1px solid #991B1B, border-radius: 8px, color: #991B1B` — "שבוע זה לא דווח במועד ולא ניתן להגישו".
 
 **Submit button:**
 - Active: `background: #142A3F`, `height: 36px`, `border-radius: 8px`, white text "הגש שבוע"
