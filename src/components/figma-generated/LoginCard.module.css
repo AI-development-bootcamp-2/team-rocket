@@ -1,0 +1,171 @@
+.loginCard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  min-width: 320px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+  border-radius: 16px;
+  padding: 32px 24px;
+  box-shadow:
+    0 8px 32px rgba(31, 38, 135, 0.15),
+    0 4px 16px rgba(31, 38, 135, 0.1),
+    0 2px 8px rgba(31, 38, 135, 0.08),
+    0 1px 4px rgba(31, 38, 135, 0.05),
+    0 0 2px rgba(31, 38, 135, 0.02);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  animation: slideIn 0.3s ease-out;
+  direction: rtl;
+  text-align: right;
+  font-family: 'Heebo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.illustration {
+  width: 100%;
+  height: 200px;
+  margin-bottom: 24px;
+  background: #F2F2F7;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 12px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.title {
+  font-family: 'Heebo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #050804;
+  margin: 0 0 8px 0;
+  text-align: right;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-family: 'Heebo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #050804;
+  text-align: right;
+}
+
+.input {
+  padding: 12px 16px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  font-family: 'Heebo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  color: #050804;
+  background: white;
+  transition: all 0.2s ease;
+  text-align: right;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Email field uses LTR — override text-align */
+.input[type="email"] {
+  direction: ltr;
+  text-align: left;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #6B2FAA;
+  box-shadow: 0 0 0 3px rgba(107, 47, 170, 0.1);
+}
+
+.input.inputError {
+  border-color: #C33636;
+  box-shadow: 0 0 0 3px rgba(195, 54, 54, 0.1);
+}
+
+.input::placeholder {
+  color: #999;
+}
+
+.error {
+  padding: 12px 16px;
+  background: #FEE8E8;
+  color: #C33636;
+  border-radius: 8px;
+  font-size: 14px;
+  animation: shake 0.4s ease;
+}
+
+.submitButton {
+  padding: 14px 24px;
+  background: #142A3F;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Heebo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: #0F1E2E;
+  box-shadow: 0 4px 12px rgba(20, 42, 63, 0.3);
+  transform: translateY(-2px);
+}
+
+.submitButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+@media (max-width: 480px) {
+  .loginCard {
+    max-width: 100%;
+    padding: 24px 16px;
+  }
+
+  .illustration {
+    height: 160px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+}
