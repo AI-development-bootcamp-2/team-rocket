@@ -1,21 +1,18 @@
-.App {
-  
-  width: 100%;
-  overflow: hidden;
-}
-
-.App-main {
-  min-height: 94.45vh;
+/* Shared full-bleed auth background (login + change-password pages) */
+.authBackground {
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  
-  background-image:
-    linear-gradient(rgba(9, 18, 54, 0.35), rgba(9, 18, 54, 0.35)),
-    url('/public/images/login-illustration.png');
+  padding: 24px 16px;
+  box-sizing: border-box;
 
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+.dashboard {
+  padding: 32px;
+  font-family: 'Inter', sans-serif;
 }
