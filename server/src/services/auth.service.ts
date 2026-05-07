@@ -1,4 +1,4 @@
-import { createHash } from 'crypto';
+import { createHash, randomInt } from 'crypto';
 import type { Knex } from 'knex';
 import config from '../config';
 import { AppError } from '../middleware/error.middleware';
@@ -226,6 +226,48 @@ export async function updatePassword(userId: number, newPlaintext: string): Prom
     must_change_password: false,
     updated_at: new Date(),
   });
+}
+
+// ── Admin password reset ──────────────────────────────────────────────────────
+
+function generateTemporaryPassword(): string {
+  const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const lower = 'abcdefghijklmnopqrstuvwxyz';
+  const digits = '0123456789';
+  const special = '!@#$%^&*()-_=+';
+  const all = upper + lower + digits + special;
+
+  // Guarantee at least one character from each required policy category.
+  const chars = [
+    upper[randomInt(upper.length)],
+    lower[randomInt(lower.length)],
+    digits[randomInt(digits.length)],
+    special[randomInt(special.length)],
+    ...Array.from({ length: 8 }, () => all[randomInt(all.length)]),
+  ];
+
+  // Fisher-Yates shuffle so the required chars aren't always at fixed positions.
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = randomInt(i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+
+  return chars.join('');
+}
+
+export async function resetUserPassword(userId: number): Promise<string> {
+  const tempPassword = generateTemporaryPassword();
+  const hash = await hashPassword(tempPassword);
+
+  await db('users').where({ id: userId }).update({
+    password_hash: hash,
+    must_change_password: true,
+    updated_at: new Date(),
+  });
+
+  await revokeAllUserTokens(userId);
+
+  return tempPassword;
 }
 
 // ── Audit logging ─────────────────────────────────────────────────────────────

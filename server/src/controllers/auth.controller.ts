@@ -16,6 +16,7 @@ import {
   revokeRefreshToken,
   revokeAllUserTokens,
   updatePassword,
+  resetUserPassword,
   writeAuditLog,
   type UserRow,
 } from '../services/auth.service';
@@ -252,6 +253,30 @@ export async function changePassword(req: Request, res: Response): Promise<void>
 
   setCookie(res, newRefreshToken, false);
   res.json({ accessToken });
+}
+
+// ── POST /users/:id/reset-password ───────────────────────────────────────────
+
+export async function adminResetPassword(req: Request, res: Response): Promise<void> {
+  const targetId = parseInt(req.params.id, 10);
+  if (isNaN(targetId)) throw new AppError('Invalid user ID', 400);
+
+  const admin = getAuthUser(req);
+  const target = await findUserById(targetId);
+  if (!target) throw new AppError('User not found', 404);
+
+  const temporaryPassword = await resetUserPassword(targetId);
+
+  writeAuditLog({
+    actorUserId: admin.id,
+    entityType: 'USER',
+    entityId: targetId,
+    action: 'PASSWORD_RESET',
+    newValue: { resetBy: admin.id },
+    ipAddress: extractIp(req),
+  }).catch((err: unknown) => console.error('[audit] admin reset password:', err));
+
+  res.json({ temporaryPassword });
 }
 
 // ── GET /users/me ─────────────────────────────────────────────────────────────
