@@ -68,16 +68,16 @@
 - [ ] **T** Implement `GET /users/me` — return current user profile
 - [ ] **T** Implement JWT middleware — attach `req.user`, return 401/403 on failure
 - [ ] **T** Implement RBAC middleware — check role/permission for protected routes
-- [ ] **T** Implement password policy validation (8 chars, upper, lower, digit, special, ≠ email)
+- [x] **T** Implement password policy validation (8 chars, upper, lower, digit, special, ≠ email)
 - [ ] **T** Implement rate limiting: 10 login attempts/min per IP (return 429)
 - [ ] **T** Implement account lockout: 15 min after 5 consecutive failed attempts
 - [ ] **T** Implement forced password change on first login and after admin reset
-- [ ] **T** Configure CORS to restrict to frontend domain(s)
-- [ ] **T** Configure HTTPS / security headers
+- [x] **T** Configure CORS to restrict to frontend domain(s)
+- [x] **T** Configure HTTPS / security headers
 
 #### Subtasks
-- [ ] **ST** Unit test: password policy validation (all rule combinations)
-- [ ] **ST** Unit test: JWT generation and expiry
+- [x] **ST** Unit test: password policy validation (all rule combinations)
+- [x] **ST** Unit test: JWT generation and expiry
 - [ ] **ST** Integration test: login success → access + refresh tokens returned
 - [ ] **ST** Integration test: login failure → 401, lockout after 5 attempts
 - [ ] **ST** Integration test: refresh token rotation (old token rejected after rotation)

@@ -1,14 +1,13 @@
-// Load env vars before any other module reads process.env
-require('dotenv').config();
-
-const app = require('./app');
-const config = require('./config');
+// Must be the first import — compiles to the first require(), so process.env
+// is populated before config or app modules are loaded.
+import 'dotenv/config';
+import app from './app';
+import config from './config';
 
 const server = app.listen(config.port, () => {
   console.log(`[server] Listening on port ${config.port} (${config.nodeEnv})`);
 });
 
-// Graceful shutdown — finish in-flight requests before exiting
 process.on('SIGTERM', () => {
   console.log('[server] SIGTERM received — shutting down gracefully');
   server.close(() => process.exit(0));

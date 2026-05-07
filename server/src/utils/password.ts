@@ -1,15 +1,13 @@
-const bcrypt = require('bcryptjs');
+import bcrypt from 'bcryptjs';
 
 const BCRYPT_COST = 12;
+const SPECIAL_CHAR_RE = /[!@#$%^&*()\-_=+[\]{};:'",.<>/?\\|`~]/;
 
-// Special characters allowed by the password policy
-const SPECIAL_CHAR_RE = /[!@#$%^&*()\-_=+\[\]{};:'",.<>/?\\|`~]/;
-
-async function hashPassword(plaintext) {
+export async function hashPassword(plaintext: string): Promise<string> {
   return bcrypt.hash(plaintext, BCRYPT_COST);
 }
 
-async function comparePassword(plaintext, hash) {
+export async function comparePassword(plaintext: string, hash: string): Promise<boolean> {
   return bcrypt.compare(plaintext, hash);
 }
 
@@ -17,10 +15,10 @@ async function comparePassword(plaintext, hash) {
  * Returns an array of human-readable violation strings.
  * An empty array means the password passes all rules.
  */
-function validatePasswordPolicy(password, email) {
-  const violations = [];
+export function validatePasswordPolicy(password: string, email: string): string[] {
+  const violations: string[] = [];
 
-  if (typeof password !== 'string' || password.length < 8) {
+  if (password.length < 8) {
     violations.push('at least 8 characters');
   }
   if (!/[A-Z]/.test(password)) {
@@ -35,11 +33,9 @@ function validatePasswordPolicy(password, email) {
   if (!SPECIAL_CHAR_RE.test(password)) {
     violations.push('at least 1 special character');
   }
-  if (typeof email === 'string' && password.toLowerCase() === email.toLowerCase()) {
+  if (password.toLowerCase() === email.toLowerCase()) {
     violations.push('password must not be the same as your email address');
   }
 
   return violations;
 }
-
-module.exports = { hashPassword, comparePassword, validatePasswordPolicy };
