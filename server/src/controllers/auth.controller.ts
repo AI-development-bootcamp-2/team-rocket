@@ -265,7 +265,19 @@ export async function adminResetPassword(req: Request, res: Response): Promise<v
   const target = await findUserById(targetId);
   if (!target) throw new AppError('User not found', 404);
 
-  const temporaryPassword = await resetUserPassword(targetId);
+  const requestedTemporaryPassword =
+    typeof req.body?.temporary_password === 'string' ? req.body.temporary_password.trim() : '';
+
+  if (!requestedTemporaryPassword) {
+    throw new AppError('temporary_password is required', 400);
+  }
+
+  const violations = validatePasswordPolicy(requestedTemporaryPassword, target.email);
+  if (violations.length > 0) {
+    throw new AppError(`Password does not meet requirements: ${violations.join(', ')}`, 400);
+  }
+
+  const temporaryPassword = await resetUserPassword(targetId, requestedTemporaryPassword);
 
   writeAuditLog({
     actorUserId: admin.id,

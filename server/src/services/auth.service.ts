@@ -217,6 +217,10 @@ export async function revokeAllUserTokens(userId: number): Promise<void> {
     .update({ revoked_at: new Date() });
 }
 
+export async function deleteAllUserTokens(userId: number): Promise<void> {
+  await db('refresh_tokens').where({ user_id: userId }).del();
+}
+
 // ── Password management ───────────────────────────────────────────────────────
 
 export async function updatePassword(userId: number, newPlaintext: string): Promise<void> {
@@ -255,8 +259,11 @@ function generateTemporaryPassword(): string {
   return chars.join('');
 }
 
-export async function resetUserPassword(userId: number): Promise<string> {
-  const tempPassword = generateTemporaryPassword();
+export async function resetUserPassword(
+  userId: number,
+  providedPassword?: string,
+): Promise<string> {
+  const tempPassword = providedPassword ?? generateTemporaryPassword();
   const hash = await hashPassword(tempPassword);
 
   await db('users').where({ id: userId }).update({
@@ -265,7 +272,7 @@ export async function resetUserPassword(userId: number): Promise<string> {
     updated_at: new Date(),
   });
 
-  await revokeAllUserTokens(userId);
+  await deleteAllUserTokens(userId);
 
   return tempPassword;
 }

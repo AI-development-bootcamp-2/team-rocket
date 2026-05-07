@@ -86,6 +86,38 @@ async function createUser(
   return { id: row.id, email: row.email, plainPassword: password };
 }
 
+async function createClient(name = 'Test Client', isActive = true): Promise<{ id: number }> {
+  const [row] = (await db('clients')
+    .insert({
+      name,
+      is_active: isActive,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+    .returning(['id'])) as Array<{ id: number }>;
+
+  return row;
+}
+
+async function createProject(seed: {
+  name?: string;
+  clientId?: number;
+  isActive?: boolean;
+} = {}): Promise<{ id: number }> {
+  const clientId = seed.clientId ?? (await createClient()).id;
+  const [row] = (await db('projects')
+    .insert({
+      client_id: clientId,
+      name: seed.name ?? 'Test Project',
+      is_active: seed.isActive ?? true,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+    .returning(['id'])) as Array<{ id: number }>;
+
+  return row;
+}
+
 // ── Auth helpers ──────────────────────────────────────────────────────────────
 
 // Low-level login call — used in tests that need direct access to the response.
@@ -493,8 +525,687 @@ describe('GET /users/me', () => {
 // RBAC — requireRole middleware
 // ─────────────────────────────────────────────────────────────────────────────
 
+describe('GET /users', () => {
+  it('200: admin can list users and filter by role and is_active', async () => {
+    const { accessToken } = await loginAndGetTokens({
+      email: 'admin-list@test.com',
+      role: 'admin',
+    });
+
+    await createUser({ email: 'active-user@test.com', role: 'user', isActive: true });
+    await createUser({ email: 'inactive-user@test.com', role: 'user', isActive: false });
+    await createUser({ email: 'other-admin@test.com', role: 'admin', isActive: true });
+
+    const res = await request(app)
+      .get('/users?role=user&is_active=true')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0]).toMatchObject({
+      email: 'active-user@test.com',
+      role: 'user',
+      isActive: true,
+      firstName: 'Test',
+      lastName: 'User',
+    });
+    expect(res.body.data[0].password_hash).toBeUndefined();
+    expect(res.body.data[0].failed_login_attempts).toBeUndefined();
+  });
+
+  it('200: admin can search by email and full name', async () => {
+    const { accessToken } = await loginAndGetTokens({
+      email: 'admin-search@test.com',
+      role: 'admin',
+    });
+
+    await createUser({ email: 'john.smith@test.com' });
+    await db('users').where({ email: 'john.smith@test.com' }).update({
+      first_name: 'John',
+      last_name: 'Smith',
+    });
+
+    await createUser({ email: 'jane.doe@test.com' });
+    await db('users').where({ email: 'jane.doe@test.com' }).update({
+      first_name: 'Jane',
+      last_name: 'Doe',
+    });
+
+    const byEmail = await request(app)
+      .get('/users?search=john.smith')
+      .set('Authorization', `Bearer ${accessToken}`);
+    expect(byEmail.status).toBe(200);
+    expect(byEmail.body.data).toHaveLength(1);
+    expect(byEmail.body.data[0].email).toBe('john.smith@test.com');
+
+    const byFullName = await request(app)
+      .get('/users?search=Jane Doe')
+      .set('Authorization', `Bearer ${accessToken}`);
+    expect(byFullName.status).toBe(200);
+    expect(byFullName.body.data).toHaveLength(1);
+    expect(byFullName.body.data[0].email).toBe('jane.doe@test.com');
+  });
+
+  it('403: non-admin cannot list users', async () => {
+    const { accessToken } = await loginAndGetTokens({ role: 'user' });
+
+    const res = await request(app)
+      .get('/users')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('400: invalid filters are rejected', async () => {
+    const { accessToken } = await loginAndGetTokens({ role: 'admin' });
+
+    const res = await request(app)
+      .get('/users?is_active=maybe')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/is_active/i);
+  });
+});
+
+describe('GET /users/:id', () => {
+  it('200: admin can fetch a single user by id', async () => {
+    const { accessToken } = await loginAndGetTokens({
+      email: 'admin-single@test.com',
+      role: 'admin',
+    });
+    const target = await createUser({ email: 'single-user@test.com', role: 'user' });
+
+    const res = await request(app)
+      .get(`/users/${target.id}`)
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      id: target.id,
+      email: 'single-user@test.com',
+      role: 'user',
+      firstName: 'Test',
+      lastName: 'User',
+    });
+    expect(res.body.password_hash).toBeUndefined();
+    expect(res.body.failed_login_attempts).toBeUndefined();
+  });
+
+  it('404: unknown user id returns not found', async () => {
+    const { accessToken } = await loginAndGetTokens({ role: 'admin' });
+
+    const res = await request(app)
+      .get('/users/999999')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    expect(res.status).toBe(404);
+  });
+
+  it('400: invalid user id is rejected', async () => {
+    const { accessToken } = await loginAndGetTokens({ role: 'admin' });
+
+    const res = await request(app)
+      .get('/users/not-a-number')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    expect(res.status).toBe(400);
+  });
+
+  it('403: non-admin cannot fetch a single user', async () => {
+    const { accessToken } = await loginAndGetTokens({ role: 'user' });
+
+    const res = await request(app)
+      .get('/users/1')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    expect(res.status).toBe(403);
+  });
+});
+
+describe('GET /projects', () => {
+  it('200: admin can list projects and filter by is_active', async () => {
+    const admin = await loginAndGetTokens({ role: 'admin' });
+    const activeClient = await createClient('Projects Client');
+    const activeProject = await createProject({
+      name: 'Active Project',
+      clientId: activeClient.id,
+      isActive: true,
+    });
+    await createProject({
+      name: 'Inactive Project',
+      clientId: activeClient.id,
+      isActive: false,
+    });
+
+    const res = await request(app)
+      .get('/projects?is_active=true')
+      .set('Authorization', `Bearer ${admin.accessToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([
+      expect.objectContaining({
+        id: activeProject.id,
+        name: 'Active Project',
+        isActive: true,
+        clientId: activeClient.id,
+      }),
+    ]);
+  });
+
+  it('200: admin can request inactive projects only', async () => {
+    const admin = await loginAndGetTokens({ role: 'admin' });
+    const client = await createClient('Inactive Filter Client');
+    const inactiveProject = await createProject({
+      name: 'Archive Me',
+      clientId: client.id,
+      isActive: false,
+    });
+    await createProject({
+      name: 'Keep Active',
+      clientId: client.id,
+      isActive: true,
+    });
+
+    const res = await request(app)
+      .get('/projects?is_active=false')
+      .set('Authorization', `Bearer ${admin.accessToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([
+      expect.objectContaining({
+        id: inactiveProject.id,
+        name: 'Archive Me',
+        isActive: false,
+        clientId: client.id,
+      }),
+    ]);
+  });
+
+  it('403: non-admin cannot list projects', async () => {
+    const user = await loginAndGetTokens({ role: 'user' });
+
+    const res = await request(app)
+      .get('/projects')
+      .set('Authorization', `Bearer ${user.accessToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('400: invalid is_active filter is rejected', async () => {
+    const admin = await loginAndGetTokens({ role: 'admin' });
+
+    const res = await request(app)
+      .get('/projects?is_active=maybe')
+      .set('Authorization', `Bearer ${admin.accessToken}`);
+
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('POST /users', () => {
+  it('201: admin can create a user with required and optional fields', async () => {
+    const { accessToken } = await loginAndGetTokens({ role: 'admin' });
+
+    const res = await request(app)
+      .post('/users')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({
+        first_name: 'Dana',
+        last_name: 'Levi',
+        email: 'dana.levi@test.com',
+        password: 'SecurePass1!',
+        role: 'user',
+        employee_number: 'EMP-42',
+        employment_type: 'part_time',
+        employment_percentage: 60,
+        department: 'Finance',
+        daily_hours_override: 6,
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({
+      email: 'dana.levi@test.com',
+      firstName: 'Dana',
+      lastName: 'Levi',
+      role: 'user',
+      isActive: true,
+      mustChangePassword: true,
+    });
+
+    const created = await db('users').where({ email: 'dana.levi@test.com' }).first();
+    expect(created).toBeDefined();
+    expect(created.must_change_password).toBe(true);
+    expect(created.employee_number).toBe('EMP-42');
+    expect(created.employment_type).toBe('part_time');
+    expect(created.employment_percentage).toBe(60);
+  });
+
+  it('409: duplicate email is rejected', async () => {
+    const { accessToken } = await loginAndGetTokens({ role: 'admin' });
+    await createUser({ email: 'duplicate@test.com' });
+
+    const res = await request(app)
+      .post('/users')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({
+        first_name: 'Dup',
+        last_name: 'User',
+        email: 'duplicate@test.com',
+        password: 'SecurePass1!',
+        role: 'user',
+      });
+
+    expect(res.status).toBe(409);
+  });
+
+  it('400: create user enforces password policy', async () => {
+    const { accessToken } = await loginAndGetTokens({ role: 'admin' });
+
+    const res = await request(app)
+      .post('/users')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({
+        first_name: 'Weak',
+        last_name: 'Password',
+        email: 'weak.password@test.com',
+        password: 'weak',
+        role: 'user',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/requirements/i);
+  });
+});
+
+describe('PUT /users/:id', () => {
+  it('200: admin can update user fields', async () => {
+    const { accessToken } = await loginAndGetTokens({ role: 'admin' });
+    const target = await createUser({ email: 'update-me@test.com', role: 'user' });
+
+    const res = await request(app)
+      .put(`/users/${target.id}`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({
+        first_name: 'Updated',
+        last_name: 'Person',
+        email: 'updated.person@test.com',
+        role: 'admin',
+        is_active: true,
+        employee_number: 'EMP-99',
+        employment_type: 'contractor',
+        employment_percentage: 80,
+        department: 'Operations',
+        daily_hours_override: 7,
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      id: target.id,
+      email: 'updated.person@test.com',
+      firstName: 'Updated',
+      lastName: 'Person',
+      role: 'admin',
+      isActive: true,
+    });
+  });
+});
+
+describe('DELETE /users/:id', () => {
+  it('204: admin can deactivate a user and revoke all sessions', async () => {
+    const { accessToken } = await loginAndGetTokens({ role: 'admin' });
+    const targetLogin = await loginAndGetTokens({ email: 'deactivate-me@test.com', role: 'user' });
+
+    const res = await request(app)
+      .delete(`/users/${targetLogin.userId}`)
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    expect(res.status).toBe(204);
+
+    const updated = await db('users').where({ id: targetLogin.userId }).first();
+    expect(updated.is_active).toBe(false);
+
+    const refreshTokens = await db('refresh_tokens').where({ user_id: targetLogin.userId });
+    expect(refreshTokens).toHaveLength(0);
+
+    const refreshRes = await request(app)
+      .post('/auth/refresh')
+      .set('Cookie', targetLogin.refreshCookie);
+    expect(refreshRes.status).toBe(401);
+  });
+
+  it('403: admin cannot deactivate self', async () => {
+    const adminLogin = await loginAndGetTokens({ role: 'admin' });
+
+    const res = await request(app)
+      .delete(`/users/${adminLogin.userId}`)
+      .set('Authorization', `Bearer ${adminLogin.accessToken}`);
+
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({
+      error: 'SELF_DEACTIVATION_FORBIDDEN',
+      message: 'אינך יכול לבטל את הפעלת החשבון שלך',
+    });
+  });
+});
+
+describe('PUT /users/me', () => {
+  it('200: authenticated user can update only own first and last name', async () => {
+    const login = await loginAndGetTokens({ role: 'user' });
+
+    const res = await request(app)
+      .put('/users/me')
+      .set('Authorization', `Bearer ${login.accessToken}`)
+      .send({
+        first_name: 'Renamed',
+        last_name: 'User',
+        email: 'should-not-change@test.com',
+        role: 'admin',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      id: login.userId,
+      email: login.email,
+      firstName: 'Renamed',
+      lastName: 'User',
+      role: 'user',
+    });
+  });
+});
+
+describe('POST /users/me/sort-preference', () => {
+  it('204: stores sort preferences on the user record', async () => {
+    const login = await loginAndGetTokens({ role: 'user' });
+    const payload = {
+      client_id: { '10': 3 },
+      project_id: { '22': 7 },
+      task_id: { '35': 12 },
+    };
+
+    const res = await request(app)
+      .post('/users/me/sort-preference')
+      .set('Authorization', `Bearer ${login.accessToken}`)
+      .send(payload);
+
+    expect(res.status).toBe(204);
+
+    const updated = await db('users').where({ id: login.userId }).select('sort_prefs').first();
+    expect(updated.sort_prefs).toEqual(payload);
+  });
+});
+
+describe('Non-admin cannot access remaining admin user endpoints', () => {
+  it('403: non-admin cannot create a user via POST /users', async () => {
+    const { accessToken } = await loginAndGetTokens({ role: 'user' });
+
+    const res = await request(app)
+      .post('/users')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({
+        first_name: 'Hacker',
+        last_name: 'McHack',
+        email: 'hacker@test.com',
+        password: 'SecurePass1!',
+        role: 'user',
+      });
+
+    expect(res.status).toBe(403);
+  });
+
+  it('403: non-admin cannot update a user via PUT /users/:id', async () => {
+    const { accessToken } = await loginAndGetTokens({ role: 'user' });
+    const target = await createUser({ email: 'put-target@test.com', role: 'user' });
+
+    const res = await request(app)
+      .put(`/users/${target.id}`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({
+        first_name: 'Updated',
+        last_name: 'User',
+        email: target.email,
+        role: 'user',
+        is_active: true,
+      });
+
+    expect(res.status).toBe(403);
+  });
+
+  it('403: non-admin cannot deactivate a user via DELETE /users/:id', async () => {
+    const { accessToken } = await loginAndGetTokens({ role: 'user' });
+    const target = await createUser({ email: 'delete-target@test.com', role: 'user' });
+
+    const res = await request(app)
+      .delete(`/users/${target.id}`)
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('403: non-admin cannot reset a password via POST /users/:id/reset-password', async () => {
+    const { accessToken } = await loginAndGetTokens({ role: 'user' });
+    const target = await createUser({ email: 'reset-rbac@test.com', role: 'user' });
+
+    const res = await request(app)
+      .post(`/users/${target.id}/reset-password`)
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    expect(res.status).toBe(403);
+  });
+});
+
+describe('Permission flags', () => {
+  it('201/200/204: admin can grant, list, and revoke a permission flag', async () => {
+    const admin = await loginAndGetTokens({ role: 'admin' });
+    const target = await createUser({ email: 'flag-target@test.com', role: 'user' });
+    const projectA = await createProject({ name: 'Project A' });
+    const projectB = await createProject({ name: 'Project B' });
+
+    const createRes = await request(app)
+      .post(`/users/${target.id}/permissions`)
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .send({
+        flag_name: 'canAssignProjectTasks',
+        scoped_project_ids: [projectA.id, projectB.id],
+      });
+
+    expect(createRes.status).toBe(201);
+    expect(createRes.body).toMatchObject({
+      userId: target.id,
+      flagName: 'canAssignProjectTasks',
+      scopedProjectIds: [projectA.id, projectB.id],
+      grantedBy: admin.userId,
+    });
+
+    const listRes = await request(app)
+      .get(`/users/${target.id}/permissions`)
+      .set('Authorization', `Bearer ${admin.accessToken}`);
+
+    expect(listRes.status).toBe(200);
+    expect(listRes.body.data).toHaveLength(1);
+    expect(listRes.body.data[0]).toMatchObject({
+      id: createRes.body.id,
+      userId: target.id,
+      flagName: 'canAssignProjectTasks',
+    });
+
+    const deleteRes = await request(app)
+      .delete(`/users/${target.id}/permissions/${createRes.body.id}`)
+      .set('Authorization', `Bearer ${admin.accessToken}`);
+
+    expect(deleteRes.status).toBe(204);
+
+    const afterDelete = await request(app)
+      .get(`/users/${target.id}/permissions`)
+      .set('Authorization', `Bearer ${admin.accessToken}`);
+    expect(afterDelete.status).toBe(200);
+    expect(afterDelete.body.data).toHaveLength(0);
+  });
+
+  it('400: scoped_project_ids must reference valid active projects', async () => {
+    const admin = await loginAndGetTokens({ role: 'admin' });
+    const target = await createUser({ email: 'flag-invalid@test.com', role: 'user' });
+    const inactiveProject = await createProject({ name: 'Inactive Project', isActive: false });
+
+    const res = await request(app)
+      .post(`/users/${target.id}/permissions`)
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .send({
+        flag_name: 'canAssignProjectTasks',
+        scoped_project_ids: [inactiveProject.id],
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/scoped_project_ids/i);
+  });
+
+  it('403: non-admin cannot manage permission flags', async () => {
+    const user = await loginAndGetTokens({ role: 'user' });
+    const target = await createUser({ email: 'flag-no-admin@test.com', role: 'user' });
+
+    const createRes = await request(app)
+      .post(`/users/${target.id}/permissions`)
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .send({
+        flag_name: 'canAssignProjectTasks',
+        scoped_project_ids: [],
+      });
+    expect(createRes.status).toBe(403);
+
+    const listRes = await request(app)
+      .get(`/users/${target.id}/permissions`)
+      .set('Authorization', `Bearer ${user.accessToken}`);
+    expect(listRes.status).toBe(403);
+  });
+
+  it('scoped_project_ids correctly restricts the flag to only the granted projects', async () => {
+    const admin = await loginAndGetTokens({ role: 'admin' });
+    const target = await createUser({ email: 'flag-scope@test.com', role: 'user' });
+    const projectA = await createProject({ name: 'Scoped Project A' });
+    const projectB = await createProject({ name: 'Scoped Project B' });
+    const projectC = await createProject({ name: 'Out of Scope Project C' });
+
+    // Grant flag scoped to A and B only — C is intentionally excluded
+    const createRes = await request(app)
+      .post(`/users/${target.id}/permissions`)
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .send({
+        flag_name: 'canAssignProjectTasks',
+        scoped_project_ids: [projectA.id, projectB.id],
+      });
+
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.scopedProjectIds).toEqual(
+      expect.arrayContaining([projectA.id, projectB.id]),
+    );
+    expect(createRes.body.scopedProjectIds).not.toContain(projectC.id);
+    expect(createRes.body.scopedProjectIds).toHaveLength(2);
+
+    // Verify persisted scoping via GET
+    const listRes = await request(app)
+      .get(`/users/${target.id}/permissions`)
+      .set('Authorization', `Bearer ${admin.accessToken}`);
+
+    expect(listRes.status).toBe(200);
+    const flag = listRes.body.data[0] as { scopedProjectIds: number[] };
+    expect(flag.scopedProjectIds).toEqual(expect.arrayContaining([projectA.id, projectB.id]));
+    expect(flag.scopedProjectIds).not.toContain(projectC.id);
+    expect(flag.scopedProjectIds).toHaveLength(2);
+  });
+});
+
+describe('POST /users/:id/reset-password', () => {
+  it('200: admin can reset a user password — returns temporaryPassword and sets must_change_password', async () => {
+    const admin = await loginAndGetTokens({ role: 'admin' });
+    const target = await createUser({ email: 'reset-target@test.com', role: 'user' });
+    const temporaryPassword = 'TempReset1!';
+
+    const res = await request(app)
+      .post(`/users/${target.id}/reset-password`)
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .send({ temporary_password: temporaryPassword });
+
+    expect(res.status).toBe(200);
+    expect(res.body.temporaryPassword).toBe(temporaryPassword);
+
+    const updated = await db('users').where({ id: target.id }).select('must_change_password').first();
+    expect(updated.must_change_password).toBe(true);
+  });
+
+  it('200: reset revokes all active sessions for the target user', async () => {
+    const admin = await loginAndGetTokens({ role: 'admin' });
+    // Log the target user in so they have an active refresh token
+    const target = await loginAndGetTokens({ email: 'reset-sessions@test.com', role: 'user' });
+
+    const tokensBefore = await db('refresh_tokens').where({ user_id: target.userId }).count('id as count').first();
+    expect(Number(tokensBefore?.count)).toBeGreaterThan(0);
+
+    await request(app)
+      .post(`/users/${target.userId}/reset-password`)
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .send({ temporary_password: 'SessionKill1!' })
+      .expect(200);
+
+    const tokensAfter = await db('refresh_tokens').where({ user_id: target.userId }).count('id as count').first();
+    expect(Number(tokensAfter?.count)).toBe(0);
+  });
+
+  it('200: reset is audit logged with PASSWORD_RESET action', async () => {
+    const admin = await loginAndGetTokens({ role: 'admin' });
+    const target = await createUser({ email: 'reset-audit@test.com', role: 'user' });
+
+    await request(app)
+      .post(`/users/${target.id}/reset-password`)
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .send({ temporary_password: 'AuditReset1!' })
+      .expect(200);
+
+    const log = await waitForAuditLog({
+      action: 'PASSWORD_RESET',
+      actor_user_id: admin.userId,
+      target_entity_id: target.id,
+    });
+    expect(log).toBeDefined();
+  });
+
+  it('403: non-admin cannot reset a user password', async () => {
+    const user = await loginAndGetTokens({ role: 'user' });
+    const target = await createUser({ email: 'reset-forbidden@test.com', role: 'user' });
+
+    const res = await request(app)
+      .post(`/users/${target.id}/reset-password`)
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .send({ temporary_password: 'Forbidden1!' });
+
+    expect(res.status).toBe(403);
+  });
+
+  it('404: reset for unknown user returns not found', async () => {
+    const admin = await loginAndGetTokens({ role: 'admin' });
+
+    const res = await request(app)
+      .post('/users/999999/reset-password')
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .send({ temporary_password: 'UnknownUser1!' });
+
+    expect(res.status).toBe(404);
+  });
+
+  it('400: reset requires a valid temporary password from the admin', async () => {
+    const admin = await loginAndGetTokens({ role: 'admin' });
+    const target = await createUser({ email: 'reset-invalid@test.com', role: 'user' });
+
+    const res = await request(app)
+      .post(`/users/${target.id}/reset-password`)
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .send({ temporary_password: 'short' });
+
+    expect(res.status).toBe(400);
+  });
+});
+
 describe('RBAC — requireRole', () => {
-  // Tests use the /test/admin-only route mounted at the top of this file.
   // It exercises the real authenticate → requireRole('admin') chain without
   // modifying any production route definitions.
 
@@ -564,5 +1275,61 @@ describe('Audit logs', () => {
 
     const log = await waitForAuditLog({ action: 'PASSWORD_RESET', actor_user_id: userId });
     expect(log).toBeDefined();
+  });
+
+  it('writes CREATE, UPDATE, and DEACTIVATE audit records for admin user mutations', async () => {
+    const admin = await loginAndGetTokens({ role: 'admin' });
+
+    const createRes = await request(app)
+      .post('/users')
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .send({
+        first_name: 'Audit',
+        last_name: 'Target',
+        email: 'audit.target@test.com',
+        password: 'SecurePass1!',
+        role: 'user',
+      });
+    expect(createRes.status).toBe(201);
+    const createdId = createRes.body.id as number;
+
+    await request(app)
+      .put(`/users/${createdId}`)
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .send({
+        first_name: 'Audited',
+        last_name: 'Target',
+        email: 'audit.target.updated@test.com',
+        role: 'user',
+        is_active: true,
+      })
+      .expect(200);
+
+    await request(app)
+      .delete(`/users/${createdId}`)
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .expect(204);
+
+    const createLog = await waitForAuditLog({
+      action: 'CREATE',
+      actor_user_id: admin.userId,
+      target_entity_id: createdId,
+    });
+    const updateLog = await waitForAuditLog({
+      action: 'UPDATE',
+      actor_user_id: admin.userId,
+      target_entity_id: createdId,
+    });
+    const deactivateLog = await waitForAuditLog({
+      action: 'DEACTIVATE',
+      actor_user_id: admin.userId,
+      target_entity_id: createdId,
+    });
+
+    expect(createLog).toBeDefined();
+    expect(updateLog.old_value).toBeDefined();
+    expect(updateLog.new_value).toBeDefined();
+    expect(deactivateLog.old_value).toBeDefined();
+    expect(deactivateLog.new_value).toBeDefined();
   });
 });
