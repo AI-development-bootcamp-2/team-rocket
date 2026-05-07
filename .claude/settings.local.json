@@ -5,7 +5,8 @@
       "mcp__claude_ai_Atlassian_Rovo__searchJiraIssuesUsingJql",
       "Bash(npm install *)",
       "Bash(npm test *)",
-      "Bash(node -e \"require\\('ts-jest'\\)\")"
+      "Bash(node -e \"require\\('ts-jest'\\)\")",
+      "Bash(npx tsc *)"
     ]
   }
 }
