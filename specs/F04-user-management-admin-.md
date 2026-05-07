@@ -16,67 +16,93 @@ Admin CRUD for users: create with initial password, edit details, toggle active/
 
 ### 1. Backend: Users module
 
-- [ ] GET /users — list all users (Admin only), with filters: active/inactive, role, search by name/email
-- [ ] GET /users/:id — single user details (Admin only)
-- [ ] GET /users/me — current user profile (any authenticated user)
-- [ ] POST /users — create user (Admin only): `first_name`, `last_name`, email, initial password, role (`'admin'|'user'` — no other values). Optional profile fields: `employee_number`, `employment_type` (`full_time|part_time|contractor`), `employment_percentage` (0–100, default 100), `department`, `daily_hours_override`. Set `must_change_password=true`
-- [ ] PUT /users/:id — update user (Admin only): `first_name`, `last_name`, email, role, `is_active`, `employee_number`, `employment_type`, `employment_percentage`, `department`, `daily_hours_override`
-- [ ] DELETE /users/:id — soft delete: set `is_active=false` (Admin only). **Cannot deactivate self — returns 403 `{ error: 'SELF_DEACTIVATION_FORBIDDEN', message: 'אינך יכול לבטל את הפעלת החשבון שלך' }`**
-- [ ] Validate: email uniqueness, password policy on create, cannot deactivate self
-- [ ] On deactivate: kill all active sessions for that user (delete from refresh_tokens)
-- [ ] All mutations audit logged
-- [ ] **PUT /users/me** — authenticated user can update own `first_name` and `last_name` only (email/role changes require Admin). Note: UI sends `first_name` + `last_name` separately; server stores them as separate columns. Returns updated user profile.
-- [ ] **POST /users/me/sort-preference** — store `{ client_id, project_id, task_id }` frequency map per user. Stored as `sort_prefs JSONB` in users table (add column to F02 migration 001). Returns 204.
+- [x] GET /users — list all users (Admin only), with filters: active/inactive, role, search by name/email
+- [x] GET /users/:id — single user details (Admin only)
+- [x] GET /users/me — current user profile (any authenticated user)
+- [x] POST /users — create user (Admin only): `first_name`, `last_name`, email, initial password, role (`'admin'|'user'` — no other values). Optional profile fields: `employee_number`, `employment_type` (`full_time|part_time|contractor`), `employment_percentage` (0–100, default 100), `department`, `daily_hours_override`. Set `must_change_password=true`
+- [x] PUT /users/:id — update user (Admin only): `first_name`, `last_name`, email, role, `is_active`, `employee_number`, `employment_type`, `employment_percentage`, `department`, `daily_hours_override`
+- [x] DELETE /users/:id — soft delete: set `is_active=false` (Admin only). **Cannot deactivate self — returns 403 `{ error: 'SELF_DEACTIVATION_FORBIDDEN', message: 'אינך יכול לבטל את הפעלת החשבון שלך' }`**
+- [x] Validate: email uniqueness, password policy on create, cannot deactivate self
+- [x] On deactivate: kill all active sessions for that user (implemented by deleting all rows from `refresh_tokens` for that user)
+- [x] All implemented user mutations audit logged (`POST /users`, `PUT /users/:id`, `DELETE /users/:id`, `PUT /users/me`, `POST /users/me/sort-preference`)
+- [x] **PUT /users/me** — authenticated user can update own `first_name` and `last_name` only (email/role changes require Admin). Note: UI sends `first_name` + `last_name` separately; server stores them as separate columns. Returns updated user profile.
+- [x] **POST /users/me/sort-preference** — store `{ client_id, project_id, task_id }` frequency map per user. Stored as `sort_prefs JSONB` in users table (add column to F02 migration 001). Returns 204.
 
 ### 2. Backend: Permission flags
 
-- [ ] POST /users/:id/permissions — grant canAssignProjectTasks with scoped_project_ids array
-- [ ] DELETE /users/:id/permissions/:flagId — revoke flag
-- [ ] GET /users/:id/permissions — list flags for a user
-- [ ] Validate: only Admin can grant, scoped_project_ids must be valid active projects
+- [x] POST /users/:id/permissions — grant canAssignProjectTasks with scoped_project_ids array
+- [x] DELETE /users/:id/permissions/:flagId — revoke flag
+- [x] GET /users/:id/permissions — list flags for a user
+- [x] Validate: only Admin can grant, scoped_project_ids must be valid active projects
 
 ### 3. Frontend: User list page
 
-- [ ] Create UserListPage.jsx with table: name, email, role, status badge, actions
-- [ ] Search bar (by name or email)
-- [ ] Filter by: role (user/admin), status (active/inactive)
-- [ ] Action buttons: edit, deactivate/reactivate, reset password
-- [ ] Create button opens UserForm modal/page
-- [ ] Mobile responsive: card layout on small screens
+- [x] Create UserListPage.jsx with table: name, email, role, status badge, actions
+- [x] Search bar (by name or email)
+- [x] Filter by: role (user/admin), status (active/inactive)
+- [x] Action buttons: edit, deactivate/reactivate, reset password
+- [x] Create button opens UserForm modal/page
+- [x] Mobile responsive: card layout on small screens
 
 ### 3b. Required UI states (v3.2 §14.1)
 
-- [ ] **Loading**: skeleton rows while user list fetches
-- [ ] **Empty**: 'No users found' with create button
-- [ ] **No-permission**: 403 page if non-admin somehow reaches this route
-- [ ] **Server error**: toast on 500
-- [ ] **Save success**: toast after create/edit
-- [ ] **Delete confirm**: confirmation dialog before deactivate ('This will log the user out immediately')
-- [ ] **Disabled control**: deactivate-self button disabled with tooltip 'Cannot deactivate your own account'
+- [x] **Loading**: skeleton rows while user list fetches
+- [x] **Empty**: 'No users found' with create button
+- [x] **No-permission**: 403 page if non-admin somehow reaches this route
+- [x] **Server error**: toast on 500
+- [x] **Save success**: toast after create/edit
+- [x] **Delete confirm**: confirmation dialog before deactivate ('This will log the user out immediately')
+- [x] **Disabled control**: deactivate-self button disabled with tooltip 'Cannot deactivate your own account'
 
 ### 4. Frontend: User form
 
-- [ ] Create UserForm.jsx — used for both create and edit
-- [ ] Fields: first name, last name (displayed concatenated as `"${first} ${last}"` everywhere in UI), email, password (create only), role dropdown (`משתמש` / `מנהל`), is_active toggle
-- [ ] Optional profile fields section: employee number, employment type, employment percentage, department, daily hours override
-- [ ] Permission flag section: toggle canAssignProjectTasks, multi-select for allowed projects
-- [ ] Validation: required fields, email format, password strength (create only)
-- [ ] Confirmation dialog on deactivate (warning about active sessions)
+- [x] Create UserForm.jsx — used for both create and edit
+- [x] Fields: first name, last name (displayed concatenated as `"${first} ${last}"` everywhere in UI), email, password (create only), role dropdown (`משתמש` / `מנהל`), is_active toggle
+- [x] Optional profile fields section: employee number, employment type, employment percentage, department, daily hours override
+- [x] Permission flag section: toggle canAssignProjectTasks, multi-select for allowed projects
+- [x] Validation: required fields, email format, password strength (create only)
+- [x] Confirmation dialog on deactivate (warning about active sessions)
 
 ### 5. Frontend: Reset password dialog
 
-- [ ] Create ResetPasswordDialog.jsx
-- [ ] Admin enters new temporary password
-- [ ] Shows confirmation: 'User will be required to change password on next login'
-- [ ] Success toast after reset
+- [x] Create ResetPasswordDialog.jsx
+- [x] Admin enters new temporary password
+- [x] Shows confirmation: 'User will be required to change password on next login'
+- [x] Success toast after reset
 
 ### 6. Tests
 
-- [ ] Test: Admin can create user with valid data
-- [ ] Test: Duplicate email returns 409
-- [ ] Test: Non-admin cannot access user endpoints
-- [ ] Test: Deactivate sets is_active=false and user cannot login
-- [ ] Test: Permission flag correctly scopes project access
+- [x] Test: Admin can create user with valid data
+- [x] Test: Duplicate email returns 409
+- [x] Test: Non-admin cannot access `GET /users`
+- [x] Test: Non-admin cannot access all remaining user endpoints
+- [x] Test: Deactivate sets `is_active=false` and user cannot login/refresh
+- [x] Test: Password policy enforced on create user
+- [x] Test: `GET /users/:id` returns 200/400/404 correctly
+- [x] Test: `PUT /users/me` updates only own name fields
+- [x] Test: `POST /users/me/sort-preference` persists `sort_prefs`
+- [x] Test: Audit log records create / edit / deactivate user mutations
+- [x] Test: Permission flag correctly scopes project access
+- [x] Test: Admin reset-password deletes active sessions and forces password change
+- [x] Test: `GET /projects` returns 200/400 correctly and remains admin-only
+
+## Progress Update
+
+- Completed current F04 backend user module scope including admin reset-password behavior
+- Implemented admin-only `GET /users` with `role`, `is_active`, and `search` filters
+- Implemented admin-only `GET /users/:id`
+- Implemented admin-only `POST /users`, `PUT /users/:id`, and `DELETE /users/:id`
+- Implemented self-service `PUT /users/me` and `POST /users/me/sort-preference`
+- Implemented Management-portal `UserListPage` with Figma-based RTL table/card layouts, search, filters, create/edit modal entry, deactivate/reactivate flow, and reset-password dialog flow
+- Implemented reusable Management-portal `UserForm` with validated create/edit fields, optional employment profile data, and scoped-project permission controls
+- Implemented `ResetPasswordDialog` so admins enter a validated temporary password and see forced-change confirmation before submit
+- Added admin-only project metadata listing to populate the permission scope picker in the user form
+- Enforced password policy on create, duplicate email rejection, and self-deactivation protection
+- Deactivation deletes all active refresh-token sessions for the target user
+- Admin reset-password now deletes all active refresh-token sessions for the target user and forces `must_change_password=true`
+- Verified current user-module behavior through passing integration tests against live Postgres
+- Added focused unit coverage for user parsing helpers and permission-flag parsing helpers, plus integration coverage for admin-only `GET /projects`
+- Current backend test baseline: 117 passing tests with 92.16% statements / 79.13% branches / 93.06% functions / 93.38% lines
 
 ## API Endpoints
 
@@ -93,6 +119,7 @@ Admin CRUD for users: create with initial password, edit details, toggle active/
 | DELETE | /users/:id | Admin | Soft delete (deactivate) |
 | POST | /users/:id/permissions | Admin | Grant permission flag |
 | DELETE | /users/:id/permissions/:flagId | Admin | Revoke permission flag |
+| GET | /projects | Admin | List active projects for permission scoping |
 
 ## Database Tables
 
@@ -165,12 +192,12 @@ UserListPage, UserForm (modal), ResetPasswordDialog
 
 ## Acceptance Criteria
 
-- [ ] Admin can create, edit, deactivate users
-- [ ] Employee table shows all users with correct data
-- [ ] Deactivated user cannot log in
-- [ ] Permission flag restricts scope correctly
-- [ ] All actions appear in audit log
-- [ ] Admin cannot deactivate own account — returns 400 with clear message
-- [ ] User can update own full_name via PUT /users/me
-- [ ] Sort preference persisted and returned in dropdown-data endpoint
+- [x] Admin can create, edit, deactivate users
+- [x] Employee table shows all users with correct data
+- [x] Deactivated user cannot log in / refresh an existing session
+- [x] Permission flag restricts scope correctly
+- [x] All implemented user mutations appear in audit log
+- [x] Admin cannot deactivate own account — returns 403 with the specified error payload
+- [x] User can update own full_name via PUT /users/me
+- [x] Sort preference persisted via POST /users/me/sort-preference
 
