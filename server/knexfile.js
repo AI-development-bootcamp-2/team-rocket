@@ -1,7 +1,16 @@
 require('dotenv').config();
 
+const migrations = {
+  directory: require('path').join(__dirname, 'src/database/migrations'),
+  tableName: 'knex_migrations',
+};
+
+const seeds = {
+  directory: require('path').join(__dirname, 'src/database/seeds'),
+};
+
 /**
- * @type { import("knex").Knex.Config }
+ * @type { Object.<string, import("knex").Knex.Config> }
  */
 module.exports = {
   development: {
@@ -14,13 +23,18 @@ module.exports = {
       password: process.env.DB_PASSWORD || 'postgres',
     },
     pool: { min: 2, max: 10 },
-    migrations: {
-      directory: './src/database/migrations',
-      tableName: 'knex_migrations',
-    },
-    seeds: {
-      directory: './src/database/seeds',
-    },
+    migrations,
+    seeds,
+  },
+
+  // Used by integration tests (NODE_ENV=test set in tests/setup.ts).
+  // DATABASE_URL is also set there, so dotenv is not needed for this config.
+  test: {
+    client: 'postgresql',
+    connection: process.env.DATABASE_URL,
+    pool: { min: 0, max: 5 },
+    migrations,
+    seeds,
   },
 
   production: {
@@ -33,12 +47,7 @@ module.exports = {
       password: process.env.DB_PASSWORD,
     },
     pool: { min: 2, max: 10 },
-    migrations: {
-      directory: './src/database/migrations',
-      tableName: 'knex_migrations',
-    },
-    seeds: {
-      directory: './src/database/seeds',
-    },
+    migrations,
+    seeds,
   },
 };

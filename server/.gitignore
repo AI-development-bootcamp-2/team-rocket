@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# TypeScript build output
+dist/
+
+# Environment — never commit real secrets
+.env
+.env.test
+.env.local
+
+# Test output
+coverage/
+
+# Local file uploads (dev storage)
+uploads/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db

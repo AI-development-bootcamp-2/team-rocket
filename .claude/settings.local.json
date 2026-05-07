@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "mcp__claude_ai_Atlassian_Rovo__createJiraIssue",
-      "mcp__claude_ai_Atlassian_Rovo__searchJiraIssuesUsingJql"
+      "mcp__claude_ai_Atlassian_Rovo__searchJiraIssuesUsingJql",
+      "Bash(npm install *)",
+      "Bash(npm test *)",
+      "Bash(node -e \"require\\('ts-jest'\\)\")",
+      "Bash(npx tsc *)",
+      "Bash(npx jest *)"
     ]
   }
 }
