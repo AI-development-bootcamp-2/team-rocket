@@ -1,13 +1,26 @@
 import axios from 'axios';
 
+// Access token lives ONLY in memory — never localStorage / sessionStorage
+let _token: string | null = null;
+let _resetInactivity: (() => void) | null = null;
+
+export const tokenStore = {
+  get: () => _token,
+  set: (t: string | null) => { _token = t; },
+};
+
+/** Called by AuthContext so every outgoing request also resets the inactivity timer */
+export const setInactivityResetFn = (fn: () => void) => { _resetInactivity = fn; };
+
 const axiosClient = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:4000',
-  withCredentials: true, // send HTTP-only refresh-token cookie
+  withCredentials: true, // send httpOnly refresh-token cookie automatically
 });
 
+// Attach Bearer token + reset inactivity on every request
 axiosClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (_token) config.headers.Authorization = `Bearer ${_token}`;
+  _resetInactivity?.();
   return config;
 });
 
@@ -24,14 +37,24 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const original = error.config;
 
+    // Dispatch a global event for 5xx so any toast listener can pick it up
+    if (error.response?.status >= 500) {
+      window.dispatchEvent(
+        new CustomEvent('app:serverError', {
+          detail: { message: 'שגיאת שרת. אנא נסה שוב מאוחר יותר.' },
+        })
+      );
+    }
+
+    // 401 — try silent token refresh, then replay original request
     if (error.response?.status === 401 && !original._retry) {
       if (isRefreshing) {
-        return new Promise((resolve, reject) => failedQueue.push({ resolve, reject })).then(
-          (token) => {
-            original.headers.Authorization = `Bearer ${token}`;
-            return axiosClient(original);
-          }
-        );
+        return new Promise((resolve, reject) =>
+          failedQueue.push({ resolve, reject })
+        ).then((token) => {
+          original.headers.Authorization = `Bearer ${token}`;
+          return axiosClient(original);
+        });
       }
 
       original._retry = true;
@@ -39,13 +62,13 @@ axiosClient.interceptors.response.use(
 
       try {
         const { data } = await axiosClient.post<{ accessToken: string }>('/auth/refresh');
-        localStorage.setItem('accessToken', data.accessToken);
+        tokenStore.set(data.accessToken);
         processQueue(null, data.accessToken);
         original.headers.Authorization = `Bearer ${data.accessToken}`;
         return axiosClient(original);
       } catch (err) {
         processQueue(err, null);
-        localStorage.removeItem('accessToken');
+        tokenStore.set(null);
         window.location.replace('/login');
         return Promise.reject(err);
       } finally {
