@@ -8,7 +8,7 @@ Project-specific Claude Code agents and skills, tailored to this repo (Vite + Re
 |---|---|---|---|
 | [test-writer](agents/test-writer.md) | Subagent | "use the test-writer subagent" / proactive | Adding tests, TDD a new feature |
 | [code-reviewer](agents/code-reviewer.md) | Subagent | "use the code-reviewer subagent" | Reviewing a PR or branch diff |
-| [frontend-design](../.agents/skills/frontend-design/SKILL.md) | Skill (auto) | Triggered by description | Building UI for any of the 3 portals |
+| [frontend-design](skills/frontend-design/SKILL.md) | Skill (auto) | Triggered by description | Building UI for any of the 3 portals |
 | [comment](skills/comment/SKILL.md) | Skill (slash) | `/comment [path]` | Adding short inline docs to a file/dir |
 | [swagger](skills/swagger/SKILL.md) | Skill (slash) | `/swagger [init\|scan\|sync\|route <path>]` | Setting up or auditing OpenAPI docs |
 
@@ -52,7 +52,7 @@ Refuses to approve when any CRITICAL is open. Doesn't restate `/lint` output.
 ## Skills
 
 ### frontend-design (auto-triggered)
-[.agents/skills/frontend-design/SKILL.md](../.agents/skills/frontend-design/SKILL.md)
+[.claude/skills/frontend-design/SKILL.md](skills/frontend-design/SKILL.md)
 
 Triggers when the user asks to build a screen, component, modal, form, or any UI for **Management** (admin desktop), **Webapp** (employee desktop), or **Mobile** portal.
 
@@ -100,18 +100,17 @@ On first run, asks the user to pick a toolchain — `swagger-jsdoc` + `swagger-u
 
 ```
 .claude/
-├── README.md                       ← this file
+├── README.md                          ← this file
 ├── agents/
 │   ├── test-writer.md
 │   └── code-reviewer.md
 └── skills/
     ├── comment/SKILL.md
     ├── swagger/SKILL.md
-    └── lint/SKILL.md                ← pre-existing, JS/TS lint + format
-
-.agents/
-└── skills/
-    └── frontend-design/SKILL.md     ← Figma-grounded UI skill
+    ├── lint/SKILL.md                  ← pre-existing, JS/TS lint + format
+    └── frontend-design/
+        ├── SKILL.md                   ← Figma-grounded UI skill
+        └── LICENSE.txt                ← Apache 2.0 (originally from anthropics/skills)
 ```
 
 Pre-existing skills not documented here (lint, openspec-*, opsx:*, init, review, security-review, etc.) are listed when the harness loads.
