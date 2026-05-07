@@ -4,6 +4,13 @@
   "description": "Time Reporting System - Backend",
   "main": "src/index.js",
   "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write src",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
     "migrate": "knex migrate:latest",
     "migrate:rollback": "knex migrate:rollback",
     "migrate:make": "knex migrate:make",
@@ -12,8 +19,24 @@
     "seed:make": "knex seed:make"
   },
   "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.1",
+    "helmet": "^8.1.0",
     "knex": "^3.1.0",
+    "multer": "^2.1.1",
+    "node-cron": "^4.2.1",
     "pg": "^8.11.3",
-    "dotenv": "^16.4.1"
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.3.0",
+    "eslint-config-prettier": "^10.1.8",
+    "jest": "^30.3.0",
+    "prettier": "^3.8.3",
+    "supertest": "^7.2.2"
   }
 }
