@@ -1,0 +1,21 @@
+.App {
+  
+  width: 100%;
+  overflow: hidden;
+}
+
+.App-main {
+  min-height: 94.45vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  
+  background-image:
+    linear-gradient(rgba(9, 18, 54, 0.35), rgba(9, 18, 54, 0.35)),
+    url('/public/images/login-illustration.png');
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
