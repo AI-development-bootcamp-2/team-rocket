@@ -1,4 +1,24 @@
 {
+  "name": "finale-server",
+  "version": "1.0.0",
+  "description": "Time Reporting System - Backend",
+  "main": "src/index.js",
+  "scripts": {
+    "migrate": "knex migrate:latest",
+    "migrate:rollback": "knex migrate:rollback",
+    "migrate:make": "knex migrate:make",
+    "migrate:status": "knex migrate:status",
+    "seed": "knex seed:run",
+    "seed:make": "knex seed:make"
+  },
+  "dependencies": {
+    "knex": "^3.1.0",
+    "pg": "^8.11.3",
+    "dotenv": "^16.4.1"
+  }
+}
+
+{
   "name": "team-rocket-server",
   "version": "1.0.0",
   "description": "Time reporting system — backend API",
