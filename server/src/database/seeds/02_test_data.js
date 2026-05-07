@@ -55,7 +55,7 @@ exports.seed = async function (knex) {
     .returning('id');
 
   // ── Tasks ──────────────────────────────────────────────────────────────────
-  const [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10] = await knex('tasks')
+  const [t1, t2, t3, t4, _t5, t6, t7, t8, _t9, t10] = await knex('tasks')
     .insert([
       { project_id: p1.id, name: 'UI Design',           status: 'open',   start_date: '2026-01-01', end_date: '2026-02-28', description: 'Figma mockups and design system', created_at: now, updated_at: now },
       { project_id: p1.id, name: 'Frontend Development', status: 'open',  start_date: '2026-03-01', end_date: '2026-05-31', description: 'React implementation',            created_at: now, updated_at: now },
