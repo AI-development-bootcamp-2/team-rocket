@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "lint",
+  "owner": "herbertjulio",
+  "repo": "specialist-agent",
+  "path": "skills/lint",
+  "branch": "main",
+  "sha": "0e1466fe8bd1946f569b6a28f46768329e6ef9ed",
+  "source": "manual"
+}
