@@ -19,7 +19,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const INACTIVITY_MS = 30 * 60 * 1000;
+const INACTIVITY_MS = 30 * 60 * 1000; //auto logout after 30 minutes of inactivity
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
