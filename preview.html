@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Figma Components Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #1B2450;
+      min-height: 100vh;
+      padding: 40px 24px;
+      color: #050804;
+    }
+
+    /* ── Page nav ── */
+    .page-nav {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+    .nav-btn {
+      padding: 10px 24px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 9999px;
+      background: transparent;
+      color: white;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover, .nav-btn.active {
+      background: #6B2FAA;
+      border-color: #6B2FAA;
+    }
+
+    /* ── Section wrapper ── */
+    .section { display: none; }
+    .section.visible { display: block; }
+
+    .section-title {
+      text-align: center;
+      color: rgba(255,255,255,0.7);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+    }
+
+    /* ── Preview containers ── */
+    .preview-row {
+      display: flex;
+      gap: 40px;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .preview-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .preview-label {
+      color: rgba(255,255,255,0.5);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ─────────────────────────────────────
+       LOGIN CARD  (from LoginCard.module.css)
+    ───────────────────────────────────────*/
+    .loginCard {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 400px;
+      min-width: 320px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%);
+      border-radius: 16px;
+      padding: 32px 24px;
+      box-shadow:
+        0 8px 32px rgba(31,38,135,0.15),
+        0 4px 16px rgba(31,38,135,0.1),
+        0 2px 8px rgba(31,38,135,0.08);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,0.18);
+      direction: rtl;
+      text-align: right;
+      animation: slideIn 0.4s ease-out;
+    }
+    .illustration {
+      width: 100%;
+      height: 140px;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, #e0e7ff 0%, #f0e6ff 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9CA3AF;
+      font-size: 13px;
+    }
+    .form { display: flex; flex-direction: column; gap: 16px; }
+    .card-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #050804;
+      margin: 0 0 8px 0;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .lbl {
+      font-size: 14px;
+      font-weight: 500;
+      color: #050804;
+    }
+    .inp {
+      padding: 12px 16px;
+      border: 1px solid #E0E0E0;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 16px;
+      color: #050804;
+      background: white;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+    .inp:focus {
+      outline: none;
+      border-color: #6B2FAA;
+      box-shadow: 0 0 0 3px rgba(107,47,170,0.12);
+    }
+    .inp[type="email"] { direction: ltr; text-align: left; }
+    .inp::placeholder { color: #999; }
+    .error-box {
+      padding: 12px 16px;
+      background: #FEE8E8;
+      color: #C33636;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .submit-btn {
+      padding: 14px 24px;
+      background: #142A3F;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+    .submit-btn:hover { background: #0F1E2E; box-shadow: 0 4px 12px rgba(20,42,63,0.3); transform: translateY(-2px); }
+    .submit-btn:active { transform: translateY(0); }
+    .submit-btn.loading { opacity: 0.6; cursor: not-allowed; }
+    .remember-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    /* ─────────────────────────────────────
+       MOBILE FRAME  (from MobileFrame.module.css)
+    ───────────────────────────────────────*/
+    .mobileFrame {
+      display: flex;
+      flex-direction: column;
+      width: 375px;
+      height: 700px;
+      border: 2px solid #DDD;
+      border-radius: 40px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      background: #F2F2F7;
+    }
+    .statusBar {
+      height: 44px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #FFFFFF;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+      flex-shrink: 0;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .statusIcons { display: flex; gap: 5px; font-size: 11px; }
+    .frame-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mobileFrame.dark {
+      background: #1C1C1E;
+      border-color: #444;
+    }
+    .mobileFrame.dark .statusBar {
+      background: #2C2C2E;
+      color: white;
+      border-bottom-color: rgba(255,255,255,0.08);
+    }
+
+    /* ─────────────────────────────────────
+       DESIGN TOKENS section
+    ───────────────────────────────────────*/
+    .tokens-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .token-card {
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .token-swatch {
+      height: 60px;
+      width: 100%;
+    }
+    .token-info {
+      padding: 12px;
+      color: white;
+    }
+    .token-name { font-size: 12px; font-weight: 600; opacity: 0.9; }
+    .token-hex  { font-size: 11px; opacity: 0.55; font-family: monospace; }
+
+    /* ─────────────────────────────────────
+       Animations
+    ───────────────────────────────────────*/
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="page-nav">
+    <button class="nav-btn active" onclick="show('login')">LoginCard</button>
+    <button class="nav-btn" onclick="show('mobile')">MobileFrame</button>
+    <button class="nav-btn" onclick="show('tokens')">Design Tokens</button>
+  </nav>
+
+  <!-- ══════════════════════════════════
+       SECTION 1 — LoginCard
+  ══════════════════════════════════ -->
+  <section id="s-login" class="section visible">
+    <p class="section-title">LoginCard — כרטיס כניסה</p>
+    <div class="preview-row">
+
+      <!-- Default state -->
+      <div class="preview-col">
+        <span class="preview-label">Default</span>
+        <div class="loginCard">
+          <div class="illustration">🖼 Illustration slot</div>
+          <form class="form" onsubmit="return false">
+            <h2 class="card-title">כניסה למערכת</h2>
+            <div class="form-group">
+              <label class="lbl">דוא"ל</label>
+              <input type="email" class="inp" placeholder="your@email.com" />
+            </div>
+            <div class="form-group">
+              <label class="lbl">סיסמה</label>
+              <input type="password" class="inp" placeholder="••••••••" />
+            </div>
+            <div class="remember-row">
+              <input type="checkbox" id="rem" />
+              <label for="rem">זכור אותי</label>
+            </div>
+            <button type="submit" class="submit-btn">כניסה</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Error state -->
+      <div class="preview-col">
+        <span class="preview-label">Error state</span>
+        <div class="loginCard">
+          <div class="illustration">🖼 Illustration slot</div>
+          <form class="form" onsubmit="return false">
+            <h2 class="card-title">כניסה למערכת</h2>
+            <div class="error-box">כתובת דוא"ל או סיסמה שגויים</div>
+            <div class="form-group">
+              <label class="lbl">דוא"ל</label>
+              <input type="email" class="inp" value="user@example.com" style="border-color:#C33636;" />
+            </div>
+            <div class="form-group">
+              <label class="lbl">סיסמה</label>
+              <input type="password" class="inp" value="wrong" style="border-color:#C33636;" />
+            </div>
+            <button type="submit" class="submit-btn">כניסה</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Loading state -->
+      <div class="preview-col">
+        <span class="preview-label">Loading state</span>
+        <div class="loginCard">
+          <div class="illustration">🖼 Illustration slot</div>
+          <form class="form" onsubmit="return false">
+            <h2 class="card-title">כניסה למערכת</h2>
+            <div class="form-group">
+              <label class="lbl">דוא"ל</label>
+              <input type="email" class="inp" value="user@example.com" />
+            </div>
+            <div class="form-group">
+              <label class="lbl">סיסמה</label>
+              <input type="password" class="inp" value="••••••••" />
+            </div>
+            <button type="button" class="submit-btn loading" disabled>מתחבר...</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       SECTION 2 — MobileFrame
+  ══════════════════════════════════ -->
+  <section id="s-mobile" class="section">
+    <p class="section-title">MobileFrame — מסגרת מובייל</p>
+    <div class="preview-row">
+
+      <!-- Light frame -->
+      <div class="preview-col">
+        <span class="preview-label">variant="light" (default)</span>
+        <div class="mobileFrame">
+          <div class="statusBar">
+            <span>9:41</span>
+            <span class="statusIcons">▶ WiFi 🔋</span>
+          </div>
+          <div class="frame-content">
+            <div class="loginCard" style="max-width:320px;">
+              <form class="form" onsubmit="return false">
+                <h2 class="card-title" style="font-size:20px;">כניסה למערכת</h2>
+                <div class="form-group">
+                  <label class="lbl">דוא"ל</label>
+                  <input type="email" class="inp" placeholder="your@email.com" />
+                </div>
+                <div class="form-group">
+                  <label class="lbl">סיסמה</label>
+                  <input type="password" class="inp" placeholder="••••••••" />
+                </div>
+                <button type="submit" class="submit-btn">כניסה</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dark frame -->
+      <div class="preview-col">
+        <span class="preview-label">variant="dark"</span>
+        <div class="mobileFrame dark">
+          <div class="statusBar">
+            <span>9:41</span>
+            <span class="statusIcons">▶ WiFi 🔋</span>
+          </div>
+          <div class="frame-content">
+            <div class="loginCard" style="max-width:320px;">
+              <form class="form" onsubmit="return false">
+                <h2 class="card-title" style="font-size:20px;">כניסה למערכת</h2>
+                <div class="form-group">
+                  <label class="lbl">דוא"ל</label>
+                  <input type="email" class="inp" placeholder="your@email.com" />
+                </div>
+                <div class="form-group">
+                  <label class="lbl">סיסמה</label>
+                  <input type="password" class="inp" placeholder="••••••••" />
+                </div>
+                <button type="submit" class="submit-btn">כניסה</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       SECTION 3 — Design Tokens
+  ══════════════════════════════════ -->
+  <section id="s-tokens" class="section">
+    <p class="section-title">Design Tokens — אסימוני עיצוב</p>
+    <div class="tokens-grid">
+      <div class="token-card">
+        <div class="token-swatch" style="background:#142A3F;"></div>
+        <div class="token-info"><div class="token-name">--color-nav-button</div><div class="token-hex">#142A3F · Primary CTA buttons</div></div>
+      </div>
+      <div class="token-card">
+        <div class="token-swatch" style="background:#6B2FAA;"></div>
+        <div class="token-info"><div class="token-name">--color-brand-purple</div><div class="token-hex">#6B2FAA · Tabs, focus, links</div></div>
+      </div>
+      <div class="token-card">
+        <div class="token-swatch" style="background:#1B2450;"></div>
+        <div class="token-info"><div class="token-name">Sidebar</div><div class="token-hex">#1B2450 · Admin sidebar bg</div></div>
+      </div>
+      <div class="token-card">
+        <div class="token-swatch" style="background:#050804;"></div>
+        <div class="token-info"><div class="token-name">--color-text-body</div><div class="token-hex">#050804 · Body text</div></div>
+      </div>
+      <div class="token-card">
+        <div class="token-swatch" style="background:#E0E0E0;"></div>
+        <div class="token-info"><div class="token-name">--color-border-input</div><div class="token-hex">#E0E0E0 · Input borders</div></div>
+      </div>
+      <div class="token-card">
+        <div class="token-swatch" style="background:#F2F2F7;"></div>
+        <div class="token-info"><div class="token-name">--background-light</div><div class="token-hex">#F2F2F7 · Page background</div></div>
+      </div>
+      <div class="token-card">
+        <div class="token-swatch" style="background:#DBEAFE; border-top: 3px solid #2563EB;"></div>
+        <div class="token-info"><div class="token-name">Badge: Submitted</div><div class="token-hex">#DBEAFE / #2563EB</div></div>
+      </div>
+      <div class="token-card">
+        <div class="token-swatch" style="background:#DCFCE7; border-top: 3px solid #16A34A;"></div>
+        <div class="token-info"><div class="token-name">Badge: Approved</div><div class="token-hex">#DCFCE7 / #16A34A</div></div>
+      </div>
+      <div class="token-card">
+        <div class="token-swatch" style="background:#FEE2E2; border-top: 3px solid #EF4444;"></div>
+        <div class="token-info"><div class="token-name">Badge: Rejected</div><div class="token-hex">#FEE2E2 / #EF4444</div></div>
+      </div>
+      <div class="token-card">
+        <div class="token-swatch" style="background:#FEF3C7; border-top: 3px solid #D97706;"></div>
+        <div class="token-info"><div class="token-name">Badge: Warning / Draft</div><div class="token-hex">#FEF3C7 / #D97706</div></div>
+      </div>
+      <div class="token-card">
+        <div class="token-swatch" style="background:#EDE9FE; border-top: 3px solid #7C3AED;"></div>
+        <div class="token-info"><div class="token-name">Badge: Entry Corrected</div><div class="token-hex">#EDE9FE / #7C3AED</div></div>
+      </div>
+      <div class="token-card">
+        <div class="token-swatch" style="background:#F3F4F6; border-top: 3px solid #374151;"></div>
+        <div class="token-info"><div class="token-name">Badge: Neutral / Lock</div><div class="token-hex">#F3F4F6 / #374151</div></div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    function show(name) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('s-' + name).classList.add('visible');
+      event.currentTarget.classList.add('active');
+    }
+  </script>
+</body>
+</html>
