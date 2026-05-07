@@ -6,7 +6,8 @@
       "Bash(npm install *)",
       "Bash(npm test *)",
       "Bash(node -e \"require\\('ts-jest'\\)\")",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(npx jest *)"
     ]
   }
 }
