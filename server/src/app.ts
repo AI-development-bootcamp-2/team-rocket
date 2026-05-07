@@ -11,7 +11,9 @@ const app = express();
 
 app.use(helmet());
 app.use(cors({ origin: config.cors.frontendUrl, credentials: true }));
-app.use(rateLimit(config.rateLimit.global));
+if (!config.isTest) {
+  app.use(rateLimit(config.rateLimit.global));
+}
 app.use(express.json());
 
 app.get('/healthz', (_req, res) => {

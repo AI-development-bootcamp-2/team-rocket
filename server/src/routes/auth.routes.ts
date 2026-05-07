@@ -16,7 +16,7 @@ const loginLimiter = rateLimit({
 
 const router = Router();
 
-router.post('/login', loginLimiter, wrap(login));
+router.post('/login', ...(config.isTest ? [] : [loginLimiter]), wrap(login));
 router.post('/logout', authenticate, wrap(logout));
 router.post('/refresh', wrap(refreshTokens));
 router.post('/change-password', authenticate, wrap(changePassword));

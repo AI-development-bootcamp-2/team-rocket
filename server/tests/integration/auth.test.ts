@@ -16,6 +16,7 @@ import type { Request, Response } from 'express';
 import app from '../../src/app';
 import { authenticate } from '../../src/middleware/auth.middleware';
 import { requireRole } from '../../src/middleware/rbac.middleware';
+import { errorMiddleware } from '../../src/middleware/error.middleware';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const db = require('../../src/database/connection') as Knex;
@@ -31,6 +32,7 @@ app.get(
     res.json({ ok: true });
   },
 );
+app.use(errorMiddleware);
 
 // ── DB helpers ────────────────────────────────────────────────────────────────
 
@@ -536,7 +538,7 @@ describe('Audit logs', () => {
     await doLogin(user.email, user.plainPassword);
 
     const log = await waitForAuditLog({ action: 'LOGIN', actor_user_id: user.id });
-    const newValue = JSON.parse(log.new_value as string);
+    const newValue = log.new_value as Record<string, unknown>;
 
     expect(newValue.success).toBe(true);
   });
@@ -546,7 +548,7 @@ describe('Audit logs', () => {
     await doLogin(user.email, 'WrongPass1!');
 
     const log = await waitForAuditLog({ action: 'LOGIN', actor_user_id: user.id });
-    const newValue = JSON.parse(log.new_value as string);
+    const newValue = log.new_value as Record<string, unknown>;
 
     expect(newValue.success).toBe(false);
     expect(newValue.reason).toBe('invalid_password');

@@ -1,12 +1,12 @@
 require('dotenv').config();
 
 const migrations = {
-  directory: './src/database/migrations',
+  directory: require('path').join(__dirname, 'src/database/migrations'),
   tableName: 'knex_migrations',
 };
 
 const seeds = {
-  directory: './src/database/seeds',
+  directory: require('path').join(__dirname, 'src/database/seeds'),
 };
 
 /**
@@ -32,7 +32,7 @@ module.exports = {
   test: {
     client: 'postgresql',
     connection: process.env.DATABASE_URL,
-    pool: { min: 1, max: 5 },
+    pool: { min: 0, max: 5 },
     migrations,
     seeds,
   },
