@@ -2,21 +2,20 @@ import React, { useState } from 'react';
 import styles from './LoginCard.module.css';
 
 interface LoginCardProps {
-  onSubmit?: (email: string, password: string) => void;
+  onSubmit?: (email: string, password: string, rememberMe: boolean) => void;
   isLoading?: boolean;
   error?: string;
 }
 
-
 export const LoginCard: React.FC<LoginCardProps> = ({ onSubmit, isLoading = false, error }) => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('rememberedEmail') || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem('rememberedEmail'));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit?.(email, password);
+    onSubmit?.(email, password, rememberMe);
   };
 
   return (
@@ -26,16 +25,14 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onSubmit, isLoading = fals
           <img
             src="/images/abra-logo.png"
             alt="Abra Logo"
-            width="212"
-            height="48"
             className={styles.logo}
           />
         </div>
 
-        <h3 className={styles.title}>
-          <span className={styles.titleLine}>👋ברוכים הבאים למערכת </span>
+        <h1 className={styles.title}>
+          <span className={styles.titleLine}>👋 ברוכים הבאים למערכת</span>
           <span className={styles.titleLine}>הניהול של אברא</span>
-        </h3>
+        </h1>
 
         {error && (
           <div className={styles.error} role="alert">
@@ -51,6 +48,7 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onSubmit, isLoading = fals
               onChange={(e) => setEmail(e.target.value)}
               placeholder="הכנס כתובת דוא״ל"
               className={styles.input}
+              autoComplete="email"
               required
             />
           </div>
@@ -62,13 +60,14 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onSubmit, isLoading = fals
               onChange={(e) => setPassword(e.target.value)}
               placeholder="הכנס סיסמה"
               className={`${styles.input} ${styles.passwordInput}`}
+              autoComplete="current-password"
               required
             />
             <button
               type="button"
               className={styles.eyeButton}
               onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? "הסתר סיסמה" : "הצג סיסמה"}
+              aria-label={showPassword ? 'הסתר סיסמה' : 'הצג סיסמה'}
             >
               {showPassword ? (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -102,7 +101,7 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onSubmit, isLoading = fals
           disabled={isLoading}
           className={styles.submitButton}
         >
-          {isLoading ? 'מתחבר...' : 'התחבר'}
+          {isLoading ? <span className={styles.spinner} aria-hidden="true" /> : 'התחבר'}
         </button>
       </form>
     </div>
