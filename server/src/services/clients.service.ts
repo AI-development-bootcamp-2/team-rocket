@@ -5,6 +5,7 @@
  * user_task_assignments → tasks → projects → clients.
  */
 import type { Knex } from 'knex';
+import { AppError } from '../middleware/error.middleware';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const db = require('../database/connection') as Knex;
@@ -56,4 +57,42 @@ export async function listClientsForUser(userId: number): Promise<ClientRow[]> {
     .where('uta.is_active', true)
     .orderBy(CLIENT_ORDER.map((o) => ({ ...o, column: `c.${o.column}` })));
   return rows as ClientRow[];
+}
+
+/** Returns one client by id, or undefined — no role scoping. Admin lookup. */
+export async function findClientByIdForAdmin(id: number): Promise<ClientRow | undefined> {
+  return db<ClientRow>('clients')
+    .select(...CLIENT_COLUMNS)
+    .where({ id })
+    .first();
+}
+
+/**
+ * Returns the client only if `userId` can reach it via an active task
+ * assignment. Returning undefined on no-access lets the controller respond
+ * with 404, which avoids leaking the existence of clients the user can't see.
+ */
+export async function findClientByIdForUser(
+  userId: number,
+  clientId: number,
+): Promise<ClientRow | undefined> {
+  const row = await db('clients as c')
+    .select(CLIENT_COLUMNS.map((col) => `c.${col}`))
+    .innerJoin('projects as p', 'p.client_id', 'c.id')
+    .innerJoin('tasks as t', 't.project_id', 'p.id')
+    .innerJoin('user_task_assignments as uta', 'uta.task_id', 't.id')
+    .where('c.id', clientId)
+    .where('uta.user_id', userId)
+    .where('uta.is_active', true)
+    .first();
+  return row as ClientRow | undefined;
+}
+
+/** Parses the :id route param to a positive integer, or throws AppError(400). */
+export function parseClientId(rawValue: string): number {
+  const id = Number.parseInt(rawValue, 10);
+  if (Number.isNaN(id) || id <= 0) {
+    throw new AppError('Invalid client ID', 400);
+  }
+  return id;
 }

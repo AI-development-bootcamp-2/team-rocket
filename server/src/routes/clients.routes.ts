@@ -7,10 +7,11 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
 import { wrap } from '../controllers/auth.controller';
-import { getClients } from '../controllers/clients.controller';
+import { getClientById, getClients } from '../controllers/clients.controller';
 
 const router = Router();
 
 router.get('/', authenticate, wrap(getClients));
+router.get('/:id', authenticate, wrap(getClientById));
 
 export default router;
