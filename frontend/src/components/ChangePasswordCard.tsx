@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axiosClient from '../api/axiosClient';
+import axiosClient, { tokenStore } from '../api/axiosClient';
 import { useAuth } from '../contexts/AuthContext';
 import styles from './ChangePasswordCard.module.css';
 
 const POLICY_RULES = [
-  { id: 'length',  label: 'לפחות 8 תווים',          test: (p: string) => p.length >= 8 },
-  { id: 'upper',   label: 'אות גדולה אחת לפחות',     test: (p: string) => /[A-Z]/.test(p) },
-  { id: 'lower',   label: 'אות קטנה אחת לפחות',     test: (p: string) => /[a-z]/.test(p) },
-  { id: 'digit',   label: 'ספרה אחת לפחות',          test: (p: string) => /\d/.test(p) },
-  { id: 'special', label: 'תו מיוחד אחד לפחות',     test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+  { id: 'length', label: 'לפחות 8 תווים', test: (p: string) => p.length >= 8 },
+  { id: 'upper', label: 'לפחות אות גדולה אחת באנגלית', test: (p: string) => /[A-Z]/.test(p) },
+  { id: 'lower', label: 'לפחות אות קטנה אחת באנגלית', test: (p: string) => /[a-z]/.test(p) },
+  { id: 'digit', label: 'לפחות ספרה אחת', test: (p: string) => /\d/.test(p) },
+  { id: 'special', label: 'לפחות תו מיוחד אחד', test: (p: string) => /[^A-Za-z0-9]/.test(p) },
 ];
 
 const EyeIcon: React.FC<{ visible: boolean }> = ({ visible }) =>
@@ -31,36 +31,39 @@ const ChangePasswordCard: React.FC = () => {
   const navigate = useNavigate();
 
   const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword]         = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showCurrent, setShowCurrent]         = useState(false);
-  const [showNew, setShowNew]                 = useState(false);
-  const [showConfirm, setShowConfirm]         = useState(false);
-  const [isLoading, setIsLoading]             = useState(false);
-  const [error, setError]                     = useState('');
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const policyPassed = POLICY_RULES.every((r) => r.test(newPassword));
+  const policyPassed = POLICY_RULES.every((rule) => rule.test(newPassword));
   const passwordsMatch = newPassword === confirmPassword;
   const canSubmit = policyPassed && passwordsMatch && confirmPassword.length > 0;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!canSubmit) return;
 
     setIsLoading(true);
     setError('');
+
     try {
-      await axiosClient.post('/auth/change-password', {
+      const { data } = await axiosClient.post<{ accessToken: string }>('/auth/change-password', {
         ...(currentPassword ? { currentPassword } : {}),
         newPassword,
       });
+
+      tokenStore.set(data.accessToken);
       clearMustChangePassword();
       navigate('/', { replace: true });
     } catch (err: any) {
       const status = err.response?.status;
-      if (status === 401) setError('הסיסמה הנוכחית שגויה');
-      else if (status === 400) setError(err.response?.data?.message || 'הסיסמה אינה עומדת בדרישות');
-      else setError('אירעה שגיאה. אנא נסה שוב');
+      if (status === 401) setError('הסיסמה הנוכחית שגויה.');
+      else if (status === 400) setError('הסיסמה החדשה לא עומדת בדרישות האבטחה.');
+      else setError('משהו השתבש. נסו שוב.');
     } finally {
       setIsLoading(false);
     }
@@ -70,63 +73,67 @@ const ChangePasswordCard: React.FC = () => {
     <div className={styles.card} dir="rtl">
       <form onSubmit={handleSubmit} className={styles.form} noValidate>
         <div className={styles.logoWrapper}>
-          <img src="/images/abra-logo.png" alt="Abra Logo" className={styles.logo} />
+          <img src="/images/abra-logo.png" alt="לוגו Abra" className={styles.logo} />
         </div>
 
-        <h1 className={styles.title}>שינוי סיסמה</h1>
+        <h1 className={styles.title}>החלפת סיסמה</h1>
         <p className={styles.subtitle}>
           {user?.fullName ? `שלום ${user.fullName}, ` : ''}
-          נדרש לשנות את הסיסמה בכניסה הראשונה
+          צריך להחליף סיסמה לפני שממשיכים.
         </p>
 
         {error && (
           <div className={styles.error} role="alert">{error}</div>
         )}
 
-        {/* Current password */}
         <div className={styles.fieldGroup}>
           <label className={styles.label}>סיסמה נוכחית</label>
           <div className={styles.passwordWrapper}>
             <input
               type={showCurrent ? 'text' : 'password'}
               value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="הכנס סיסמה נוכחית"
+              onChange={(event) => setCurrentPassword(event.target.value)}
+              placeholder="יש להזין סיסמה נוכחית"
               className={`${styles.input} ${styles.passwordInput}`}
               autoComplete="current-password"
             />
-            <button type="button" className={styles.eyeButton}
+            <button
+              type="button"
+              className={styles.eyeButton}
               onClick={() => setShowCurrent(!showCurrent)}
-              aria-label={showCurrent ? 'הסתר' : 'הצג'}>
+              aria-label={showCurrent ? 'הסתרת סיסמה' : 'הצגת סיסמה'}
+            >
               <EyeIcon visible={showCurrent} />
             </button>
           </div>
         </div>
 
-        {/* New password + policy */}
         <div className={styles.fieldGroup}>
           <label className={styles.label}>סיסמה חדשה</label>
           <div className={styles.passwordWrapper}>
             <input
               type={showNew ? 'text' : 'password'}
               value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="הכנס סיסמה חדשה"
+              onChange={(event) => setNewPassword(event.target.value)}
+              placeholder="יש להזין סיסמה חדשה"
               className={`${styles.input} ${styles.passwordInput}`}
               autoComplete="new-password"
               required
             />
-            <button type="button" className={styles.eyeButton}
+            <button
+              type="button"
+              className={styles.eyeButton}
               onClick={() => setShowNew(!showNew)}
-              aria-label={showNew ? 'הסתר' : 'הצג'}>
+              aria-label={showNew ? 'הסתרת סיסמה' : 'הצגת סיסמה'}
+            >
               <EyeIcon visible={showNew} />
             </button>
           </div>
           {newPassword && (
-            <ul className={styles.policyList} aria-label="דרישות סיסמה">
+            <ul className={styles.policyList} aria-label="כללי סיסמה">
               {POLICY_RULES.map((rule) => (
                 <li key={rule.id} className={rule.test(newPassword) ? styles.rulePass : styles.ruleFail}>
-                  <span aria-hidden="true">{rule.test(newPassword) ? '✓' : '✗'}</span>
+                  <span aria-hidden="true">{rule.test(newPassword) ? 'תקין' : 'חסר'}</span>
                   {rule.label}
                 </li>
               ))}
@@ -134,34 +141,36 @@ const ChangePasswordCard: React.FC = () => {
           )}
         </div>
 
-        {/* Confirm password */}
         <div className={styles.fieldGroup}>
           <label className={styles.label}>אימות סיסמה</label>
           <div className={styles.passwordWrapper}>
             <input
               type={showConfirm ? 'text' : 'password'}
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="הכנס סיסמה שוב"
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              placeholder="יש לאמת את הסיסמה החדשה"
               className={`${styles.input} ${styles.passwordInput} ${
                 confirmPassword && !passwordsMatch ? styles.inputError : ''
               }`}
               autoComplete="new-password"
               required
             />
-            <button type="button" className={styles.eyeButton}
+            <button
+              type="button"
+              className={styles.eyeButton}
               onClick={() => setShowConfirm(!showConfirm)}
-              aria-label={showConfirm ? 'הסתר' : 'הצג'}>
+              aria-label={showConfirm ? 'הסתרת סיסמה' : 'הצגת סיסמה'}
+            >
               <EyeIcon visible={showConfirm} />
             </button>
           </div>
           {confirmPassword && !passwordsMatch && (
-            <p className={styles.mismatch}>הסיסמאות אינן תואמות</p>
+            <p className={styles.mismatch}>הסיסמאות אינן תואמות.</p>
           )}
         </div>
 
         <button type="submit" disabled={isLoading || !canSubmit} className={styles.submitButton}>
-          {isLoading ? <span className={styles.spinner} aria-hidden="true" /> : 'שמור סיסמה'}
+          {isLoading ? <span className={styles.spinner} aria-hidden="true" /> : 'שמירת סיסמה'}
         </button>
       </form>
     </div>

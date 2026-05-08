@@ -7,8 +7,6 @@ RUN npm ci
 
 COPY . .
 
-RUN mkdir -p uploads
+EXPOSE 5173
 
-EXPOSE 3001
-
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]
