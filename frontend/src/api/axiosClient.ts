@@ -46,8 +46,10 @@ axiosClient.interceptors.response.use(
       );
     }
 
-    // 401 — try silent token refresh, then replay original request
-    if (error.response?.status === 401 && !original._retry) {
+    // 401 — try silent token refresh, then replay original request.
+    // Skip if there was no access token in flight (e.g. login/refresh endpoints):
+    // those 401s mean bad credentials/no session, not an expired token.
+    if (error.response?.status === 401 && !original._retry && tokenStore.get()) {
       if (isRefreshing) {
         return new Promise((resolve, reject) =>
           failedQueue.push({ resolve, reject })

@@ -20,8 +20,7 @@ function getAuthUserId(req: Request): number {
 }
 
 function extractIp(req: Request): string {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string') return forwarded.split(',')[0]?.trim() ?? '';
+  // app.ts sets trust proxy: 1, so req.ip already reflects the real client IP.
   return req.ip ?? '';
 }
 
