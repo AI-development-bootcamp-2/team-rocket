@@ -1,0 +1,34 @@
+import express from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import config from './config';
+import { errorMiddleware } from './middleware/error.middleware';
+import authRouter from './routes/auth.routes';
+import projectsRouter from './routes/projects.routes';
+import usersRouter from './routes/users.routes';
+
+const app = express();
+
+// Trust the first proxy hop so req.ip reflects the real client IP from X-Forwarded-For.
+// Without this, manual header parsing is needed and can be spoofed.
+app.set('trust proxy', 1);
+
+app.use(helmet());
+app.use(cors({ origin: config.cors.frontendUrl, credentials: true }));
+if (!config.isTest) {
+  app.use(rateLimit(config.rateLimit.global));
+}
+app.use(express.json());
+
+app.get('/healthz', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.use('/auth', authRouter);
+app.use('/projects', projectsRouter);
+app.use('/users', usersRouter);
+
+app.use(errorMiddleware);
+
+export default app;

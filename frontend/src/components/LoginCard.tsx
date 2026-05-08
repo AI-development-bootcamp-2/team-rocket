@@ -57,7 +57,7 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onSubmit, isLoading = fals
     <div className={styles.loginCard} dir="rtl">
       <form onSubmit={handleSubmit} className={styles.form} noValidate>
         <div className={styles.logoWrapper}>
-          <img src="/images/abra-logo.png" alt="Abra Logo" className={styles.logo} />
+          <img src="/images/abra-logo.png" alt="לוגו Abra" className={styles.logo} />
         </div>
 
         <h1 className={styles.title}>

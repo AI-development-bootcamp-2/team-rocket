@@ -11,23 +11,24 @@
 **Story Points**: 8
 
 ### Tasks
-- [ ] **T** BE: `GET /users` — list all users with filters (role, is_active)
-- [ ] **T** BE: `GET /users/:id` — get single user
-- [ ] **T** BE: `POST /users` — create user (Admin only), set `must_change_password = true`
-- [ ] **T** BE: `PUT /users/:id` — edit user (name, email, role, is_active)
-- [ ] **T** BE: `DELETE /users/:id` — soft deactivate (`is_active = false`), terminate all sessions
-- [ ] **T** BE: `POST /users/:id/reset-password` — generate temp password, force change
-- [ ] **T** BE: `PUT /permission-flags/:userId` — set/update `canAssignProjectTasks` + scoped project IDs
-- [ ] **T** FE: Employee table view — full name, email, role, status columns
-- [ ] **T** FE: Create/Edit user form modal
-- [ ] **T** FE: Deactivate/Activate toggle with confirmation modal
-- [ ] **T** FE: Reset Password button + dialog
+- [x] **T** BE: `GET /users` — list all users with filters (role, is_active)
+- [x] **T** BE: `GET /users/:id` — get single user
+- [x] **T** BE: `POST /users` — create user (Admin only), set `must_change_password = true`
+- [x] **T** BE: `PUT /users/:id` — edit user (name, email, role, is_active)
+- [x] **T** BE: `DELETE /users/:id` — soft deactivate (`is_active = false`), terminate all sessions
+- [x] **T** BE: `POST /users/:id/reset-password` — accept admin-provided temporary password, force change
+- [x] **T** BE: `PUT /permission-flags/:userId` — set/update `canAssignProjectTasks` + scoped project IDs
+- [x] **T** FE: Employee table view — full name, email, role, status columns
+- [x] **T** FE: Create/Edit user form modal
+- [x] **T** FE: Deactivate/Activate toggle with confirmation modal
+- [x] **T** FE: Reset Password button + dialog
 
 #### Subtasks
-- [ ] **ST** Permission test: all user CRUD endpoints return 403 for non-admin
-- [ ] **ST** Integration test: create user → `must_change_password = true`
-- [ ] **ST** Integration test: reset password → user flagged for forced change
-- [ ] **ST** Integration test: deactivate user → all sessions terminated
+- [x] **ST** Permission test: all implemented user CRUD endpoints return 403 for non-admin
+- [x] **ST** Permission test: `GET /users` returns 403 for non-admin
+- [x] **ST** Integration test: create user → `must_change_password = true`
+- [x] **ST** Integration test: reset password → user flagged for forced change
+- [x] **ST** Integration test: deactivate user → all sessions terminated
 - [ ] **ST** Audit log: create / edit / deactivate / reset-password all logged with old+new values
 
 ---
@@ -56,7 +57,7 @@
 **Story Points**: 4
 
 ### Tasks
-- [ ] **T** BE: `GET /projects` — list projects (filter: client_id, is_active)
+- [x] **T** BE: `GET /projects` — list projects (current implementation supports `is_active`; `client_id` filter still pending)
 - [ ] **T** BE: `GET /projects/:id` — get single project
 - [ ] **T** BE: `POST /projects` — create project
 - [ ] **T** BE: `PUT /projects/:id` — edit project
@@ -66,6 +67,7 @@
 - [ ] **T** FE: Duplicate name warning (warning toast, not blocking)
 
 #### Subtasks
+- [x] **ST** Integration test: `GET /projects` returns 200/400 correctly and remains admin-only
 - [ ] **ST** Integration test: duplicate project name under same client shows warning but allows save
 - [ ] **ST** Integration test: archive project → tasks closed, assignments deactivated
 
