@@ -13,10 +13,13 @@ import {
   listAllClients,
   listClientsForUser,
   parseClientId,
+  parseOptionalBoolean,
   parseOptionalText,
   parseRequiredText,
   toAuditClientValue,
+  updateClientForAdmin,
   type ClientRow,
+  type UpdateClientInput,
 } from '../services/clients.service';
 import { writeAuditLog } from '../services/auth.service';
 import type { AuthenticatedUser } from '../middleware/auth.middleware';
@@ -131,4 +134,69 @@ export async function createClient(req: Request, res: Response): Promise<void> {
   }
 
   res.status(201).json(toClientListItem(result.client));
+}
+
+/**
+ * Validates and normalises the PUT /clients/:id body for a partial update.
+ * Each field is independently optional. `name` may be omitted, but if sent
+ * must be a non-empty string (the column is NOT NULL); the nullable text
+ * fields use parseOptionalText so an explicit "" clears them.
+ */
+function parseClientUpdateBody(body: Record<string, unknown>): UpdateClientInput {
+  const update: UpdateClientInput = {};
+  if (body.name !== undefined) {
+    update.name = parseRequiredText(body.name, 'name');
+  }
+  if (body.contact_info !== undefined) {
+    update.contactInfo = parseOptionalText(body.contact_info);
+  }
+  if (body.client_number !== undefined) {
+    update.clientNumber = parseOptionalText(body.client_number);
+  }
+  if (body.is_active !== undefined) {
+    update.isActive = parseOptionalBoolean(body.is_active, 'is_active');
+  }
+  return update;
+}
+
+/**
+ * PUT /clients/:id — admin only. Partial update; any field omitted from the
+ * body is preserved. Emits an UPDATE audit row on success (with both
+ * old_value and new_value) and on failure (with the error reason).
+ */
+export async function updateClient(req: Request, res: Response): Promise<void> {
+  const actor = getAuthUser(req);
+  const clientId = parseClientId(req.params.id);
+  const ip = extractIp(req);
+
+  let before: ClientRow;
+  let after: ClientRow;
+  try {
+    ({ before, after } = await updateClientForAdmin(
+      clientId,
+      parseClientUpdateBody(req.body as Record<string, unknown>),
+    ));
+  } catch (err) {
+    writeAuditLog({
+      actorUserId: actor.id,
+      entityType: 'CLIENT',
+      entityId: clientId,
+      action: 'UPDATE',
+      newValue: { success: false, reason: err instanceof Error ? err.message : 'unknown' },
+      ipAddress: ip,
+    }).catch((e: unknown) => console.error('[audit] updateClient failure:', e));
+    throw err;
+  }
+
+  await writeAuditLog({
+    actorUserId: actor.id,
+    entityType: 'CLIENT',
+    entityId: clientId,
+    action: 'UPDATE',
+    oldValue: toAuditClientValue(before),
+    newValue: toAuditClientValue(after),
+    ipAddress: ip,
+  });
+
+  res.json(toClientListItem(after));
 }

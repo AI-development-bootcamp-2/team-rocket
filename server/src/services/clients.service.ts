@@ -161,6 +161,63 @@ export async function createClientForAdmin(
   }
 }
 
+/** Coerces a boolean field; throws AppError(400) on a non-boolean non-null value. */
+export function parseOptionalBoolean(rawValue: unknown, fieldName: string): boolean | undefined {
+  if (rawValue == null) return undefined;
+  if (typeof rawValue !== 'boolean') throw new AppError(`${fieldName} must be a boolean`, 400);
+  return rawValue;
+}
+
+export interface UpdateClientInput {
+  name?: string;
+  contactInfo?: string | null;
+  clientNumber?: string | null;
+  isActive?: boolean;
+}
+
+/**
+ * Applies a partial update. Fields that are `undefined` in `input` are
+ * preserved from the current DB row; `null` (where the schema allows it)
+ * clears the field. Touches `updated_at` on every successful update.
+ * Returns both the before and after rows so the caller can write a diff
+ * to the audit log.
+ */
+export async function updateClientForAdmin(
+  id: number,
+  input: UpdateClientInput,
+): Promise<{ before: ClientRow; after: ClientRow }> {
+  const existing = await findClientByIdForAdmin(id);
+  if (!existing) {
+    throw new AppError('Client not found', 404);
+  }
+
+  try {
+    const [updated] = (await db('clients')
+      .where({ id })
+      .update({
+        name: input.name === undefined ? existing.name : input.name,
+        client_number:
+          input.clientNumber === undefined ? existing.client_number : input.clientNumber,
+        contact_info:
+          input.contactInfo === undefined ? existing.contact_info : input.contactInfo,
+        is_active: input.isActive === undefined ? existing.is_active : input.isActive,
+        updated_at: new Date(),
+      })
+      .returning([...CLIENT_COLUMNS])) as ClientRow[];
+
+    if (!updated) {
+      throw new AppError('Client not found', 404);
+    }
+
+    return { before: existing, after: updated };
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      throw new AppError('client_number already exists', 409);
+    }
+    throw error;
+  }
+}
+
 /** Normalises a client row to the JSON shape stored in audit_logs.new_value / old_value. */
 export function toAuditClientValue(client: ClientRow): Record<string, unknown> {
   return {

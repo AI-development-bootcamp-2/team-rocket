@@ -8,12 +8,18 @@ import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
 import { requireRole } from '../middleware/rbac.middleware';
 import { wrap } from '../controllers/auth.controller';
-import { createClient, getClientById, getClients } from '../controllers/clients.controller';
+import {
+  createClient,
+  getClientById,
+  getClients,
+  updateClient,
+} from '../controllers/clients.controller';
 
 const router = Router();
 
 router.get('/', authenticate, wrap(getClients));
 router.post('/', authenticate, requireRole('admin'), wrap(createClient));
 router.get('/:id', authenticate, wrap(getClientById));
+router.put('/:id', authenticate, requireRole('admin'), wrap(updateClient));
 
 export default router;
