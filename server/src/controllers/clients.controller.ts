@@ -7,13 +7,18 @@
 import { Request, Response } from 'express';
 import { AppError } from '../middleware/error.middleware';
 import {
+  createClientForAdmin,
   findClientByIdForAdmin,
   findClientByIdForUser,
   listAllClients,
   listClientsForUser,
   parseClientId,
+  parseOptionalText,
+  parseRequiredText,
+  toAuditClientValue,
   type ClientRow,
 } from '../services/clients.service';
+import { writeAuditLog } from '../services/auth.service';
 import type { AuthenticatedUser } from '../middleware/auth.middleware';
 
 /** Returns the authenticated user attached by the auth middleware, or 401s. */
@@ -62,4 +67,68 @@ export async function getClientById(req: Request, res: Response): Promise<void> 
   }
 
   res.json(toClientListItem(client));
+}
+
+/** Returns the request IP, or '' when behind an unconfigured proxy chain. */
+function extractIp(req: Request): string {
+  return req.ip ?? '';
+}
+
+/** Validates and normalises the POST /clients request body. */
+function parseClientCreateBody(body: Record<string, unknown>): {
+  name: string;
+  contactInfo: string | null | undefined;
+  clientNumber: string | null | undefined;
+} {
+  return {
+    name: parseRequiredText(body.name, 'name'),
+    contactInfo: parseOptionalText(body.contact_info),
+    clientNumber: parseOptionalText(body.client_number),
+  };
+}
+
+/**
+ * POST /clients — admin only. Returns the new client at 201. When the name
+ * collides with an existing active client the response is wrapped as
+ * `{ data, warning }` per spec §1; otherwise the row is returned flat to
+ * match F04's createUser shape. Both success and failure paths emit a
+ * CREATE audit row.
+ */
+export async function createClient(req: Request, res: Response): Promise<void> {
+  const actor = getAuthUser(req);
+  const ip = extractIp(req);
+
+  let result: Awaited<ReturnType<typeof createClientForAdmin>>;
+  try {
+    result = await createClientForAdmin(parseClientCreateBody(req.body as Record<string, unknown>));
+  } catch (err) {
+    writeAuditLog({
+      actorUserId: actor.id,
+      entityType: 'CLIENT',
+      entityId: null,
+      action: 'CREATE',
+      newValue: { success: false, reason: err instanceof Error ? err.message : 'unknown' },
+      ipAddress: ip,
+    }).catch((e: unknown) => console.error('[audit] createClient failure:', e));
+    throw err;
+  }
+
+  await writeAuditLog({
+    actorUserId: actor.id,
+    entityType: 'CLIENT',
+    entityId: result.client.id,
+    action: 'CREATE',
+    newValue: toAuditClientValue(result.client),
+    ipAddress: ip,
+  });
+
+  if (result.nameDuplicate) {
+    res.status(201).json({
+      data: toClientListItem(result.client),
+      warning: 'A client with this name already exists',
+    });
+    return;
+  }
+
+  res.status(201).json(toClientListItem(result.client));
 }

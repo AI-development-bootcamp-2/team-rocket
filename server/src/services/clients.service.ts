@@ -96,3 +96,88 @@ export function parseClientId(rawValue: string): number {
   }
   return id;
 }
+
+/** Validates a required string field; trims whitespace; throws AppError(400) if missing or empty. */
+export function parseRequiredText(rawValue: unknown, fieldName: string): string {
+  if (typeof rawValue !== 'string' || rawValue.trim() === '') {
+    throw new AppError(`${fieldName} is required`, 400);
+  }
+  return rawValue.trim();
+}
+
+/**
+ * Validates an optional string. Returns undefined when absent (preserve
+ * existing DB value on update), null for explicit empty string (clear the
+ * field), or the trimmed string. Throws AppError(400) if a non-string is
+ * supplied.
+ */
+export function parseOptionalText(rawValue: unknown): string | null | undefined {
+  if (rawValue == null) return undefined;
+  if (typeof rawValue !== 'string') throw new AppError('Invalid text field', 400);
+  const trimmed = rawValue.trim();
+  return trimmed === '' ? null : trimmed;
+}
+
+export interface CreateClientInput {
+  name: string;
+  contactInfo?: string | null;
+  clientNumber?: string | null;
+}
+
+/**
+ * Inserts a new client row. Reports `nameDuplicate=true` when an *active*
+ * client already shares the same name (case-insensitive) — the controller
+ * uses that flag to attach a warning to the 201 response per spec §1.
+ * Archived clients don't trigger the warning since reusing a freed name is
+ * normal. Duplicate `client_number` raises Postgres 23505 → AppError(409).
+ */
+export async function createClientForAdmin(
+  input: CreateClientInput,
+): Promise<{ client: ClientRow; nameDuplicate: boolean }> {
+  const dup = await db<ClientRow>('clients')
+    .select('id')
+    .whereRaw('LOWER(name) = LOWER(?)', [input.name])
+    .where({ is_active: true })
+    .first();
+
+  try {
+    const [row] = (await db('clients')
+      .insert({
+        name: input.name,
+        client_number: input.clientNumber ?? null,
+        contact_info: input.contactInfo ?? null,
+        is_active: true,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+      .returning([...CLIENT_COLUMNS])) as ClientRow[];
+
+    return { client: row, nameDuplicate: !!dup };
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      throw new AppError('client_number already exists', 409);
+    }
+    throw error;
+  }
+}
+
+/** Normalises a client row to the JSON shape stored in audit_logs.new_value / old_value. */
+export function toAuditClientValue(client: ClientRow): Record<string, unknown> {
+  return {
+    id: client.id,
+    clientNumber: client.client_number,
+    name: client.name,
+    contactInfo: client.contact_info,
+    isActive: client.is_active,
+  };
+}
+
+/** True iff `error` is the Postgres unique_violation (SQLSTATE 23505). */
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: string }).code === '23505'
+  );
+}
