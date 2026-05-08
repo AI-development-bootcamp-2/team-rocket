@@ -343,9 +343,11 @@ describe('POST /auth/logout', () => {
     expect(res.status).toBe(401);
   });
 
-  it('401: requires a Bearer token', async () => {
+  it('204: succeeds without a Bearer token (cookie-based revocation — expired access tokens must not block logout)', async () => {
+    // Logout is intentionally unauthenticated so a user with an expired access token
+    // can still revoke their refresh-token cookie.
     const res = await request(app).post('/auth/logout');
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(204);
   });
 
   it('204: succeeds silently when the refresh cookie is absent (double-logout tolerance)', async () => {

@@ -170,12 +170,14 @@ export async function updateUserForAdmin(
         first_name: input.firstName,
         last_name: input.lastName,
         role: input.role,
-        is_active: input.isActive ?? existingUser.is_active,
-        employee_number: input.employeeNumber ?? null,
-        employment_type: input.employmentType ?? null,
-        employment_percentage: input.employmentPercentage ?? 100,
-        department: input.department ?? null,
-        daily_hours_override: input.dailyHoursOverride ?? null,
+        // undefined means the field was absent from the request body — preserve the existing value.
+        // null means the client explicitly cleared it — write null to the DB.
+        is_active: input.isActive === undefined ? existingUser.is_active : input.isActive,
+        employee_number: input.employeeNumber === undefined ? existingUser.employee_number : input.employeeNumber,
+        employment_type: input.employmentType === undefined ? existingUser.employment_type : input.employmentType,
+        employment_percentage: input.employmentPercentage === undefined ? existingUser.employment_percentage : input.employmentPercentage,
+        department: input.department === undefined ? existingUser.department : input.department,
+        daily_hours_override: input.dailyHoursOverride === undefined ? existingUser.daily_hours_override : input.dailyHoursOverride,
         updated_at: new Date(),
       })
       .returning([

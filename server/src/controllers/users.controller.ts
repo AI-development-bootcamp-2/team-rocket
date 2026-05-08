@@ -100,8 +100,6 @@ function getAuthUser(req: Request): AuthenticatedUser {
 }
 
 function extractIp(req: Request): string {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string') return forwarded.split(',')[0]?.trim() ?? '';
   return req.ip ?? '';
 }
 
@@ -123,12 +121,23 @@ function parseUserWriteBody(body: Record<string, unknown>) {
 export async function createUser(req: Request, res: Response): Promise<void> {
   const actor = getAuthUser(req);
   const body = req.body as Record<string, unknown>;
-  const password = parseRequiredText(body.password, 'password');
+  const ip = extractIp(req);
 
-  const createdUser = await createUserForAdmin({
-    ...parseUserWriteBody(body),
-    password,
-  });
+  let createdUser: Awaited<ReturnType<typeof createUserForAdmin>>;
+  try {
+    const input = { ...parseUserWriteBody(body), password: parseRequiredText(body.password, 'password') };
+    createdUser = await createUserForAdmin(input);
+  } catch (err) {
+    writeAuditLog({
+      actorUserId: actor.id,
+      entityType: 'USER',
+      entityId: null,
+      action: 'CREATE',
+      newValue: { success: false, reason: err instanceof Error ? err.message : 'unknown' },
+      ipAddress: ip,
+    }).catch((e: unknown) => console.error('[audit] createUser failure:', e));
+    throw err;
+  }
 
   await writeAuditLog({
     actorUserId: actor.id,
@@ -136,7 +145,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
     entityId: createdUser.id,
     action: 'CREATE',
     newValue: toAuditUserValue(createdUser),
-    ipAddress: extractIp(req),
+    ipAddress: ip,
   });
 
   res.status(201).json(toUserListItem(createdUser));
@@ -145,7 +154,23 @@ export async function createUser(req: Request, res: Response): Promise<void> {
 export async function updateUser(req: Request, res: Response): Promise<void> {
   const actor = getAuthUser(req);
   const userId = parseUserId(req.params.id);
-  const { before, after } = await updateUserForAdmin(userId, parseUserWriteBody(req.body));
+  const ip = extractIp(req);
+
+  let before: Awaited<ReturnType<typeof updateUserForAdmin>>['before'];
+  let after: Awaited<ReturnType<typeof updateUserForAdmin>>['after'];
+  try {
+    ({ before, after } = await updateUserForAdmin(userId, parseUserWriteBody(req.body)));
+  } catch (err) {
+    writeAuditLog({
+      actorUserId: actor.id,
+      entityType: 'USER',
+      entityId: userId,
+      action: 'UPDATE',
+      newValue: { success: false, reason: err instanceof Error ? err.message : 'unknown' },
+      ipAddress: ip,
+    }).catch((e: unknown) => console.error('[audit] updateUser failure:', e));
+    throw err;
+  }
 
   await writeAuditLog({
     actorUserId: actor.id,
@@ -154,7 +179,7 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
     action: 'UPDATE',
     oldValue: toAuditUserValue(before),
     newValue: toAuditUserValue(after),
-    ipAddress: extractIp(req),
+    ipAddress: ip,
   });
 
   res.json(toUserListItem(after));
@@ -163,21 +188,12 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
 export async function deactivateUser(req: Request, res: Response): Promise<void> {
   const actor = getAuthUser(req);
   const userId = parseUserId(req.params.id);
+  const ip = extractIp(req);
 
+  let before: Awaited<ReturnType<typeof deactivateUserForAdmin>>['before'];
+  let after: Awaited<ReturnType<typeof deactivateUserForAdmin>>['after'];
   try {
-    const { before, after } = await deactivateUserForAdmin(userId, actor.id);
-
-    await writeAuditLog({
-      actorUserId: actor.id,
-      entityType: 'USER',
-      entityId: userId,
-      action: 'DEACTIVATE',
-      oldValue: toAuditUserValue(before),
-      newValue: toAuditUserValue(after),
-      ipAddress: extractIp(req),
-    });
-
-    res.status(204).send();
+    ({ before, after } = await deactivateUserForAdmin(userId, actor.id));
   } catch (error) {
     if (error instanceof AppError && error.statusCode === 403 && error.message === 'SELF_DEACTIVATION_FORBIDDEN') {
       res.status(403).json({
@@ -186,8 +202,28 @@ export async function deactivateUser(req: Request, res: Response): Promise<void>
       });
       return;
     }
+    writeAuditLog({
+      actorUserId: actor.id,
+      entityType: 'USER',
+      entityId: userId,
+      action: 'DEACTIVATE',
+      newValue: { success: false, reason: error instanceof Error ? error.message : 'unknown' },
+      ipAddress: ip,
+    }).catch((e: unknown) => console.error('[audit] deactivateUser failure:', e));
     throw error;
   }
+
+  await writeAuditLog({
+    actorUserId: actor.id,
+    entityType: 'USER',
+    entityId: userId,
+    action: 'DEACTIVATE',
+    oldValue: toAuditUserValue(before),
+    newValue: toAuditUserValue(after),
+    ipAddress: ip,
+  });
+
+  res.status(204).send();
 }
 
 export async function updateOwnUserProfile(req: Request, res: Response): Promise<void> {
