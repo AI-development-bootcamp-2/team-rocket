@@ -22,6 +22,12 @@ export interface UserRow {
   lockout_until: Date | null;
   created_at: Date;
   updated_at: Date;
+  employee_number: string | null;
+  employment_type: 'full_time' | 'part_time' | 'contractor' | null;
+  employment_percentage: number;
+  department: string | null;
+  daily_hours_override: number | null;
+  sort_prefs?: Record<string, unknown> | null;
 }
 
 export interface RefreshTokenRow {
@@ -207,6 +213,39 @@ export async function revokeRefreshToken(rawToken: string): Promise<void> {
   await db('refresh_tokens')
     .where({ token_hash: hashToken(rawToken) })
     .update({ revoked_at: new Date() });
+}
+
+// Atomically revokes the old token and stores the new one in a single transaction.
+// The WHERE revoked_at IS NULL guard means only one concurrent /refresh call wins;
+// a second concurrent call will find 0 rows updated and receive a 401.
+export async function rotateRefreshToken(
+  oldRawToken: string,
+  newRawToken: string,
+  userId: number,
+  rememberMe: boolean,
+  meta: { ipAddress?: string; userAgent?: string } = {},
+): Promise<void> {
+  const expiryStr = rememberMe ? config.jwt.refreshExpiryLong : config.jwt.refreshExpiry;
+  const expiresAt = new Date(Date.now() + parseExpiryMs(expiryStr));
+
+  await db.transaction(async (trx) => {
+    const rowsUpdated = await trx('refresh_tokens')
+      .where({ token_hash: hashToken(oldRawToken) })
+      .whereNull('revoked_at')
+      .update({ revoked_at: new Date() });
+
+    if (rowsUpdated === 0) {
+      throw new AppError('Refresh token is invalid or has been revoked', 401);
+    }
+
+    await trx('refresh_tokens').insert({
+      user_id: userId,
+      token_hash: hashToken(newRawToken),
+      expires_at: expiresAt,
+      ip_address: meta.ipAddress ?? null,
+      user_agent: meta.userAgent ?? null,
+    });
+  });
 }
 
 // Used when admin deactivates a user — all active sessions must terminate.

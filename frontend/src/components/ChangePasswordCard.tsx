@@ -41,7 +41,8 @@ const ChangePasswordCard: React.FC = () => {
 
   const policyPassed = POLICY_RULES.every((rule) => rule.test(newPassword));
   const passwordsMatch = newPassword === confirmPassword;
-  const canSubmit = policyPassed && passwordsMatch && confirmPassword.length > 0;
+  const sameAsCurrent = currentPassword.length > 0 && newPassword === currentPassword;
+  const canSubmit = policyPassed && passwordsMatch && confirmPassword.length > 0 && !sameAsCurrent;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -62,7 +63,10 @@ const ChangePasswordCard: React.FC = () => {
     } catch (err: any) {
       const status = err.response?.status;
       if (status === 401) setError('הסיסמה הנוכחית שגויה.');
-      else if (status === 400) setError('הסיסמה החדשה לא עומדת בדרישות האבטחה.');
+      else if (status === 400) {
+        const msg = err.response?.data?.error ?? '';
+        setError(msg.includes('different') ? 'הסיסמה החדשה חייבת להיות שונה מהסיסמה הנוכחית.' : 'הסיסמה החדשה לא עומדת בדרישות האבטחה.');
+      }
       else setError('משהו השתבש. נסו שוב.');
     } finally {
       setIsLoading(false);
@@ -166,6 +170,9 @@ const ChangePasswordCard: React.FC = () => {
           </div>
           {confirmPassword && !passwordsMatch && (
             <p className={styles.mismatch}>הסיסמאות אינן תואמות.</p>
+          )}
+          {sameAsCurrent && (
+            <p className={styles.mismatch}>הסיסמה החדשה חייבת להיות שונה מהסיסמה הנוכחית.</p>
           )}
         </div>
 

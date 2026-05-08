@@ -33,7 +33,8 @@ export function signRefreshToken(payload: RefreshTokenPayload, rememberMe = fals
 export function verifyAccessToken(token: string): AccessTokenPayload {
   try {
     return jwt.verify(token, config.jwt.accessSecret) as AccessTokenPayload;
-  } catch {
+  } catch (err) {
+    console.error('[jwt] verifyAccessToken failed:', (err as Error).name);
     throw new AppError('Invalid or expired access token', 401);
   }
 }
@@ -41,7 +42,8 @@ export function verifyAccessToken(token: string): AccessTokenPayload {
 export function verifyRefreshToken(token: string): RefreshTokenPayload {
   try {
     return jwt.verify(token, config.jwt.refreshSecret) as RefreshTokenPayload;
-  } catch {
+  } catch (err) {
+    console.error('[jwt] verifyRefreshToken failed:', (err as Error).name);
     throw new AppError('Invalid or expired refresh token', 401);
   }
 }

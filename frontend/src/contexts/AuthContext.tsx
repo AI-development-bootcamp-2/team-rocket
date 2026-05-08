@@ -39,7 +39,9 @@ const normalizeUser = (user: ApiUser): User => ({
 
 const getTokenExpiry = (token: string): number | null => {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    // JWTs use base64url (- and _ instead of + and /). atob only accepts standard base64.
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64));
     return payload.exp ? payload.exp * 1000 : null;
   } catch {
     return null;
@@ -58,11 +60,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearTimers = () => {
     if (logoutTimer.current) clearTimeout(logoutTimer.current);
     if (warningTimer.current) clearTimeout(warningTimer.current);
+    if (refreshTimer.current) clearTimeout(refreshTimer.current);
   };
 
   const performLogout = useCallback(async () => {
     clearTimers();
-    if (refreshTimer.current) clearTimeout(refreshTimer.current);
 
     try {
       await axiosClient.post('/auth/logout');

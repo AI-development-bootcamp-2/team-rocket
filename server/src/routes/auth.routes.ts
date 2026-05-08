@@ -14,11 +14,21 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Separate limit on /refresh: a leaked cookie must not be used to mint tokens unboundedly.
+const refreshLimiter = rateLimit({
+  ...config.rateLimit.refresh,
+  message: { error: 'Too many refresh attempts. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 const router = Router();
 
 router.post('/login', ...(config.isTest ? [] : [loginLimiter]), wrap(login));
-router.post('/logout', authenticate, wrap(logout));
-router.post('/refresh', wrap(refreshTokens));
+// Logout is intentionally unauthenticated: if the access token is already expired
+// the refresh-token cookie must still be revocable so it can't be replayed later.
+router.post('/logout', wrap(logout));
+router.post('/refresh', ...(config.isTest ? [] : [refreshLimiter]), wrap(refreshTokens));
 router.post('/change-password', authenticate, wrap(changePassword));
 
 export default router;

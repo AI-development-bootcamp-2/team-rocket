@@ -10,6 +10,10 @@ import usersRouter from './routes/users.routes';
 
 const app = express();
 
+// Trust the first proxy hop so req.ip reflects the real client IP from X-Forwarded-For.
+// Without this, manual header parsing is needed and can be spoofed.
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(cors({ origin: config.cors.frontendUrl, credentials: true }));
 if (!config.isTest) {

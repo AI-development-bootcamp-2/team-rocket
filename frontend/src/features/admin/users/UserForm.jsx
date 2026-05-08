@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Input } from '../../../components/ui/Input.jsx';
 import { Select } from '../../../components/ui/Select.jsx';
 import { getInitialUserFormState } from './userFormState.js';
+import { EMAIL_RE, validatePasswordStrength } from '../../../utils/validation';
 
 const EMPLOYMENT_TYPES = [
   { value: '', label: 'לא הוגדר' },
@@ -9,21 +10,6 @@ const EMPLOYMENT_TYPES = [
   { value: 'part_time', label: 'משרה חלקית' },
   { value: 'contractor', label: 'קבלן' },
 ];
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function validatePasswordStrength(password, email) {
-  const checks = [
-    password.length >= 8,
-    /[A-Z]/.test(password),
-    /[a-z]/.test(password),
-    /[0-9]/.test(password),
-    /[!@#$%^&*()\-_=+[{\]};:'",.<>/?\\|`~]/.test(password),
-    password.toLowerCase() !== email.toLowerCase(),
-  ];
-
-  return checks.every(Boolean);
-}
 
 export function UserForm({
   mode,

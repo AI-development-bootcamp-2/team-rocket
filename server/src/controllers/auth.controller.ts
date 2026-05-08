@@ -14,6 +14,7 @@ import {
   storeRefreshToken,
   findValidRefreshToken,
   revokeRefreshToken,
+  rotateRefreshToken,
   revokeAllUserTokens,
   updatePassword,
   resetUserPassword,
@@ -43,8 +44,7 @@ function getRefreshCookie(req: Request): string | undefined {
 }
 
 function extractIp(req: Request): string {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string') return forwarded.split(',')[0]?.trim() ?? '';
+  // req.ip is set correctly when app.set('trust proxy', 1) is configured in app.ts.
   return req.ip ?? '';
 }
 
@@ -189,15 +189,15 @@ export async function refreshTokens(req: Request, res: Response): Promise<void> 
     new Date(stored.expires_at).getTime() - new Date(stored.created_at).getTime();
   const rememberMe = lifetimeMs > 7 * 24 * 60 * 60 * 1_000;
 
-  // Rotation: revoke old, issue new pair atomically from the client's perspective.
-  await revokeRefreshToken(rawToken);
-
   const accessToken = signAccessToken({ sub: String(user.id), role: user.role });
   const newRefreshToken = signRefreshToken(
     { sub: String(user.id), jti: randomUUID() },
     rememberMe,
   );
-  await storeRefreshToken(user.id, newRefreshToken, rememberMe, {
+  // Atomic rotation: revoke old and store new in one transaction.
+  // Concurrent /refresh calls with the same cookie will race on the conditional
+  // WHERE revoked_at IS NULL — only one wins; the other gets a 401.
+  await rotateRefreshToken(rawToken, newRefreshToken, user.id, rememberMe, {
     ipAddress: extractIp(req),
     userAgent: req.headers['user-agent'],
   });
@@ -229,6 +229,9 @@ export async function changePassword(req: Request, res: Response): Promise<void>
 
   const currentValid = await comparePassword(currentPassword, user.password_hash);
   if (!currentValid) throw new AppError('Current password is incorrect', 401);
+
+  const sameAsExisting = await comparePassword(newPassword, user.password_hash);
+  if (sameAsExisting) throw new AppError('New password must be different from your current password', 400);
 
   await updatePassword(user.id, newPassword);
 

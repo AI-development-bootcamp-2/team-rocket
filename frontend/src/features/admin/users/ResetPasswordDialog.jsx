@@ -2,19 +2,7 @@ import { useMemo, useState } from 'react';
 import { Modal } from '../../../components/ui/Modal.jsx';
 import { Button } from '../../../components/ui/Button.jsx';
 import { Input } from '../../../components/ui/Input.jsx';
-
-function validatePasswordStrength(password, email) {
-  const checks = [
-    password.length >= 8,
-    /[A-Z]/.test(password),
-    /[a-z]/.test(password),
-    /[0-9]/.test(password),
-    /[!@#$%^&*()\-_=+[{\]};:'",.<>/?\\|`~]/.test(password),
-    password.toLowerCase() !== email.toLowerCase(),
-  ];
-
-  return checks.every(Boolean);
-}
+import { validatePasswordStrength } from '../../../utils/validation';
 
 export function ResetPasswordDialog({ user, onClose, onConfirm, loading }) {
   const [temporaryPassword, setTemporaryPassword] = useState('');

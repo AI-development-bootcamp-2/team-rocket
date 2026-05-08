@@ -35,6 +35,7 @@ const config = Object.freeze({
   rateLimit: {
     global: { windowMs: 60_000, limit: 100 },
     login: { windowMs: 60_000, limit: 10 },
+    refresh: { windowMs: 60_000, limit: 30 },
   },
 
   isProd: process.env.NODE_ENV === 'production',
