@@ -230,6 +230,35 @@ describe('POST /auth/login', () => {
     expect(refreshEntry).toContain('Path=/auth');
   });
 
+  it('rememberMe=false: issues session cookie (no Max-Age)', async () => {
+    await createUser({ email: 'session@test.com', role: 'admin' });
+    const res = await request(app)
+      .post('/auth/login')
+      .send({ email: 'session@test.com', password: 'TestPass1!', rememberMe: false });
+
+    expect(res.status).toBe(200);
+    const rawSetCookie = res.headers['set-cookie'] as string | string[] | undefined;
+    const cookies: string[] = Array.isArray(rawSetCookie) ? rawSetCookie : rawSetCookie ? [rawSetCookie] : [];
+    const refreshEntry = cookies.find((c) => c.startsWith('refreshToken='));
+    expect(refreshEntry).toBeDefined();
+    expect(refreshEntry).not.toContain('Max-Age');
+    expect(refreshEntry).not.toContain('Expires');
+  });
+
+  it('rememberMe=true: issues persistent cookie (with Max-Age)', async () => {
+    await createUser({ email: 'persist@test.com', role: 'admin' });
+    const res = await request(app)
+      .post('/auth/login')
+      .send({ email: 'persist@test.com', password: 'TestPass1!', rememberMe: true });
+
+    expect(res.status).toBe(200);
+    const rawSetCookie = res.headers['set-cookie'] as string | string[] | undefined;
+    const cookies: string[] = Array.isArray(rawSetCookie) ? rawSetCookie : rawSetCookie ? [rawSetCookie] : [];
+    const refreshEntry = cookies.find((c) => c.startsWith('refreshToken='));
+    expect(refreshEntry).toBeDefined();
+    expect(refreshEntry).toContain('Max-Age=');
+  });
+
   it('401: wrong password — same error message as unknown email (no account enumeration)', async () => {
     await createUser({ email: 'user@test.com' });
 

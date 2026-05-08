@@ -1,0 +1,5 @@
+# Audit Documents (Added to .gitignore to exclude from commits)
+# These are internal review documents - not part of the codebase
+
+AUDIT_F01-F06.md
+DEEP_AUDIT_F01-F06.md

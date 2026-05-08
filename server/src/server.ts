@@ -3,9 +3,12 @@
 import 'dotenv/config';
 import app from './app';
 import config from './config';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { initCron } = require('./cron') as { initCron: () => void };
 
 const server = app.listen(config.port, () => {
   console.log(`[server] Listening on port ${config.port} (${config.nodeEnv})`);
+  initCron();
 });
 
 process.on('SIGTERM', () => {
