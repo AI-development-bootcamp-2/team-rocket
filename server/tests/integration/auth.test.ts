@@ -725,14 +725,16 @@ describe('GET /projects', () => {
     ]);
   });
 
-  it('403: non-admin cannot list projects', async () => {
+  it('200: non-admin can list projects (sees only assigned ones)', async () => {
     const user = await loginAndGetTokens({ role: 'user' });
 
     const res = await request(app)
       .get('/projects')
       .set('Authorization', `Bearer ${user.accessToken}`);
 
-    expect(res.status).toBe(403);
+    // Regular users see 200 with an (empty) list of their assigned projects
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.data)).toBe(true);
   });
 
   it('400: invalid is_active filter is rejected', async () => {
