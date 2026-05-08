@@ -37,9 +37,14 @@ export function AdminShell({ title, subtitle, actions, children }) {
           >
             פרויקטים
           </NavLink>
-          <button type="button" className="admin-nav__item" disabled>
+          <NavLink
+            to="/admin/tasks"
+            className={({ isActive }) =>
+              `admin-nav__item ${isActive ? 'admin-nav__item--active' : ''}`.trim()
+            }
+          >
             משימות
-          </button>
+          </NavLink>
         </nav>
 
         <div className="admin-sidebar__footer">
