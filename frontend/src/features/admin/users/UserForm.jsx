@@ -10,7 +10,7 @@ const EMPLOYMENT_TYPES = [
   { value: 'contractor', label: 'קבלן' },
 ];
 
-import { EMAIL_RE, validatePasswordStrength } from '../../../utils/validation.js';
+import { EMAIL_RE, validatePasswordStrength } from '../../../utils/validation';
 
 export function UserForm({
   mode,

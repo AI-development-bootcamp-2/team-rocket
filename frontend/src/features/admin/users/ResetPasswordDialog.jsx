@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Modal } from '../../../components/ui/Modal.jsx';
 import { Button } from '../../../components/ui/Button.jsx';
 import { Input } from '../../../components/ui/Input.jsx';
-import { validatePasswordStrength } from '../../../utils/validation.js';
+import { validatePasswordStrength } from '../../../utils/validation';
 
 export function ResetPasswordDialog({ user, onClose, onConfirm, loading }) {
   const [temporaryPassword, setTemporaryPassword] = useState('');
