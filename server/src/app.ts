@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import config from './config';
 import { errorMiddleware } from './middleware/error.middleware';
 import authRouter from './routes/auth.routes';
+import clientsRouter from './routes/clients.routes';
 import projectsRouter from './routes/projects.routes';
 import usersRouter from './routes/users.routes';
 
@@ -26,6 +27,7 @@ app.get('/healthz', (_req, res) => {
 });
 
 app.use('/auth', authRouter);
+app.use('/clients', clientsRouter);
 app.use('/projects', projectsRouter);
 app.use('/users', usersRouter);
 

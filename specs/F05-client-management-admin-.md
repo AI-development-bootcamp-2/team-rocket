@@ -16,7 +16,7 @@ Admin CRUD for clients: create, edit, soft delete (archive). Clients default to 
 
 ### 1. Backend: Clients module
 
-- [ ] GET /clients — list all clients (Admin: all; User: only clients with assigned tasks)
+- [x] GET /clients — list all clients (Admin: all; User: only clients with assigned tasks)
 - [ ] GET /clients/:id — single client
 - [ ] POST /clients — create (Admin only): `name`, `contact_info` (optional), `client_number` (optional, admin-assigned human-readable identifier e.g. `#001`, UNIQUE). Default `is_active=true`. **If name already exists (case-insensitive): return 201 with `{ data: {...}, warning: 'A client with this name already exists' }` — warn but allow (per v3.2 section 6).**
 - [ ] PUT /clients/:id — update (Admin only): `name`, `contact_info`, `client_number`, `is_active`
@@ -42,10 +42,10 @@ Admin CRUD for clients: create, edit, soft delete (archive). Clients default to 
 
 ### 3. Tests
 
-- [ ] Test: Create client returns 201
-- [ ] Test: Archive sets is_active=false
-- [ ] Test: User endpoint returns only assigned clients
-- [ ] Test: Non-admin cannot create/edit/delete
+- [x] Test: Create client returns 201
+- [x] Test: Archive sets is_active=false
+- [x] Test: User endpoint returns only assigned clients
+- [x] Test: Non-admin cannot create/edit/delete
 
 ## API Endpoints
 
