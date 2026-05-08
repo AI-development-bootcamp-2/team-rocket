@@ -35,6 +35,9 @@ function LoginPage() {
   if (isAuthenticated) return <Navigate to="/" replace />;
 
   const handleSubmit = async (email: string, password: string, rememberMe: boolean) => {
+    // Prevent double-submission if already loading
+    if (isLoading) return;
+
     setIsLoading(true);
     setError('');
 
@@ -60,7 +63,12 @@ function LoginPage() {
 
   return (
     <main className={styles.authBackground} style={authBgStyle}>
-      <LoginCard onSubmit={handleSubmit} isLoading={isLoading} error={error} />
+      <LoginCard
+        onSubmit={handleSubmit}
+        isLoading={isLoading}
+        error={error}
+        onErrorDismiss={() => setError('')}
+      />
     </main>
   );
 }
