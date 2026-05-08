@@ -8,6 +8,7 @@ import { Request, Response } from 'express';
 import { AppError } from '../middleware/error.middleware';
 import {
   createClientForAdmin,
+  deactivateClientForAdmin,
   findClientByIdForAdmin,
   findClientByIdForUser,
   listAllClients,
@@ -199,4 +200,52 @@ export async function updateClient(req: Request, res: Response): Promise<void> {
   });
 
   res.json(toClientListItem(after));
+}
+
+/**
+ * DELETE /clients/:id — admin only. Soft-delete: flips is_active to false
+ * and emits a DEACTIVATE audit row with the before/after diff. Returns 200
+ * (not 204 like F04's user delete) because the spec requires an optional
+ * `warning` body when the archived client still has active projects.
+ */
+export async function deactivateClient(req: Request, res: Response): Promise<void> {
+  const actor = getAuthUser(req);
+  const clientId = parseClientId(req.params.id);
+  const ip = extractIp(req);
+
+  let result: Awaited<ReturnType<typeof deactivateClientForAdmin>>;
+  try {
+    result = await deactivateClientForAdmin(clientId);
+  } catch (err) {
+    writeAuditLog({
+      actorUserId: actor.id,
+      entityType: 'CLIENT',
+      entityId: clientId,
+      action: 'DEACTIVATE',
+      newValue: { success: false, reason: err instanceof Error ? err.message : 'unknown' },
+      ipAddress: ip,
+    }).catch((e: unknown) => console.error('[audit] deactivateClient failure:', e));
+    throw err;
+  }
+
+  await writeAuditLog({
+    actorUserId: actor.id,
+    entityType: 'CLIENT',
+    entityId: clientId,
+    action: 'DEACTIVATE',
+    oldValue: toAuditClientValue(result.before),
+    newValue: toAuditClientValue(result.after),
+    ipAddress: ip,
+  });
+
+  if (result.activeProjectCount > 0) {
+    const noun = result.activeProjectCount === 1 ? 'project' : 'projects';
+    res.status(200).json({
+      data: toClientListItem(result.after),
+      warning: `This client has ${result.activeProjectCount} active ${noun}; their tasks will no longer appear in user dropdowns.`,
+    });
+    return;
+  }
+
+  res.status(200).json(toClientListItem(result.after));
 }

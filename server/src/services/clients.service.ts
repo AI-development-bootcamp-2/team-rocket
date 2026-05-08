@@ -218,6 +218,38 @@ export async function updateClientForAdmin(
   }
 }
 
+/**
+ * Soft-deletes a client by flipping is_active to false. Returns the count of
+ * the client's currently-active projects measured *before* the archive — the
+ * controller turns that into a warning string when non-zero. Idempotent:
+ * archiving an already-archived client succeeds (matches F04's
+ * deactivateUserForAdmin, which doesn't guard against double-deactivation).
+ */
+export async function deactivateClientForAdmin(
+  id: number,
+): Promise<{ before: ClientRow; after: ClientRow; activeProjectCount: number }> {
+  const existing = await findClientByIdForAdmin(id);
+  if (!existing) {
+    throw new AppError('Client not found', 404);
+  }
+
+  const projectCountResult = await db('projects')
+    .where({ client_id: id, is_active: true })
+    .count<{ count: string | number }>('* as count')
+    .first();
+  const activeProjectCount = Number(projectCountResult?.count ?? 0);
+
+  const [updated] = (await db('clients')
+    .where({ id })
+    .update({
+      is_active: false,
+      updated_at: new Date(),
+    })
+    .returning([...CLIENT_COLUMNS])) as ClientRow[];
+
+  return { before: existing, after: updated, activeProjectCount };
+}
+
 /** Normalises a client row to the JSON shape stored in audit_logs.new_value / old_value. */
 export function toAuditClientValue(client: ClientRow): Record<string, unknown> {
   return {

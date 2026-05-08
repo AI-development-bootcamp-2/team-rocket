@@ -10,6 +10,7 @@ import { requireRole } from '../middleware/rbac.middleware';
 import { wrap } from '../controllers/auth.controller';
 import {
   createClient,
+  deactivateClient,
   getClientById,
   getClients,
   updateClient,
@@ -21,5 +22,6 @@ router.get('/', authenticate, wrap(getClients));
 router.post('/', authenticate, requireRole('admin'), wrap(createClient));
 router.get('/:id', authenticate, wrap(getClientById));
 router.put('/:id', authenticate, requireRole('admin'), wrap(updateClient));
+router.delete('/:id', authenticate, requireRole('admin'), wrap(deactivateClient));
 
 export default router;
