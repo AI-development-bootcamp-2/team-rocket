@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import InactivityWarningModal from './components/InactivityWarningModal';
 import { ErrorState } from './components/ui/ErrorState.jsx';
 import { UserListPage } from './features/admin/users/UserListPage.jsx';
+import { ProjectListPage } from './features/admin/projects/ProjectListPage.jsx';
 import { useAuth } from './contexts/AuthContext';
 
 const authBgStyle: CSSProperties = {
@@ -104,9 +105,14 @@ function AccessDeniedPage() {
 
 function AdminUsersPage() {
   const { user } = useAuth();
-
   if (user?.role !== 'admin') return <AccessDeniedPage />;
   return <UserListPage />;
+}
+
+function AdminProjectsPage() {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <AccessDeniedPage />;
+  return <ProjectListPage />;
 }
 
 function App() {
@@ -137,6 +143,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminUsersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/projects"
+            element={
+              <ProtectedRoute>
+                <AdminProjectsPage />
               </ProtectedRoute>
             }
           />
