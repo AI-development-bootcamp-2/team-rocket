@@ -10,20 +10,7 @@ const EMPLOYMENT_TYPES = [
   { value: 'contractor', label: 'קבלן' },
 ];
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function validatePasswordStrength(password, email) {
-  const checks = [
-    password.length >= 8,
-    /[A-Z]/.test(password),
-    /[a-z]/.test(password),
-    /[0-9]/.test(password),
-    /[!@#$%^&*()\-_=+[{\]};:'",.<>/?\\|`~]/.test(password),
-    password.toLowerCase() !== email.toLowerCase(),
-  ];
-
-  return checks.every(Boolean);
-}
+import { EMAIL_RE, validatePasswordStrength } from '../../../utils/validation.js';
 
 export function UserForm({
   mode,

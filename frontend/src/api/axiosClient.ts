@@ -13,7 +13,7 @@ export const tokenStore = {
 export const setInactivityResetFn = (fn: () => void) => { _resetInactivity = fn; };
 
 const axiosClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:4000',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001',
   withCredentials: true, // send httpOnly refresh-token cookie automatically
 });
 
