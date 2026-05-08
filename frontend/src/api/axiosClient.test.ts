@@ -80,6 +80,9 @@ describe('axiosClient', () => {
     const { client, responseErrorHandler, tokenStore } = loadModule();
     client.post.mockResolvedValue({ data: { accessToken: 'new-token' } });
 
+    // Seed a token to simulate an authenticated request whose access token expired
+    tokenStore.set('current-token');
+
     const originalRequest = { headers: {}, _retry: false };
 
     await expect(

@@ -5,9 +5,10 @@ interface LoginCardProps {
   onSubmit?: (email: string, password: string, rememberMe: boolean) => void;
   isLoading?: boolean;
   error?: string;
+  onErrorDismiss?: () => void;
 }
 
-export const LoginCard: React.FC<LoginCardProps> = ({ onSubmit, isLoading = false, error }) => {
+export const LoginCard: React.FC<LoginCardProps> = ({ onSubmit, isLoading = false, error, onErrorDismiss }) => {
   const [email, setEmail]           = useState(() => localStorage.getItem('rememberedEmail') || '');
   const [password, setPassword]     = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -81,10 +82,15 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onSubmit, isLoading = fals
             <input
               type="email"
               value={email}
-              onChange={(e) => { setEmail(e.target.value); setEmailError(''); }}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setEmailError('');
+                onErrorDismiss?.();
+              }}
               placeholder="הכנס כתובת דוא״ל"
               className={`${styles.input} ${emailError ? styles.inputInvalid : ''}`}
               autoComplete="email"
+              disabled={isLoading}
             />
             {emailError && <p className={styles.fieldError}>{emailError}</p>}
           </div>
@@ -95,10 +101,15 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onSubmit, isLoading = fals
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => { setPassword(e.target.value); setPassError(''); }}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setPassError('');
+                  onErrorDismiss?.();
+                }}
                 placeholder="הכנס סיסמה"
                 className={`${styles.input} ${styles.passwordInput} ${passError ? styles.inputInvalid : ''}`}
                 autoComplete="current-password"
+                disabled={isLoading}
               />
               <button
                 type="button"
