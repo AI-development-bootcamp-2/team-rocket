@@ -49,6 +49,12 @@ export async function getPermissionFlags(req: Request, res: Response): Promise<v
   res.json({ data: flags.map(toPermissionFlagDto) });
 }
 
+export async function getMyPermissionFlags(req: Request, res: Response): Promise<void> {
+  const callerId = req.user!.id;
+  const flags = await listPermissionFlagsForUser(callerId);
+  res.json({ data: flags.map(toPermissionFlagDto) });
+}
+
 export async function createPermissionFlagForUser(req: Request, res: Response): Promise<void> {
   const actorUserId = getAuthUserId(req);
   const userId = parseUserId(req.params.id);
