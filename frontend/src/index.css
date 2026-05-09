@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 :root {
   --font-base: 'Heebo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --mgmt-sidebar-bg: #1b2450;
+  --mgmt-sidebar-bg: #141E3E;
   --mgmt-table-header: #1b2340;
   --mgmt-page-bg: #f3f4f6;
   --mgmt-card-bg: #ffffff;
@@ -70,47 +70,108 @@ button:disabled {
 
 .admin-shell {
   display: flex;
-  flex-direction: row-reverse;
+  flex-direction: row;
   min-height: 100svh;
 }
 
 .admin-sidebar {
-  flex: 0 0 280px;
+  flex: 0 0 320px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  padding: 32px 24px;
-  background: var(--mgmt-sidebar-bg);
-  color: var(--color-neutral-white);
+  justify-content: space-between;
+  align-items: center;
+  gap: 69px;
+  padding: 32px 0 0;
+  background: #141E3E;
+  color: #fff;
+  min-height: 100svh;
 }
 
 .admin-brand {
   display: flex;
   align-items: center;
+  padding: 0 24px 32px;
+}
+
+.admin-brand__logo {
+  width: 110px;
+  height: auto;
+  object-fit: contain;
+}
+
+
+.admin-sidebar__footer {
+  align-self: stretch;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-user-profile {
+  display: flex;
+  align-items: center;
   gap: 12px;
+  padding: 16px 24px;
+  direction: rtl;
 }
 
-.admin-brand__flame {
-  color: var(--color-brand-orange);
-  font-size: 24px;
+.admin-user-profile__avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
 }
 
-.admin-brand__name {
-  font-size: 24px;
-  font-weight: 800;
-  line-height: 1;
+.admin-user-profile__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
 }
 
-.admin-brand__tag {
-  margin-top: 4px;
-  color: rgba(255, 255, 255, 0.66);
+.admin-user-profile__name {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-user-profile__role {
+  color: rgba(255, 255, 255, 0.5);
   font-size: 12px;
+  font-weight: 400;
+}
+
+.admin-user-profile__logout {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  font-weight: 400;
+  text-align: right;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.admin-user-profile__logout:hover {
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .admin-nav {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  align-self: stretch;
 }
 
 .admin-sidebar__footer {
@@ -120,22 +181,30 @@ button:disabled {
 .admin-nav__item {
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 24px;
   border: 0;
-  border-radius: 8px;
+  border-left: 3px solid transparent;
+  border-radius: 0;
   background: transparent;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.6);
   text-align: right;
   text-decoration: none;
   font-size: 15px;
   font-weight: 600;
-  transition: var(--transition-fast);
+  transition: background 0.15s, color 0.15s;
 }
 
-.admin-nav__item:hover,
+.admin-nav__item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .admin-nav__item--active {
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
+  border-left-color: var(--color-brand-orange);
 }
 
 .admin-main {
