@@ -672,6 +672,40 @@ describe('POST /users/:id/reset-password', () => {
 
     expect(res.status).toBe(404);
   });
+
+  it("admin reset revokes the target user's refresh token", async () => {
+    const admin = await seedUser({ email: 'admin@test.com', role: 'admin' });
+    const target = await seedUser({ email: 'target@test.com', role: 'user' });
+
+    // Target logs in and captures their refresh cookie before the reset.
+    const targetLogin = await request(app)
+      .post('/auth/login')
+      .send({ email: target.email, password: target.plainPassword });
+    expect(targetLogin.status).toBe(200);
+
+    const rawSetCookie = targetLogin.headers['set-cookie'] as string | string[] | undefined;
+    const cookies: string[] = Array.isArray(rawSetCookie)
+      ? rawSetCookie
+      : rawSetCookie
+      ? [rawSetCookie]
+      : [];
+    const refreshCookie = cookies.find((c) => c.startsWith('refreshToken='))?.split(';')[0];
+    expect(refreshCookie).toBeDefined();
+
+    // Admin resets the target's password.
+    const adminToken = await login(admin.email, admin.plainPassword);
+    const resetRes = await request(app)
+      .post(`/users/${target.id}/reset-password`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ temporary_password: 'TempPass1!' });
+    expect(resetRes.status).toBe(200);
+
+    // The target's pre-reset refresh cookie must no longer be accepted.
+    const refreshRes = await request(app)
+      .post('/auth/refresh')
+      .set('Cookie', refreshCookie as string);
+    expect(refreshRes.status).toBe(401);
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
