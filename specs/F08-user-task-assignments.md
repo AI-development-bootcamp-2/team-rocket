@@ -16,37 +16,37 @@ Assign users to tasks (not to clients or projects). Users only see entities wher
 
 ### 1. Backend: Assignments module
 
-- [ ] GET /assignments — list. Admin: all. User+flag: within scoped projects. User: own assignments.
-- [ ] **GET /assignments/:id** — single assignment with user, task, project, client details
-- [ ] POST /assignments — create: user_id, task_id. Validate no duplicate active assignment. Admin or User+flag (scoped).
-- [ ] PUT /assignments/:id — toggle is_active
-- [ ] DELETE /assignments/:id — set is_active=false
-- [ ] Validate permission flag scope: User+canAssignProjectTasks can only assign within their allowed project IDs
-- [ ] All mutations audit logged
+- [x] GET /assignments — list. Admin: all. User+flag: within scoped projects. User: own assignments.
+- [x] **GET /assignments/:id** — single assignment with user, task, project, client details
+- [x] POST /assignments — create: user_id, task_id. Validate no duplicate active assignment. Admin or User+flag (scoped).
+- [x] PUT /assignments/:id — toggle is_active
+- [x] DELETE /assignments/:id — set is_active=false
+- [x] Validate permission flag scope: User+canAssignProjectTasks can only assign within their allowed project IDs
+- [x] All mutations audit logged
 
 ### 2. Frontend: Assignment page
 
-- [ ] Create AssignmentPage.jsx
-- [ ] Matrix view or table: rows = users, columns = tasks (grouped by project)
-- [ ] Checkbox to toggle assignment
-- [ ] Filter by project, user
-- [ ] **Scoped picker for User+flag**: when current actor has `canAssignProjectTasks` flag, the project dropdown only shows their scoped project IDs. Show a scope-limited label: 'You can only assign within your allowed projects'. Tasks outside scope are greyed out.
+- [x] Create AssignmentPage.jsx
+- [x] Matrix view or table: rows = users, columns = tasks (grouped by project)
+- [x] Checkbox to toggle assignment
+- [x] Filter by project, user
+- [x] **Scoped picker for User+flag**: when current actor has `canAssignProjectTasks` flag, the project dropdown only shows their scoped project IDs. Show a scope-limited label: 'You can only assign within your allowed projects'. Tasks outside scope are greyed out.
 
 ### 2b. Required UI states (v3.2 §14.1)
 
-- [ ] **Loading**: skeleton matrix
-- [ ] **Empty**: 'No assignments' per user row
-- [ ] **No-permission**: 403 if regular user without flag tries to access
-- [ ] **Disabled control**: out-of-scope tasks greyed with tooltip 'Outside your allowed projects'
-- [ ] **Save success**: inline confirmation (checkbox state + brief toast)
-- [ ] **Server error**: toast on 500
+- [x] **Loading**: skeleton matrix
+- [x] **Empty**: 'No assignments' per user row
+- [x] **No-permission**: 403 if regular user without flag tries to access
+- [x] **Disabled control**: out-of-scope tasks greyed with tooltip 'Outside your allowed projects'
+- [x] **Save success**: inline confirmation (checkbox state + brief toast)
+- [x] **Server error**: toast on 500
 
 ### 3. Tests
 
-- [ ] Test: No duplicate active assignment
-- [ ] Test: User+flag can only assign in scoped projects
-- [ ] Test: Regular user cannot create assignments
-- [ ] Test: Deactivating assignment hides task from user's dropdowns
+- [x] Test: No duplicate active assignment
+- [x] Test: User+flag can only assign in scoped projects
+- [x] Test: Regular user cannot create assignments
+- [x] Test: Deactivating assignment hides task from user's dropdowns
 
 ## API Endpoints
 
@@ -110,7 +110,7 @@ The management portal may also show an assignment matrix table (per task → ass
 
 ## Acceptance Criteria
 
-- [ ] Users only see assigned tasks in reporting
-- [ ] Permission flag scope enforced
-- [ ] Assignment history preserved
+- [x] Users only see assigned tasks in reporting
+- [x] Permission flag scope enforced
+- [x] Assignment history preserved
 
