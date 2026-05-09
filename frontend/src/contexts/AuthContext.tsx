@@ -19,6 +19,7 @@ export interface User extends ApiUser {
 interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
+  isInitializing: boolean;
   login: (email: string, password: string, rememberMe: boolean) => Promise<void>;
   logout: () => Promise<void>;
   clearMustChangePassword: () => void;
@@ -50,6 +51,7 @@ const getTokenExpiry = (token: string): number | null => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [showInactivityWarning, setShowWarning] = useState(false);
 
   const logoutTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -131,7 +133,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(normalizeUser(me));
         resetTimer();
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setIsInitializing(false));
   }, [resetTimer, scheduleRefresh]);
 
   useEffect(() => {
@@ -169,6 +172,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         isAuthenticated: !!user,
+        isInitializing,
         login,
         logout: performLogout,
         clearMustChangePassword,

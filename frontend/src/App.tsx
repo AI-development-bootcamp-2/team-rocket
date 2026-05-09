@@ -1,5 +1,5 @@
 import React, { CSSProperties, useEffect, useState } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import styles from './App.module.css';
 import { LoginCard } from './components/LoginCard';
 import ChangePasswordCard from './components/ChangePasswordCard';
@@ -32,10 +32,12 @@ function Toast({ message, onDismiss }: { message: string; onDismiss: () => void 
 
 function LoginPage() {
   const { login, isAuthenticated } = useAuth();
+  const location = useLocation();
+  const from = (location.state as { from?: Location })?.from?.pathname || '/';
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  if (isAuthenticated) return <Navigate to="/" replace />;
+  if (isAuthenticated) return <Navigate to={from} replace />;
 
   const handleSubmit = async (email: string, password: string, rememberMe: boolean) => {
     // Prevent double-submission if already loading
