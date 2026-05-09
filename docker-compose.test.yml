@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: time_reporting
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d time_reporting']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  test-runner:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.test
+    working_dir: /app
+    environment:
+      NODE_ENV: test
+      JWT_ACCESS_SECRET: test_access_secret_at_least_32_chars!!
+      JWT_REFRESH_SECRET: test_refresh_secret_at_least_32chars!
+      FRONTEND_URL: http://localhost:5173
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: time_reporting
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/time_reporting
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: npm run test:integration

@@ -4,6 +4,7 @@ import { requireRole } from '../middleware/rbac.middleware';
 import { wrap, getMe, adminResetPassword } from '../controllers/auth.controller';
 import {
   createPermissionFlagForUser,
+  getMyPermissionFlags,
   getPermissionFlags,
   revokePermissionFlagForUser,
 } from '../controllers/permission-flags.controller';
@@ -22,7 +23,8 @@ const router = Router();
 router.get('/me', authenticate, wrap(getMe));
 router.put('/me', authenticate, wrap(updateOwnUserProfile));
 router.post('/me/sort-preference', authenticate, wrap(updateOwnSortPreference));
-router.get('/', authenticate, requireRole('admin'), wrap(getUsers));
+router.get('/me/permissions', authenticate, wrap(getMyPermissionFlags));
+router.get('/', authenticate, wrap(getUsers));
 router.post('/', authenticate, requireRole('admin'), wrap(createUser));
 router.get('/:id', authenticate, requireRole('admin'), wrap(getUserById));
 router.put('/:id', authenticate, requireRole('admin'), wrap(updateUser));

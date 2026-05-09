@@ -22,6 +22,7 @@ import {
   updateUserForAdmin,
 } from '../services/users.service';
 import { writeAuditLog } from '../services/auth.service';
+import { getAssignFlag } from '../services/assignments.service';
 import type { AuthenticatedUser } from '../middleware/auth.middleware';
 
 function toUserListItem(user: {
@@ -73,6 +74,19 @@ function parseSearchFilter(rawValue: unknown): string | undefined {
 }
 
 export async function getUsers(req: Request, res: Response): Promise<void> {
+  const caller = req.user!;
+
+  // Non-admin: only users with canAssignProjectTasks flag may list users.
+  // They receive a minimal response (id, firstName, lastName) for active users only.
+  if (caller.role !== 'admin') {
+    const flag = await getAssignFlag(caller.id);
+    if (!flag) throw new AppError('Forbidden', 403);
+
+    const users = await listUsers({ isActive: true });
+    res.json({ data: users.map((u) => ({ id: u.id, firstName: u.first_name, lastName: u.last_name })) });
+    return;
+  }
+
   const role = parseRoleFilter(req.query.role);
   const isActive = parseIsActiveFilter(req.query.is_active);
   const search = parseSearchFilter(req.query.search);
