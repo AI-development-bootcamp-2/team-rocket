@@ -39,7 +39,7 @@ export function AssignmentFilters({
         </Select>
       </div>
 
-      {isAdmin && users.length > 0 ? (
+      {(isAdmin || isScopedUser) && users.length > 0 ? (
         <div className="user-filters__select">
           <Select
             label="עובד"

@@ -24,7 +24,7 @@ router.get('/me', authenticate, wrap(getMe));
 router.put('/me', authenticate, wrap(updateOwnUserProfile));
 router.post('/me/sort-preference', authenticate, wrap(updateOwnSortPreference));
 router.get('/me/permissions', authenticate, wrap(getMyPermissionFlags));
-router.get('/', authenticate, requireRole('admin'), wrap(getUsers));
+router.get('/', authenticate, wrap(getUsers));
 router.post('/', authenticate, requireRole('admin'), wrap(createUser));
 router.get('/:id', authenticate, requireRole('admin'), wrap(getUserById));
 router.put('/:id', authenticate, requireRole('admin'), wrap(updateUser));
