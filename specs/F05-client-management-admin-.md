@@ -27,7 +27,7 @@ Admin CRUD for clients: create, edit, soft delete (archive). Clients default to 
 
 - [ ] Create ClientListPage.jsx with table: name, contact info, status, project count, actions
 - [ ] Filter by active/inactive
-- [ ] Create/edit via modal form (ClientForm.jsx)
+- [x] Create/edit via modal form (ClientForm.jsx)
 - [ ] Archive confirmation with warning: 'This client has X active projects'
 - [ ] Mobile responsive
 

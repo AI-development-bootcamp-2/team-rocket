@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import InactivityWarningModal from './components/InactivityWarningModal';
 import { ErrorState } from './components/ui/ErrorState.jsx';
 import { UserListPage } from './features/admin/users/UserListPage.jsx';
+import { ClientListPage } from './features/admin/clients/ClientListPage.jsx';
 import { ProjectListPage } from './features/admin/projects/ProjectListPage.jsx';
 import { TaskListPage } from './features/admin/tasks/TaskListPage.jsx';
 import { AssignmentPage } from './features/admin/assignments/AssignmentPage.jsx';
@@ -119,6 +120,12 @@ function AdminUsersPage() {
   return <UserListPage />;
 }
 
+function AdminClientsPage() {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <AccessDeniedPage />;
+  return <ClientListPage />;
+}
+
 function AdminProjectsPage() {
   const { user } = useAuth();
   if (user?.role !== 'admin') return <AccessDeniedPage />;
@@ -167,6 +174,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminUsersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/clients"
+            element={
+              <ProtectedRoute>
+                <AdminClientsPage />
               </ProtectedRoute>
             }
           />
