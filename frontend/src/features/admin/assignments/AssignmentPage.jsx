@@ -81,11 +81,9 @@ export function AssignmentPage() {
 
     Promise.all(promises)
       .then(([projectsRes, tasksRes, usersRes]) => {
-        let projectList = projectsRes.data ?? [];
-        if (scopedProjectIds != null) {
-          projectList = projectList.filter((p) => scopedProjectIds.includes(p.id));
-        }
-        setProjects(projectList);
+        // Do NOT filter projects — the matrix shows all projects with out-of-scope
+        // ones greyed. The modal dropdown restricts via the scopedProjectIds prop.
+        setProjects(projectsRes.data ?? []);
         setTasks(tasksRes.data ?? []);
         if (usersRes) setUsers(usersRes.data ?? []);
       })
@@ -127,11 +125,11 @@ export function AssignmentPage() {
     }
   }
 
-  async function handleCreate(payload) {
+  async function handleCreate({ task_id, user_ids }) {
     setSaving(true);
     try {
-      await createAssignment(payload);
-      showToast('השיוך נוצר בהצלחה');
+      await Promise.all(user_ids.map((uid) => createAssignment({ task_id, user_id: uid })));
+      showToast(user_ids.length > 1 ? `${user_ids.length} שיוכים נוצרו בהצלחה` : 'השיוך נוצר בהצלחה');
       setShowModal(false);
       await loadAssignments();
     } catch (err) {
@@ -204,6 +202,7 @@ export function AssignmentPage() {
         <AssignmentTable
           assignments={assignments}
           users={users}
+          tasks={tasks}
           loading={loading}
           canMutate={canMutate}
           scopedProjectIds={scopedProjectIds}
@@ -218,6 +217,7 @@ export function AssignmentPage() {
           users={users}
           saving={saving}
           isScopedUser={!isAdmin && canMutate}
+          scopedProjectIds={scopedProjectIds}
           onClose={() => setShowModal(false)}
           onSubmit={handleCreate}
         />
