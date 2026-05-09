@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { Request, Response, RequestHandler } from 'express';
+import { Request, Response, RequestHandler, CookieOptions } from 'express';
 import config from '../config';
 import { AppError } from '../middleware/error.middleware';
 import type { AuthenticatedUser } from '../middleware/auth.middleware';
@@ -49,14 +49,18 @@ function extractIp(req: Request): string {
 }
 
 function setCookie(res: Response, token: string, rememberMe: boolean): void {
-  const maxAge = rememberMe ? 30 * 24 * 60 * 60 * 1_000 : 7 * 24 * 60 * 60 * 1_000;
-  res.cookie('refreshToken', token, {
+  // rememberMe=true  → 30-day persistent cookie
+  // rememberMe=false → session cookie (no maxAge = deleted when browser closes)
+  const options: CookieOptions = {
     httpOnly: true,
     secure: config.isProd,
     sameSite: 'strict',
-    maxAge,
     path: '/auth',
-  });
+  };
+  if (rememberMe) {
+    options.maxAge = 30 * 24 * 60 * 60 * 1_000;
+  }
+  res.cookie('refreshToken', token, options);
 }
 
 function clearCookie(res: Response): void {

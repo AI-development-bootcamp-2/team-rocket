@@ -230,6 +230,35 @@ describe('POST /auth/login', () => {
     expect(refreshEntry).toContain('Path=/auth');
   });
 
+  it('rememberMe=false: issues session cookie (no Max-Age)', async () => {
+    await createUser({ email: 'session@test.com', role: 'admin' });
+    const res = await request(app)
+      .post('/auth/login')
+      .send({ email: 'session@test.com', password: 'TestPass1!', rememberMe: false });
+
+    expect(res.status).toBe(200);
+    const rawSetCookie = res.headers['set-cookie'] as string | string[] | undefined;
+    const cookies: string[] = Array.isArray(rawSetCookie) ? rawSetCookie : rawSetCookie ? [rawSetCookie] : [];
+    const refreshEntry = cookies.find((c) => c.startsWith('refreshToken='));
+    expect(refreshEntry).toBeDefined();
+    expect(refreshEntry).not.toContain('Max-Age');
+    expect(refreshEntry).not.toContain('Expires');
+  });
+
+  it('rememberMe=true: issues persistent cookie (with Max-Age)', async () => {
+    await createUser({ email: 'persist@test.com', role: 'admin' });
+    const res = await request(app)
+      .post('/auth/login')
+      .send({ email: 'persist@test.com', password: 'TestPass1!', rememberMe: true });
+
+    expect(res.status).toBe(200);
+    const rawSetCookie = res.headers['set-cookie'] as string | string[] | undefined;
+    const cookies: string[] = Array.isArray(rawSetCookie) ? rawSetCookie : rawSetCookie ? [rawSetCookie] : [];
+    const refreshEntry = cookies.find((c) => c.startsWith('refreshToken='));
+    expect(refreshEntry).toBeDefined();
+    expect(refreshEntry).toContain('Max-Age=');
+  });
+
   it('401: wrong password — same error message as unknown email (no account enumeration)', async () => {
     await createUser({ email: 'user@test.com' });
 
@@ -725,14 +754,16 @@ describe('GET /projects', () => {
     ]);
   });
 
-  it('403: non-admin cannot list projects', async () => {
+  it('200: non-admin can list projects (sees only assigned ones)', async () => {
     const user = await loginAndGetTokens({ role: 'user' });
 
     const res = await request(app)
       .get('/projects')
       .set('Authorization', `Bearer ${user.accessToken}`);
 
-    expect(res.status).toBe(403);
+    // Regular users see 200 with an (empty) list of their assigned projects
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.data)).toBe(true);
   });
 
   it('400: invalid is_active filter is rejected', async () => {

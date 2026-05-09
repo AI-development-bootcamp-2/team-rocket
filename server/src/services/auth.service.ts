@@ -142,6 +142,7 @@ export function assertNotLocked(user: UserRow): void {
     throw new AppError(
       `Account is temporarily locked. Try again in ${remainingMin} minute(s).`,
       423,
+      { retryAfterMinutes: remainingMin },
     );
   }
 }

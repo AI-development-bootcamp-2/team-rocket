@@ -1,9 +1,11 @@
+import path from 'path';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import config from './config';
 import { errorMiddleware } from './middleware/error.middleware';
+import { authenticate } from './middleware/auth.middleware';
 import authRouter from './routes/auth.routes';
 import projectsRouter from './routes/projects.routes';
 import usersRouter from './routes/users.routes';
@@ -28,6 +30,23 @@ app.get('/healthz', (_req, res) => {
 app.use('/auth', authRouter);
 app.use('/projects', projectsRouter);
 app.use('/users', usersRouter);
+
+// Serve uploaded files — auth required; path is validated against uploads/ root
+// to prevent directory traversal (CWE-22).
+const UPLOADS_ROOT = path.resolve(__dirname, '..', 'uploads');
+app.get('/uploads/:filename', authenticate, (req, res) => {
+  const filename = path.basename(req.params.filename); // strip any path separators
+  const filepath = path.join(UPLOADS_ROOT, filename);
+  if (!filepath.startsWith(UPLOADS_ROOT + path.sep) && filepath !== UPLOADS_ROOT) {
+    res.status(403).json({ error: 'Access denied' });
+    return;
+  }
+  res.download(filepath, (err) => {
+    if (err && !res.headersSent) {
+      res.status(404).json({ error: 'File not found' });
+    }
+  });
+});
 
 app.use(errorMiddleware);
 

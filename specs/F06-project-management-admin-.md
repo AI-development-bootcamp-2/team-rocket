@@ -16,34 +16,34 @@ Admin CRUD for projects. Each project belongs to one client. Tasks can be added 
 
 ### 1. Backend: Projects module
 
-- [ ] GET /projects — list (Admin: all; User: only projects with assigned tasks). Filter by client_id, is_active
-- [ ] GET /projects/:id — single project with tasks list
-- [ ] POST /projects — create **(Admin only** — `canAssignProjectTasks` flag does NOT grant project creation): `client_id`, `name`, `manager_user_id` (optional, FK to users), `start_date` (optional DATE), `end_date` (optional DATE), `description` (optional TEXT). Default `is_active=true`. **If name already exists under same `client_id`: return 201 with `{ data: {...}, warning: 'פרויקט בשם זה כבר קיים תחת לקוח זה' }` — warn but allow.**
-- [ ] PUT /projects/:id — update **(Admin only)**: `name`, `client_id`, `manager_user_id`, `start_date`, `end_date`, `description`, `is_active`
-- [ ] DELETE /projects/:id — soft delete. Warning if has active tasks. **Archiving a project removes all its tasks from user-facing reporting dropdowns (GET /tasks filters by project.is_active=true). Also remove `projectId` from all `permission_flags.scoped_project_ids` arrays**: `UPDATE permission_flags SET scoped_project_ids = array_remove(scoped_project_ids, :projectId) WHERE :projectId = ANY(scoped_project_ids)`.
-- [ ] All mutations audit logged
+- [x] GET /projects — list (Admin: all; User: only projects with assigned tasks). Filter by client_id, is_active
+- [x] GET /projects/:id — single project with tasks list
+- [x] POST /projects — create **(Admin only** — `canAssignProjectTasks` flag does NOT grant project creation): `client_id`, `name`, `manager_user_id` (optional, FK to users), `start_date` (optional DATE), `end_date` (optional DATE), `description` (optional TEXT). Default `is_active=true`. **If name already exists under same `client_id`: return 201 with `{ data: {...}, warning: 'פרויקט בשם זה כבר קיים תחת לקוח זה' }` — warn but allow.**
+- [x] PUT /projects/:id — update **(Admin only)**: `name`, `client_id`, `manager_user_id`, `start_date`, `end_date`, `description`, `is_active`
+- [x] DELETE /projects/:id — soft delete. Warning if has active tasks. **Archiving a project removes all its tasks from user-facing reporting dropdowns (GET /tasks filters by project.is_active=true). Also remove `projectId` from all `permission_flags.scoped_project_ids` arrays**: `UPDATE permission_flags SET scoped_project_ids = array_remove(scoped_project_ids, :projectId) WHERE :projectId = ANY(scoped_project_ids)`.
+- [x] All mutations audit logged
 
 ### 2. Frontend: Project list page
 
-- [ ] Create ProjectListPage.jsx with table: client name, project name, status, task count, actions
-- [ ] Filter by client, status
-- [ ] Inline button to add task from project row (per original spec)
-- [ ] Mobile responsive
+- [x] Create ProjectListPage.jsx with table: client name, project name, status, task count, actions
+- [x] Filter by client, status
+- [x] Inline button to add task from project row (per original spec)
+- [x] Mobile responsive
 
 ### 2b. Required UI states (v3.2 §14.1)
 
-- [ ] **Loading**: skeleton rows
-- [ ] **Empty**: 'No projects yet' with create button
-- [ ] **Save success**: toast after create/edit
-- [ ] **Delete confirm**: dialog before archive ('All tasks will be hidden from dropdowns')
-- [ ] **Disabled control**: edit/archive buttons greyed for non-admin with tooltip 'Admin only'
-- [ ] **Server error**: toast on 500
+- [x] **Loading**: skeleton rows
+- [x] **Empty**: 'No projects yet' with create button
+- [x] **Save success**: toast after create/edit
+- [x] **Delete confirm**: dialog before archive ('All tasks will be hidden from dropdowns')
+- [x] **Disabled control**: edit/archive buttons greyed for non-admin with tooltip 'Admin only'
+- [x] **Server error**: toast on 500
 
 ### 3. Tests
 
-- [ ] Test: Project requires valid client_id
-- [ ] Test: Duplicate name warns but allows
-- [ ] Test: User sees only assigned projects
+- [x] Test: Project requires valid client_id
+- [x] Test: Duplicate name warns but allows
+- [x] Test: User sees only assigned projects
 
 ## API Endpoints
 
@@ -103,9 +103,9 @@ Employee pill tags in "עובדים משויכים" column: same style as F05 (2
 
 ## Acceptance Criteria
 
-- [ ] Projects belong to clients
-- [ ] Can add task from project screen
-- [ ] Soft delete works with warning
-- [ ] Only Admin can create/edit/archive projects — `canAssignProjectTasks` flag does not grant write access here
-- [ ] Archived project's tasks excluded from all user-facing reporting dropdowns
+- [x] Projects belong to clients
+- [x] Can add task from project screen
+- [x] Soft delete works with warning
+- [x] Only Admin can create/edit/archive projects — `canAssignProjectTasks` flag does not grant write access here
+- [x] Archived project's tasks excluded from all user-facing reporting dropdowns
 

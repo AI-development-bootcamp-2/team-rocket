@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import InactivityWarningModal from './components/InactivityWarningModal';
 import { ErrorState } from './components/ui/ErrorState.jsx';
 import { UserListPage } from './features/admin/users/UserListPage.jsx';
+import { ProjectListPage } from './features/admin/projects/ProjectListPage.jsx';
 import { useAuth } from './contexts/AuthContext';
 
 const authBgStyle: CSSProperties = {
@@ -34,6 +35,9 @@ function LoginPage() {
   if (isAuthenticated) return <Navigate to="/" replace />;
 
   const handleSubmit = async (email: string, password: string, rememberMe: boolean) => {
+    // Prevent double-submission if already loading
+    if (isLoading) return;
+
     setIsLoading(true);
     setError('');
 
@@ -59,7 +63,12 @@ function LoginPage() {
 
   return (
     <main className={styles.authBackground} style={authBgStyle}>
-      <LoginCard onSubmit={handleSubmit} isLoading={isLoading} error={error} />
+      <LoginCard
+        onSubmit={handleSubmit}
+        isLoading={isLoading}
+        error={error}
+        onErrorDismiss={() => setError('')}
+      />
     </main>
   );
 }
@@ -104,9 +113,14 @@ function AccessDeniedPage() {
 
 function AdminUsersPage() {
   const { user } = useAuth();
-
   if (user?.role !== 'admin') return <AccessDeniedPage />;
   return <UserListPage />;
+}
+
+function AdminProjectsPage() {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <AccessDeniedPage />;
+  return <ProjectListPage />;
 }
 
 function App() {
@@ -137,6 +151,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminUsersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/projects"
+            element={
+              <ProtectedRoute>
+                <AdminProjectsPage />
               </ProtectedRoute>
             }
           />
