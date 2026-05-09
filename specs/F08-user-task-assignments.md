@@ -110,7 +110,7 @@ The management portal may also show an assignment matrix table (per task → ass
 
 ## Acceptance Criteria
 
-- [ ] Users only see assigned tasks in reporting
-- [ ] Permission flag scope enforced
-- [ ] Assignment history preserved
+- [x] Users only see assigned tasks in reporting
+- [x] Permission flag scope enforced
+- [x] Assignment history preserved
 
