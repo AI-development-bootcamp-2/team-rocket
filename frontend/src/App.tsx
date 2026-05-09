@@ -9,6 +9,7 @@ import { ErrorState } from './components/ui/ErrorState.jsx';
 import { UserListPage } from './features/admin/users/UserListPage.jsx';
 import { ProjectListPage } from './features/admin/projects/ProjectListPage.jsx';
 import { TaskListPage } from './features/admin/tasks/TaskListPage.jsx';
+import { AssignmentPage } from './features/admin/assignments/AssignmentPage.jsx';
 import { useAuth } from './contexts/AuthContext';
 
 const authBgStyle: CSSProperties = {
@@ -130,6 +131,14 @@ function AdminTasksPage() {
   return <TaskListPage />;
 }
 
+function AdminAssignmentsPage() {
+  const { user } = useAuth();
+  // Admin and users with canAssignProjectTasks flag may access this page;
+  // the AssignmentPage itself handles the 403 state for regular users.
+  if (!user) return <AccessDeniedPage />;
+  return <AssignmentPage />;
+}
+
 function App() {
   const [toast, setToast] = useState<string | null>(null);
 
@@ -174,6 +183,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminTasksPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/assignments"
+            element={
+              <ProtectedRoute>
+                <AdminAssignmentsPage />
               </ProtectedRoute>
             }
           />

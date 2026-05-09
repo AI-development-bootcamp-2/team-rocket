@@ -45,6 +45,14 @@ export function AdminShell({ title, subtitle, actions, children }) {
           >
             משימות
           </NavLink>
+          <NavLink
+            to="/admin/assignments"
+            className={({ isActive }) =>
+              `admin-nav__item ${isActive ? 'admin-nav__item--active' : ''}`.trim()
+            }
+          >
+            שיוך עובדים
+          </NavLink>
         </nav>
 
         <div className="admin-sidebar__footer">
