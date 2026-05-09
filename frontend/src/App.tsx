@@ -8,6 +8,7 @@ import InactivityWarningModal from './components/InactivityWarningModal';
 import { ErrorState } from './components/ui/ErrorState.jsx';
 import { UserListPage } from './features/admin/users/UserListPage.jsx';
 import { ProjectListPage } from './features/admin/projects/ProjectListPage.jsx';
+import { TaskListPage } from './features/admin/tasks/TaskListPage.jsx';
 import { useAuth } from './contexts/AuthContext';
 
 const authBgStyle: CSSProperties = {
@@ -123,6 +124,12 @@ function AdminProjectsPage() {
   return <ProjectListPage />;
 }
 
+function AdminTasksPage() {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <AccessDeniedPage />;
+  return <TaskListPage />;
+}
+
 function App() {
   const [toast, setToast] = useState<string | null>(null);
 
@@ -159,6 +166,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminProjectsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/tasks"
+            element={
+              <ProtectedRoute>
+                <AdminTasksPage />
               </ProtectedRoute>
             }
           />

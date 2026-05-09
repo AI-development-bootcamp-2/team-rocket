@@ -316,6 +316,22 @@ button:disabled {
   text-align: right;
 }
 
+.task-table__project-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.task-table__project-cell strong {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.task-table__project-cell span {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
 .users-table__skeleton {
   height: 20px;
   border-radius: 999px;
