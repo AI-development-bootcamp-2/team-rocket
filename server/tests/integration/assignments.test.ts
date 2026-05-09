@@ -339,7 +339,7 @@ describe('POST /assignments', () => {
     expect(res.status).toBe(409);
   });
 
-  it('201: creating an assignment for an inactive row reactivates it', async () => {
+  it('201: creating an assignment when an inactive row exists inserts a new row (history preserved)', async () => {
     const admin = await seedUser({ email: 'admin@test.com', role: 'admin' });
     const user = await seedUser({ email: 'user@test.com', role: 'user' });
     const client = await seedClient();
@@ -354,7 +354,7 @@ describe('POST /assignments', () => {
       .send({ user_id: user.id, task_id: task.id });
 
     expect(res.status).toBe(201);
-    expect(res.body.data.id).toBe(existingId); // same row reactivated
+    expect(res.body.data.id).not.toBe(existingId); // new row created; old row preserved as history
     expect(res.body.data.isActive).toBe(true);
   });
 
@@ -1198,7 +1198,7 @@ describe('DELETE /assignments/:id', () => {
     expect(res.body.data.isActive).toBe(false);
   });
 
-  it('after DELETE, POST can re-create (reactivate) the same assignment', async () => {
+  it('after DELETE, POST creates a new assignment row preserving history', async () => {
     const admin = await seedUser({ email: 'admin@test.com', role: 'admin' });
     const user = await seedUser({ email: 'user@test.com', role: 'user' });
     const client = await seedClient();
@@ -1215,13 +1215,13 @@ describe('DELETE /assignments/:id', () => {
     expect(delRes.status).toBe(200);
     expect(delRes.body.data.isActive).toBe(false);
 
-    // Re-create via POST — should reactivate the row, not create a new one
+    // Re-create via POST — inserts a NEW row; original row stays as history
     const postRes = await request(app)
       .post('/assignments')
       .set('Authorization', `Bearer ${token}`)
       .send({ user_id: user.id, task_id: task.id });
     expect(postRes.status).toBe(201);
     expect(postRes.body.data.isActive).toBe(true);
-    expect(postRes.body.data.id).toBe(assignment.id); // same row reactivated
+    expect(postRes.body.data.id).not.toBe(assignment.id); // new row; old row preserved
   });
 });

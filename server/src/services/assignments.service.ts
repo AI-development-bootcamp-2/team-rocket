@@ -118,26 +118,17 @@ export async function createAssignment(params: {
   userId: number;
   taskId: number;
 }): Promise<AssignmentRow> {
-  // Check for existing assignment (active or inactive) for this user+task pair
-  const existing = await db('user_task_assignments')
-    .where({ user_id: params.userId, task_id: params.taskId })
-    .select('id', 'is_active')
-    .first() as { id: number; is_active: boolean } | undefined;
+  // Reject if an active assignment already exists (partial unique index guarantees at most one)
+  const activeExists = await db('user_task_assignments')
+    .where({ user_id: params.userId, task_id: params.taskId, is_active: true })
+    .select('id')
+    .first() as { id: number } | undefined;
 
-  if (existing) {
-    if (existing.is_active) {
-      throw new AppError('Assignment already exists for this user and task', 409);
-    }
-    // Reactivate the inactive assignment instead of creating a duplicate
-    await db('user_task_assignments')
-      .where({ id: existing.id })
-      .update({ is_active: true, updated_at: new Date() });
-
-    const row = await getAssignmentById(existing.id, { role: 'admin', callerId: 0 });
-    if (!row) throw new AppError('Assignment not found after reactivation', 500);
-    return row;
+  if (activeExists) {
+    throw new AppError('Assignment already exists for this user and task', 409);
   }
 
+  // Always insert a new record — previous inactive rows remain as history
   const [created] = (await db('user_task_assignments')
     .insert({
       user_id: params.userId,
