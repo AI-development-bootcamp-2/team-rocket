@@ -1036,3 +1036,192 @@ describe('Multiple assignments', () => {
     expect(userIds).toContain(user2.id);
   });
 });
+
+// ── DELETE /assignments/:id ───────────────────────────────────────────────────
+
+describe('DELETE /assignments/:id', () => {
+  it('401: unauthenticated request is rejected', async () => {
+    const res = await request(app).delete('/assignments/1');
+    expect(res.status).toBe(401);
+  });
+
+  it('200: admin can soft-delete (deactivate) an assignment', async () => {
+    const admin = await seedUser({ email: 'admin@test.com', role: 'admin' });
+    const user = await seedUser({ email: 'user@test.com', role: 'user' });
+    const client = await seedClient();
+    const project = await seedProject({ clientId: client.id });
+    const task = await seedTask({ projectId: project.id });
+    const assignment = await seedAssignment(user.id, task.id, true);
+
+    const token = await login(admin.email, admin.plainPassword);
+    const res = await request(app)
+      .delete(`/assignments/${assignment.id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.isActive).toBe(false);
+    expect(res.body.data.id).toBe(assignment.id);
+  });
+
+  it('200: response includes full joined fields', async () => {
+    const admin = await seedUser({ email: 'admin@test.com', role: 'admin' });
+    const user = await seedUser({ email: 'bob@test.com', role: 'user', firstName: 'Bob', lastName: 'Smith' });
+    const client = await seedClient('Corp Inc');
+    const project = await seedProject({ clientId: client.id, name: 'Alpha' });
+    const task = await seedTask({ projectId: project.id, name: 'Design Work' });
+    const assignment = await seedAssignment(user.id, task.id);
+
+    const token = await login(admin.email, admin.plainPassword);
+    const res = await request(app)
+      .delete(`/assignments/${assignment.id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.user.firstName).toBe('Bob');
+    expect(res.body.data.task.name).toBe('Design Work');
+    expect(res.body.data.projectName).toBe('Alpha');
+    expect(res.body.data.clientName).toBe('Corp Inc');
+    expect(res.body.data.isActive).toBe(false);
+  });
+
+  it('404: non-existent assignment returns 404', async () => {
+    const admin = await seedUser({ email: 'admin@test.com', role: 'admin' });
+    const token = await login(admin.email, admin.plainPassword);
+    const res = await request(app)
+      .delete('/assignments/99999')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(404);
+  });
+
+  it('400: invalid id (non-numeric) returns 400', async () => {
+    const admin = await seedUser({ email: 'admin@test.com', role: 'admin' });
+    const token = await login(admin.email, admin.plainPassword);
+    const res = await request(app)
+      .delete('/assignments/abc')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(400);
+  });
+
+  it('400: id=0 returns 400', async () => {
+    const admin = await seedUser({ email: 'admin@test.com', role: 'admin' });
+    const token = await login(admin.email, admin.plainPassword);
+    const res = await request(app)
+      .delete('/assignments/0')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(400);
+  });
+
+  it('403: regular user without flag is rejected', async () => {
+    await seedUser({ email: 'admin@test.com', role: 'admin' });
+    const user = await seedUser({ email: 'user@test.com', role: 'user' });
+    const client = await seedClient();
+    const project = await seedProject({ clientId: client.id });
+    const task = await seedTask({ projectId: project.id });
+    const assignment = await seedAssignment(user.id, task.id);
+
+    const token = await login(user.email, user.plainPassword);
+    const res = await request(app)
+      .delete(`/assignments/${assignment.id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('200: user+flag can delete assignment within scoped project', async () => {
+    await seedUser({ email: 'admin@test.com', role: 'admin' });
+    const actor = await seedUser({ email: 'actor@test.com', role: 'user' });
+    const target = await seedUser({ email: 'target@test.com', role: 'user' });
+    const client = await seedClient();
+    const project = await seedProject({ clientId: client.id });
+    const task = await seedTask({ projectId: project.id });
+    const assignment = await seedAssignment(target.id, task.id);
+    await seedPermissionFlag(actor.id, [project.id]);
+
+    const token = await login(actor.email, actor.plainPassword);
+    const res = await request(app)
+      .delete(`/assignments/${assignment.id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.isActive).toBe(false);
+  });
+
+  it('404: user+flag cannot delete assignment outside scoped project', async () => {
+    await seedUser({ email: 'admin@test.com', role: 'admin' });
+    const actor = await seedUser({ email: 'actor@test.com', role: 'user' });
+    const target = await seedUser({ email: 'target@test.com', role: 'user' });
+    const client = await seedClient();
+    const project = await seedProject({ clientId: client.id });
+    const otherProject = await seedProject({ clientId: client.id, name: 'Other Project' });
+    const task = await seedTask({ projectId: otherProject.id });
+    const assignment = await seedAssignment(target.id, task.id);
+    await seedPermissionFlag(actor.id, [project.id]); // scoped to different project
+
+    const token = await login(actor.email, actor.plainPassword);
+    const res = await request(app)
+      .delete(`/assignments/${assignment.id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(404);
+  });
+
+  it('audit log: DELETE creates a log entry with action DELETE', async () => {
+    const admin = await seedUser({ email: 'admin@test.com', role: 'admin' });
+    const user = await seedUser({ email: 'user@test.com', role: 'user' });
+    const client = await seedClient();
+    const project = await seedProject({ clientId: client.id });
+    const task = await seedTask({ projectId: project.id });
+    const assignment = await seedAssignment(user.id, task.id);
+
+    const token = await login(admin.email, admin.plainPassword);
+    await request(app)
+      .delete(`/assignments/${assignment.id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    const log = await db('audit_logs')
+      .where({ action: 'DELETE', target_entity_type: 'ASSIGNMENT', target_entity_id: assignment.id })
+      .first();
+    expect(log).toBeDefined();
+    expect(log.actor_user_id).toBe(admin.id);
+  });
+
+  it('200: idempotent — deleting an already-inactive assignment returns 200 with isActive=false', async () => {
+    const admin = await seedUser({ email: 'admin@test.com', role: 'admin' });
+    const user = await seedUser({ email: 'user@test.com', role: 'user' });
+    const client = await seedClient();
+    const project = await seedProject({ clientId: client.id });
+    const task = await seedTask({ projectId: project.id });
+    const assignment = await seedAssignment(user.id, task.id, false); // already inactive
+
+    const token = await login(admin.email, admin.plainPassword);
+    const res = await request(app)
+      .delete(`/assignments/${assignment.id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.isActive).toBe(false);
+  });
+
+  it('after DELETE, POST can re-create (reactivate) the same assignment', async () => {
+    const admin = await seedUser({ email: 'admin@test.com', role: 'admin' });
+    const user = await seedUser({ email: 'user@test.com', role: 'user' });
+    const client = await seedClient();
+    const project = await seedProject({ clientId: client.id });
+    const task = await seedTask({ projectId: project.id });
+    const assignment = await seedAssignment(user.id, task.id);
+
+    const token = await login(admin.email, admin.plainPassword);
+
+    // Soft-delete via DELETE
+    const delRes = await request(app)
+      .delete(`/assignments/${assignment.id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(delRes.status).toBe(200);
+    expect(delRes.body.data.isActive).toBe(false);
+
+    // Re-create via POST — should reactivate the row, not create a new one
+    const postRes = await request(app)
+      .post('/assignments')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ user_id: user.id, task_id: task.id });
+    expect(postRes.status).toBe(201);
+    expect(postRes.body.data.isActive).toBe(true);
+    expect(postRes.body.data.id).toBe(assignment.id); // same row reactivated
+  });
+});

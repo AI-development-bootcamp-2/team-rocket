@@ -164,6 +164,43 @@ export async function createAssignmentHandler(req: Request, res: Response): Prom
   res.status(201).json({ data: toAssignmentResponse(assignment) });
 }
 
+export async function deleteAssignmentHandler(req: Request, res: Response): Promise<void> {
+  const caller = req.user!;
+  const id = parseInt(req.params.id, 10);
+  if (!Number.isInteger(id) || id <= 0) throw new AppError('Invalid assignment id', 400);
+
+  // Non-admin must have canAssignProjectTasks flag and target must be in scope
+  if (caller.role !== 'admin') {
+    const flag = await getAssignFlag(caller.id);
+    if (!flag) throw new AppError('Forbidden', 403);
+
+    const existing = await getAssignmentById(id, {
+      role: 'user',
+      callerId: caller.id,
+      scopedProjectIds: flag.scoped_project_ids ?? [],
+    });
+    if (!existing) throw new AppError('Assignment not found', 404);
+  }
+
+  const before = await getAssignmentById(id, { role: 'admin', callerId: 0 });
+  if (!before) throw new AppError('Assignment not found', 404);
+
+  const updated = await toggleAssignment(id, false);
+  if (!updated) throw new AppError('Assignment not found', 404);
+
+  await writeAuditLog({
+    actorUserId: caller.id,
+    entityType: 'ASSIGNMENT',
+    entityId: id,
+    action: 'DELETE',
+    oldValue: toAssignmentResponse(before) as unknown as Record<string, unknown>,
+    newValue: toAssignmentResponse(updated) as unknown as Record<string, unknown>,
+    ipAddress: req.ip ?? '',
+  });
+
+  res.json({ data: toAssignmentResponse(updated) });
+}
+
 export async function toggleAssignmentHandler(req: Request, res: Response): Promise<void> {
   const caller = req.user!;
   const id = parseInt(req.params.id, 10);

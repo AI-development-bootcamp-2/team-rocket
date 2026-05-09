@@ -20,7 +20,7 @@ Assign users to tasks (not to clients or projects). Users only see entities wher
 - [x] **GET /assignments/:id** — single assignment with user, task, project, client details
 - [x] POST /assignments — create: user_id, task_id. Validate no duplicate active assignment. Admin or User+flag (scoped).
 - [x] PUT /assignments/:id — toggle is_active
-- [ ] DELETE /assignments/:id — set is_active=false
+- [x] DELETE /assignments/:id — set is_active=false
 - [x] Validate permission flag scope: User+canAssignProjectTasks can only assign within their allowed project IDs
 - [x] All mutations audit logged
 
