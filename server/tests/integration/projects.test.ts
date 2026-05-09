@@ -510,6 +510,33 @@ describe('DELETE /projects/:id', () => {
       .first();
     expect(log).toBeDefined();
   });
+
+  it('archive is rolled back if the permission_flags scrub fails', async () => {
+    const admin = await seedUser({ email: 'admin@test.com', role: 'admin' });
+    const scoped = await seedUser({ email: 'scoped@test.com', role: 'user' });
+    const project = await seedProject();
+    const token = await login(admin.email, admin.plainPassword);
+
+    // Inject a non-numeric entry alongside the project id. The row matches the
+    // WHERE clause (scoped_project_ids @> [projectId]) so the subquery runs
+    // jsonb_array_elements over the whole array, and elem::text::integer fails
+    // on 'NOT_A_NUMBER' — surfacing as a Postgres error inside the transaction.
+    await db('permission_flags').insert({
+      user_id: scoped.id,
+      flag_name: 'canAssignProjectTasks',
+      scoped_project_ids: JSON.stringify([project.id, 'NOT_A_NUMBER']),
+      created_at: new Date(),
+    });
+
+    const res = await request(app)
+      .delete(`/projects/${project.id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBeGreaterThanOrEqual(500);
+
+    // Project must still be active — the transaction should have rolled back.
+    const row = await db('projects').where('id', project.id).first();
+    expect(row.is_active).toBe(true);
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
