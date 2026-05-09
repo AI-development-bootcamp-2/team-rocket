@@ -76,7 +76,8 @@ export function AssignmentPage() {
       listProjects({ isActive: true }),
       listTasks({ status: 'open' }),
     ];
-    if (isAdmin) promises.push(listUsers({ isActive: 'active' }));
+    // Load full user list for admin or any user with canAssignProjectTasks flag
+    if (isAdmin || canMutate) promises.push(listUsers({ isActive: 'active' }));
 
     Promise.all(promises)
       .then(([projectsRes, tasksRes, usersRes]) => {
@@ -90,7 +91,7 @@ export function AssignmentPage() {
       })
       .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin, scopeLoaded]);
+  }, [isAdmin, scopeLoaded, canMutate]);
 
   // ── Assignments list ────────────────────────────────────────────────────────
   const loadAssignments = useCallback(async () => {
@@ -157,8 +158,8 @@ export function AssignmentPage() {
     );
   }
 
-  // For non-admin without flag, show 403 message
-  if (scopeLoaded && !isAdmin && !canMutate && assignments.length === 0 && !loading) {
+  // Non-admin without canAssignProjectTasks flag has no access to this page
+  if (scopeLoaded && !isAdmin && !canMutate && !loading) {
     return (
       <AdminShell title="שיוך עובדים למשימות" subtitle="">
         <ErrorState
@@ -202,6 +203,7 @@ export function AssignmentPage() {
       ) : (
         <AssignmentTable
           assignments={assignments}
+          users={users}
           loading={loading}
           canMutate={canMutate}
           scopedProjectIds={scopedProjectIds}
@@ -213,7 +215,7 @@ export function AssignmentPage() {
         <NewAssignmentModal
           projects={projects}
           tasks={tasks}
-          users={isAdmin ? users : [{ id: user.id, firstName: user.firstName, lastName: user.lastName }]}
+          users={users}
           saving={saving}
           isScopedUser={!isAdmin && canMutate}
           onClose={() => setShowModal(false)}
