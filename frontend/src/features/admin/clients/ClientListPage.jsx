@@ -48,6 +48,8 @@ export function ClientListPage() {
             onClose={() => setToast(null)}
           />
         ) : null}
+
+        {/* TODO: Clients table is intentionally missing for now; another teammate is implementing it. */}
       </AdminShell>
 
       {dialog ? (
