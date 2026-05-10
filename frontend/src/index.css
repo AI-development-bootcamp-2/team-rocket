@@ -1040,13 +1040,3 @@ button:disabled {
   background: var(--color-disabled);
   cursor: not-allowed;
 }
-
-.client-modal__cta-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  font-size: 16px;
-  line-height: 1;
-}
