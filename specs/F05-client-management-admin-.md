@@ -16,12 +16,12 @@ Admin CRUD for clients: create, edit, soft delete (archive). Clients default to 
 
 ### 1. Backend: Clients module
 
-- [ ] GET /clients — list all clients (Admin: all; User: only clients with assigned tasks)
-- [ ] GET /clients/:id — single client
-- [ ] POST /clients — create (Admin only): `name`, `contact_info` (optional), `client_number` (optional, admin-assigned human-readable identifier e.g. `#001`, UNIQUE). Default `is_active=true`. **If name already exists (case-insensitive): return 201 with `{ data: {...}, warning: 'A client with this name already exists' }` — warn but allow (per v3.2 section 6).**
-- [ ] PUT /clients/:id — update (Admin only): `name`, `contact_info`, `client_number`, `is_active`
-- [ ] DELETE /clients/:id — soft delete: set is_active=false (Admin only). Warning if has active projects. **Archiving a client removes all its projects and tasks from all user-facing reporting dropdowns immediately (GET /projects and GET /tasks filter by client.is_active=true).**
-- [ ] All mutations audit logged
+- [x] GET /clients — list all clients (Admin: all; User: only clients with assigned tasks)
+- [x] GET /clients/:id — single client
+- [x] POST /clients — create (Admin only): `name`, `contact_info` (optional), `client_number` (optional, admin-assigned human-readable identifier e.g. `#001`, UNIQUE). Default `is_active=true`. **If name already exists (case-insensitive): return 201 with `{ data: {...}, warning: 'A client with this name already exists' }` — warn but allow (per v3.2 section 6).**
+- [x] PUT /clients/:id — update (Admin only): `name`, `contact_info`, `client_number`, `is_active`
+- [x] DELETE /clients/:id — soft delete: set is_active=false (Admin only). Warning if has active projects. **Archiving a client removes all its projects and tasks from all user-facing reporting dropdowns immediately (GET /projects and GET /tasks filter by client.is_active=true).**
+- [x] All mutations audit logged
 
 ### 2. Frontend: Client list page
 
@@ -42,10 +42,10 @@ Admin CRUD for clients: create, edit, soft delete (archive). Clients default to 
 
 ### 3. Tests
 
-- [ ] Test: Create client returns 201
-- [ ] Test: Archive sets is_active=false
-- [ ] Test: User endpoint returns only assigned clients
-- [ ] Test: Non-admin cannot create/edit/delete
+- [x] Test: Create client returns 201
+- [x] Test: Archive sets is_active=false
+- [x] Test: User endpoint returns only assigned clients
+- [x] Test: Non-admin cannot create/edit/delete
 
 ## API Endpoints
 
