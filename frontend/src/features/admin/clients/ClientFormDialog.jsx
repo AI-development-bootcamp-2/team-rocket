@@ -24,6 +24,16 @@ export function ClientFormDialog({ mode = 'create', client, onClose, onSubmit, s
         aria-label={title}
         onClick={(event) => event.stopPropagation()}
       >
+        <button
+          type="button"
+          className="client-modal__close"
+          onClick={onClose}
+          aria-label="סגירה"
+        >
+          <svg width="11.67" height="11.67" viewBox="0 0 11.67 11.67" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 0L11.67 11.67M11.67 0L0 11.67" stroke="#212525" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </button>
         <header className="client-modal__header">
           <div className="client-modal__header-group">
             <div className="client-modal__icon" aria-hidden="true">
@@ -44,23 +54,11 @@ export function ClientFormDialog({ mode = 'create', client, onClose, onSubmit, s
               </svg>
             </div>
             <div className="client-modal__header-text">
-              <div className="client-modal__title-row">
-                <h2 className="client-modal__title">{title}</h2>
-                {isEdit && <span className="client-modal__edit-badge">עריכה</span>}
-              </div>
+              <h2 className="client-modal__title">{title}</h2>
               <p className="client-modal__subtitle">{subtitle}</p>
             </div>
           </div>
-          <button
-            type="button"
-            className="client-modal__close"
-            onClick={onClose}
-            aria-label="סגירה"
-          >
-            <svg width="11.67" height="11.67" viewBox="0 0 11.67 11.67" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M0 0L11.67 11.67M11.67 0L0 11.67" stroke="#212525" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
+          {isEdit && <span className="client-modal__edit-badge">עריכה</span>}
         </header>
 
         <ClientForm
