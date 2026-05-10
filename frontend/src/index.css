@@ -228,7 +228,7 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 48px;
+  height: 48px;
   padding: 0 24px;
   border: 0;
   border-radius: 8px;
@@ -238,14 +238,14 @@ button:disabled {
 }
 
 .ui-button--primary {
-  background: var(--color-nav-button);
+  background: #0052d6;
   color: #fff;
+  border: 1px solid #0052d6;
 }
 
 .ui-button--primary:hover:not(:disabled) {
-  background: var(--color-nav-button-hover);
+  background: #0044b3;
   box-shadow: var(--shadow-button-hover);
-  transform: translateY(-2px);
 }
 
 .ui-button--secondary {
