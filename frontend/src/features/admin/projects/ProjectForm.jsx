@@ -1,7 +1,7 @@
 import { Input } from '../../../components/ui/Input.jsx';
 import { Select } from '../../../components/ui/Select.jsx';
 
-export function ProjectForm({ id, initialValues, clients, users, onSubmit }) {
+export function ProjectForm({ id, initialValues, clients, users, onSubmit, onValuesChange }) {
   function handleSubmit(e) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -15,24 +15,30 @@ export function ProjectForm({ id, initialValues, clients, users, onSubmit }) {
     });
   }
 
+  function handleChange(e) {
+    const fd = new FormData(e.currentTarget);
+    const name = (fd.get('name') ?? '').trim();
+    const clientId = fd.get('client_id');
+    onValuesChange?.(Boolean(name && clientId));
+  }
+
   const v = initialValues ?? {};
 
   return (
-    <form id={id} onSubmit={handleSubmit} noValidate>
+    <form id={id} onSubmit={handleSubmit} onChange={handleChange} noValidate>
       <div className="user-form__field">
         <Input
           label="שם הפרויקט"
           name="name"
+          placeholder="צור שם לפרויקט"
           defaultValue={v.name ?? ''}
           required
         />
       </div>
 
       <div className="user-form__field">
-        <Select label="לקוח" name="client_id" defaultValue={v.clientId ?? ''} required>
-          <option value="" disabled>
-            בחר לקוח
-          </option>
+        <Select label="שם הלקוח" name="client_id" defaultValue={v.clientId ?? ''} required>
+          <option value="" disabled>מה שם הלקוח</option>
           {clients.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -42,8 +48,8 @@ export function ProjectForm({ id, initialValues, clients, users, onSubmit }) {
       </div>
 
       <div className="user-form__field">
-        <Select label="מנהל ראשי" name="manager_user_id" defaultValue={v.managerUserId ?? ''}>
-          <option value="">— ללא מנהל —</option>
+        <Select label="שייך מנהל ראשי לפרויקט" name="manager_user_id" defaultValue={v.managerUserId ?? ''}>
+          <option value="">בחר מנהל</option>
           {users.map((u) => (
             <option key={u.id} value={u.id}>
               {`${u.firstName} ${u.lastName}`}
@@ -61,6 +67,7 @@ export function ProjectForm({ id, initialValues, clients, users, onSubmit }) {
             defaultValue={v.startDate ?? ''}
           />
         </div>
+        <span className="project-date-sep">—</span>
         <div className="user-form__field">
           <Input
             label="תאריך סיום"
@@ -72,13 +79,16 @@ export function ProjectForm({ id, initialValues, clients, users, onSubmit }) {
       </div>
 
       <div className="user-form__field">
-        <label className="ui-input__label">תיאור הפרויקט</label>
-        <textarea
-          name="description"
-          className="ui-input__control"
-          style={{ minHeight: 80, resize: 'vertical' }}
-          defaultValue={v.description ?? ''}
-        />
+        <label className="ui-field">
+          <span className="ui-field__label">תאור הפרויקט</span>
+          <textarea
+            name="description"
+            className="ui-input"
+            placeholder="תאר בקצרה את הפרויקט"
+            style={{ height: 114, resize: 'none' }}
+            defaultValue={v.description ?? ''}
+          />
+        </label>
       </div>
     </form>
   );
