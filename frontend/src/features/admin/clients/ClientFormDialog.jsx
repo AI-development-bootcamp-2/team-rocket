@@ -23,10 +23,6 @@ export function ClientFormDialog({ mode = 'create', client, onClose, onSubmit, s
       >
         <header className="client-modal__header">
           <div className="client-modal__header-group">
-            <div className="client-modal__header-text">
-              <h2 className="client-modal__title">{title}</h2>
-              <p className="client-modal__subtitle">{subtitle}</p>
-            </div>
             <div className="client-modal__icon" aria-hidden="true">
               <svg
                 width="32"
@@ -44,6 +40,10 @@ export function ClientFormDialog({ mode = 'create', client, onClose, onSubmit, s
                 />
               </svg>
             </div>
+            <div className="client-modal__header-text">
+              <h2 className="client-modal__title">{title}</h2>
+              <p className="client-modal__subtitle">{subtitle}</p>
+            </div>
           </div>
           <button
             type="button"
@@ -51,7 +51,9 @@ export function ClientFormDialog({ mode = 'create', client, onClose, onSubmit, s
             onClick={onClose}
             aria-label="סגירה"
           >
-            ×
+            <svg width="11.67" height="11.67" viewBox="0 0 11.67 11.67" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 0L11.67 11.67M11.67 0L0 11.67" stroke="#212525" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
           </button>
         </header>
 
