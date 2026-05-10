@@ -46,17 +46,15 @@ export function ProjectListPage() {
   const showToast = (message, tone = 'success') =>
     setToast(createToast(message, tone));
 
-  // Load meta (clients + users) once for dropdowns
+  // Load meta (clients + users) once for dropdowns — fetched independently
+  // so a failure of one does not prevent the other from populating.
   useEffect(() => {
-    Promise.all([
-      listClients({ isActive: true }),
-      listUsers({}),
-    ])
-      .then(([clientsRes, usersRes]) => {
-        setClients(clientsRes.data ?? []);
-        setUsers(usersRes.data ?? []);
-      })
-      .catch(() => {/* meta failure is non-fatal */});
+    listClients({})
+      .then((res) => setClients(res.data ?? []))
+      .catch(() => {});
+    listUsers({})
+      .then((res) => setUsers(res.data ?? []))
+      .catch(() => {});
   }, []);
 
   const loadProjects = useCallback(async () => {
@@ -111,8 +109,9 @@ export function ProjectListPage() {
   async function handleUpdate(payload) {
     setDialogLoading(true);
     try {
-      await updateProject(dialog.project.id, payload);
-      showToast('הפרויקט עודכן בהצלחה');
+      const res = await updateProject(dialog.project.id, payload);
+      if (res.warning) showToast(`הפרויקט עודכן. ${res.warning}`, 'info');
+      else showToast('הפרויקט עודכן בהצלחה');
       setDialog(null);
       loadProjects();
     } catch {
@@ -132,7 +131,7 @@ export function ProjectListPage() {
       setDialog(null);
       loadProjects();
     } catch {
-      showToast('שגיאה בארכוב הפרויקט', 'error');
+      showToast( 'שגיאה בהעברת הפרויקט לארכיון', 'error');
     } finally {
       setDialogLoading(false);
     }
@@ -151,6 +150,7 @@ export function ProjectListPage() {
         )
       }
     >
+      <section className="users-page">
       <ProjectFilters
         clientId={clientFilter}
         status={statusFilter}
@@ -211,9 +211,10 @@ export function ProjectListPage() {
           key={toast.id}
           message={toast.message}
           tone={toast.tone}
-          onDismiss={() => setToast(null)}
+          onClose={() => setToast(null)}
         />
       )}
+      </section>
     </AdminShell>
   );
 }
