@@ -8,14 +8,25 @@ export async function listClients({ isActive } = {}) {
   return response.data;
 }
 
-// TEMP: backend POST /clients lives on branch `feat/F05-clients-backend` and is
-// pending PR approval before it lands on `development`. Until that PR merges,
-// this call will 404 — the create modal still renders for design review.
-export async function createClient({ name, contact_info, client_number } = {}) {
+export async function createClient({ name, contact_info, is_active } = {}) {
   const response = await axiosClient.post('/clients', {
     name,
     contact_info: contact_info ?? null,
-    client_number: client_number ?? null,
+    is_active: is_active ?? true,
   });
+  return response.data;
+}
+
+export async function updateClient(id, { name, contact_info, is_active } = {}) {
+  const response = await axiosClient.put(`/clients/${id}`, {
+    name,
+    contact_info: contact_info ?? null,
+    is_active,
+  });
+  return response.data;
+}
+
+export async function archiveClient(id) {
+  const response = await axiosClient.delete(`/clients/${id}`);
   return response.data;
 }
