@@ -108,24 +108,14 @@ button:disabled {
 .admin-user-profile {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   padding: 16px 24px;
   direction: rtl;
 }
 
 .admin-user-profile__avatar {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
 }
 
 .admin-user-profile__info {
