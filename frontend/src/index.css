@@ -462,6 +462,12 @@ button:disabled {
   color: var(--color-error-text);
 }
 
+.ui-toast--info {
+  background: #eff6ff;
+  border-color: rgba(59, 130, 246, 0.18);
+  color: #1d4ed8;
+}
+
 .ui-toast__content {
   display: flex;
   align-items: center;
@@ -805,6 +811,59 @@ button:disabled {
   margin-bottom: 16px;
   color: var(--color-text-secondary);
   font-size: 14px;
+}
+
+.client-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.client-group__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: var(--mgmt-table-header);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: right;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.client-group__header:hover {
+  background: #222d5a;
+}
+
+.client-group__chevron {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.client-group__name {
+  flex: 1;
+}
+
+.client-group__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.users-table__row--archived td {
+  opacity: 0.55;
+  background: #f9fafb;
 }
 
 @media (max-width: 1100px) {

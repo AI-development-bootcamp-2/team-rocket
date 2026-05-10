@@ -17,9 +17,9 @@ export function ProjectRowActions({ project, isAdmin, onEdit, onArchive }) {
         onClick={() => onArchive(project)}
         disabled={!isAdmin || !project.isActive}
         title={!isAdmin ? 'Admin only' : !project.isActive ? 'פרויקט כבר מושבת' : undefined}
-        aria-label={`ארכוב ${project.name}`}
+        aria-label={`העברה לארכיון ${project.name}`}
       >
-        ארכוב
+        העברה לארכיון
       </button>
     </div>
   );
