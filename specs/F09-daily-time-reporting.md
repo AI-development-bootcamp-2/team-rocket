@@ -16,29 +16,29 @@ The core user feature. Daily report form with cascading dropdowns, existing entr
 
 ### 1. Backend: Time entries module
 
-- [ ] GET /time-entries — list by user_id, date, week, month. User: own only. Admin: any user.
-- [ ] GET /time-entries/:id — single entry
-- [ ] POST /time-entries — create: date, start_time, end_time, client_id, project_id, task_id, location, description. Calculate duration_minutes automatically.
-- [ ] PUT /time-entries/:id — update **(only if `status IN ('draft','rejected')` AND month not locked AND week status is `draft` or `rejected`)**. **Requires `version` field in request body. If `DB.version !== body.version` → return 409 `{ error: 'CONFLICT', message: 'Entry was modified by someone else. Please reload and try again.' }`. On successful update, increment version. If entry was previously `rejected`, auto-transition `status → 'draft'` and clear `rejection_reason`.**
-- [ ] DELETE /time-entries/:id — **soft delete** (only if `status IN ('draft','rejected')` AND month not locked): execute `UPDATE time_entries SET deleted_at = NOW() WHERE id = :id`. All GET queries add `WHERE deleted_at IS NULL`.
-- [ ] Implement overlap detection across all projects for same user+date
-- [ ] Implement cross-midnight duration calculation
-- [ ] **Manual duration override**: if request body includes `duration_override_minutes` without `end_time`, derive `end_time = start_time + duration_override_minutes`. If both `end_time` and `duration_override_minutes` are provided, `end_time` wins and `duration_override_minutes` is ignored.
-- [ ] Validate: no future dates, required fields, task must be assigned and open, project/client must be active
-- [ ] Validate: task.status must be `open` — closed task returns 422 `{ error: 'Task is closed' }`
-- [ ] Validate: end_time > start_time (except cross-midnight)
-- [ ] Return daily summary: total hours, remaining hours vs standard
-- [ ] **Admin edit path**: Admin can PUT /time-entries/:id for any user's draft entry. On save, store `last_modified_by = admin_user_id` and `last_modified_by_role = 'admin'` on the entry. Audit logged with action=ADMIN_EDIT.
-- [ ] All mutations audit logged with old/new values
+- [x] GET /time-entries — list by user_id, date, week, month. User: own only. Admin: any user.
+- [x] GET /time-entries/:id — single entry
+- [x] POST /time-entries — create: date, start_time, end_time, client_id, project_id, task_id, location, description. Calculate duration_minutes automatically.
+- [x] PUT /time-entries/:id — update **(only if `status IN ('draft','rejected')` AND month not locked AND week status is `draft` or `rejected`)**. **Requires `version` field in request body. If `DB.version !== body.version` → return 409 `{ error: 'CONFLICT', message: 'Entry was modified by someone else. Please reload and try again.' }`. On successful update, increment version. If entry was previously `rejected`, auto-transition `status → 'draft'` and clear `rejection_reason`.**
+- [x] DELETE /time-entries/:id — **soft delete** (only if `status IN ('draft','rejected')` AND month not locked): execute `UPDATE time_entries SET deleted_at = NOW() WHERE id = :id`. All GET queries add `WHERE deleted_at IS NULL`.
+- [x] Implement overlap detection across all projects for same user+date
+- [x] Implement cross-midnight duration calculation
+- [x] **Manual duration override**: if request body includes `duration_override_minutes` without `end_time`, derive `end_time = start_time + duration_override_minutes`. If both `end_time` and `duration_override_minutes` are provided, `end_time` wins and `duration_override_minutes` is ignored.
+- [x] Validate: no future dates, required fields, task must be assigned and open, project/client must be active
+- [x] Validate: task.status must be `open` — closed task returns 422 `{ error: 'Task is closed' }`
+- [x] Validate: end_time > start_time (except cross-midnight)
+- [x] Return daily summary: total hours, remaining hours vs standard
+- [x] **Admin edit path**: Admin can PUT /time-entries/:id for any user's draft entry. On save, store `last_modified_by = admin_user_id` and `last_modified_by_role = 'admin'` on the entry. Audit logged with action=ADMIN_EDIT.
+- [x] All mutations audit logged with old/new values
 
 ### 2. Backend: Dropdown data endpoints
 
-- [ ] GET /time-entries/dropdown-data — returns user's available clients→projects→tasks tree based on assignments.
+- [x] GET /time-entries/dropdown-data — returns user's available clients→projects→tasks tree based on assignments.
   > Response shape: `{ clients: [...], sort_prefs: { client_id, project_id, task_id } }`. The `sort_prefs` field is read from `users.sort_prefs JSONB`.
   > Clients, projects, and tasks sorted by past-usage frequency (derived from `sort_prefs`). Frontend pre-selects the `sort_prefs` values as the initial form defaults.
   > **"No assignments" empty state**: if `clients` array is empty, frontend shows info banner: `'לא שוייכת עדיין למשימות. פנה למנהל המערכת לקבלת גישה.'` and disables the 'הוספת פרויקט' button.
-- [ ] GET /time-entries/daily-summary?date=&user_id= — returns `{ date, total_hours, standard_hours, remaining_hours, entry_count, status: 'full'|'partial'|'missing'|'day_off' }`. `standard_hours` respects `users.daily_hours_override` and holiday calendar. `status='day_off'` when date is a holiday or weekend.
-- [ ] After POST or PUT /time-entries: compute `monthlyTotal / monthlyQuota`. If ≥90% and no existing `QUOTA_WARNING` notification for this `user_id + month + year` → call `notificationsService.create({ type: 'QUOTA_WARNING', userId, month, year })`.
+- [x] GET /time-entries/daily-summary?date=&user_id= — returns `{ date, total_hours, standard_hours, remaining_hours, entry_count, status: 'full'|'partial'|'missing'|'day_off' }`. `standard_hours` respects `users.daily_hours_override` and holiday calendar. `status='day_off'` when date is a holiday or weekend.
+- [x] After POST or PUT /time-entries: compute `monthlyTotal / monthlyQuota`. If ≥90% and no existing `QUOTA_WARNING` notification for this `user_id + month + year` → call `notificationsService.create({ type: 'QUOTA_WARNING', userId, month, year })`.
 
 ### 3. Frontend: Daily report page (default/home screen)
 
@@ -80,18 +80,18 @@ The core user feature. Daily report form with cascading dropdowns, existing entr
 
 ### 5. Tests
 
-- [ ] Test: Overlapping entries blocked (same user, any project)
-- [ ] Test: Adjacent entries allowed (12:00-15:00 then 15:00-18:00)
-- [ ] Test: Cross-midnight duration calculated correctly
-- [ ] Test: Future date blocked
-- [ ] Test: Unassigned task blocked
-- [ ] Test: Closed task blocked with 422
-- [ ] Test: Locked month blocks create/edit/delete
-- [ ] Test: Submitted week blocks edit/delete (status not draft/rejected)
-- [ ] Test: Optimistic lock — concurrent PUT with stale version returns 409
-- [ ] Test: Daily hours summary correct
-- [ ] Test: Sort by frequency returns most-used first
-- [ ] Test: Admin edit sets last_modified_by_role='admin' and audit logs ADMIN_EDIT
+- [x] Test: Overlapping entries blocked (same user, any project)
+- [x] Test: Adjacent entries allowed (12:00-15:00 then 15:00-18:00)
+- [x] Test: Cross-midnight duration calculated correctly
+- [x] Test: Future date blocked
+- [x] Test: Unassigned task blocked
+- [x] Test: Closed task blocked with 422
+- [x] Test: Locked month blocks create/edit/delete
+- [x] Test: Submitted week blocks edit/delete (status not draft/rejected)
+- [x] Test: Optimistic lock — concurrent PUT with stale version returns 409
+- [x] Test: Daily hours summary correct
+- [x] Test: Sort by frequency returns most-used first
+- [x] Test: Admin edit sets last_modified_by_role='admin' and audit logs ADMIN_EDIT
 
 ## API Endpoints
 
