@@ -1,5 +1,5 @@
 import React, { CSSProperties, useEffect, useState } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import styles from './App.module.css';
 import { LoginCard } from './components/LoginCard';
 import ChangePasswordCard from './components/ChangePasswordCard';
@@ -7,8 +7,10 @@ import ProtectedRoute from './components/ProtectedRoute';
 import InactivityWarningModal from './components/InactivityWarningModal';
 import { ErrorState } from './components/ui/ErrorState.jsx';
 import { UserListPage } from './features/admin/users/UserListPage.jsx';
+import { ClientListPage } from './features/admin/clients/ClientListPage.jsx';
 import { ProjectListPage } from './features/admin/projects/ProjectListPage.jsx';
 import { TaskListPage } from './features/admin/tasks/TaskListPage.jsx';
+import { AssignmentPage } from './features/admin/assignments/AssignmentPage.jsx';
 import { useAuth } from './contexts/AuthContext';
 
 const authBgStyle: CSSProperties = {
@@ -30,10 +32,12 @@ function Toast({ message, onDismiss }: { message: string; onDismiss: () => void 
 
 function LoginPage() {
   const { login, isAuthenticated } = useAuth();
+  const location = useLocation();
+  const from = (location.state as { from?: Location })?.from?.pathname || '/';
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  if (isAuthenticated) return <Navigate to="/" replace />;
+  if (isAuthenticated) return <Navigate to={from} replace />;
 
   const handleSubmit = async (email: string, password: string, rememberMe: boolean) => {
     // Prevent double-submission if already loading
@@ -118,6 +122,12 @@ function AdminUsersPage() {
   return <UserListPage />;
 }
 
+function AdminClientsPage() {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <AccessDeniedPage />;
+  return <ClientListPage />;
+}
+
 function AdminProjectsPage() {
   const { user } = useAuth();
   if (user?.role !== 'admin') return <AccessDeniedPage />;
@@ -128,6 +138,14 @@ function AdminTasksPage() {
   const { user } = useAuth();
   if (user?.role !== 'admin') return <AccessDeniedPage />;
   return <TaskListPage />;
+}
+
+function AdminAssignmentsPage() {
+  const { user } = useAuth();
+  // Admin and users with canAssignProjectTasks flag may access this page;
+  // the AssignmentPage itself handles the 403 state for regular users.
+  if (!user) return <AccessDeniedPage />;
+  return <AssignmentPage />;
 }
 
 function App() {
@@ -162,6 +180,14 @@ function App() {
             }
           />
           <Route
+            path="/admin/clients"
+            element={
+              <ProtectedRoute>
+                <AdminClientsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/projects"
             element={
               <ProtectedRoute>
@@ -174,6 +200,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminTasksPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/assignments"
+            element={
+              <ProtectedRoute>
+                <AdminAssignmentsPage />
               </ProtectedRoute>
             }
           />

@@ -32,9 +32,14 @@ export function AdminShell({ title, subtitle, actions, children }) {
           >
             ניהול משתמשים
           </NavLink>
-          <button type="button" className="admin-nav__item" disabled>
+          <NavLink
+            to="/admin/clients"
+            className={({ isActive }) =>
+              `admin-nav__item ${isActive ? 'admin-nav__item--active' : ''}`.trim()
+            }
+          >
             לקוחות
-          </button>
+          </NavLink>
           <NavLink
             to="/admin/projects"
             className={({ isActive }) =>
@@ -50,6 +55,14 @@ export function AdminShell({ title, subtitle, actions, children }) {
             }
           >
             משימות
+          </NavLink>
+          <NavLink
+            to="/admin/assignments"
+            className={({ isActive }) =>
+              `admin-nav__item ${isActive ? 'admin-nav__item--active' : ''}`.trim()
+            }
+          >
+            שיוך עובדים
           </NavLink>
         </nav>
 

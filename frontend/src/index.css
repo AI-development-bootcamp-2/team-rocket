@@ -969,3 +969,138 @@ button:disabled {
     width: 100%;
   }
 }
+
+.client-modal {
+  width: min(440px, 100%);
+  padding-bottom: 24px;
+}
+
+.client-modal__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 24px 16px;
+  text-align: center;
+}
+
+.client-modal__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: #DBEAFE;
+  color: #2563EB;
+}
+
+.client-modal__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.client-modal__subtitle {
+  margin: 0;
+  max-width: 320px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.client-modal__content {
+  padding: 8px 24px 16px;
+}
+
+.client-modal__footer {
+  padding: 8px 24px 0;
+}
+
+.client-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.client-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.client-form__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-body);
+}
+
+.client-form__input,
+.client-form__textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--color-input-border);
+  border-radius: 8px;
+  background: var(--color-input-bg);
+  color: var(--color-text-primary);
+  font: inherit;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.client-form__input::placeholder,
+.client-form__textarea::placeholder {
+  color: #9CA3AF;
+}
+
+.client-form__input {
+  height: 48px;
+}
+
+.client-form__textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.client-form__input:focus,
+.client-form__textarea:focus {
+  outline: none;
+  border-color: var(--color-brand-purple);
+  box-shadow: 0 0 0 3px rgba(107, 47, 170, 0.1);
+}
+
+.client-modal__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 48px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--color-nav-button);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  transition: background 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+.client-modal__cta:hover:not(:disabled) {
+  background: var(--color-nav-button-hover);
+  transform: translateY(-1px);
+}
+
+.client-modal__cta:disabled {
+  background: var(--color-disabled);
+  cursor: not-allowed;
+}
+
+.client-modal__cta-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 16px;
+  line-height: 1;
+}
