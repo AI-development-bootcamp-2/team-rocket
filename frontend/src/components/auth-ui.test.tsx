@@ -38,6 +38,7 @@ jest.mock('react-router-dom', () => ({
     </a>
   ),
   useNavigate: () => mockNavigate,
+  useLocation: () => ({ state: null, pathname: '/' }),
 }), { virtual: true });
 
 jest.mock('../contexts/AuthContext', () => ({
