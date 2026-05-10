@@ -1200,13 +1200,9 @@ button:disabled {
   color: #fff;
   font-size: 15px;
   font-weight: 600;
-  transition: background 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+  cursor: default;
 }
 
-.client-modal__cta:hover:not(:disabled) {
-  background: #6b6e78;
-  transform: translateY(-1px);
-}
 
 .client-modal__cta:disabled {
   background: var(--color-disabled);

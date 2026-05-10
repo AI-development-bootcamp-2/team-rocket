@@ -1,4 +1,4 @@
-export function ClientForm({ id, initialValues, onSubmit }) {
+export function ClientForm({ id, initialValues, onSubmit, onNameChange }) {
   function handleSubmit(event) {
     event.preventDefault();
     const fd = new FormData(event.currentTarget);
@@ -22,6 +22,7 @@ export function ClientForm({ id, initialValues, onSubmit }) {
           defaultValue={v.name ?? ''}
           required
           autoFocus
+          onChange={(e) => onNameChange?.(e.target.value)}
         />
       </label>
 
