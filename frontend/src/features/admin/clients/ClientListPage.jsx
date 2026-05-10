@@ -5,9 +5,9 @@ import { AdminShell } from '../../../components/layout/AdminShell.jsx';
 import { Button } from '../../../components/ui/Button.jsx';
 import { EmptyState } from '../../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../../components/ui/ErrorState.jsx';
-import { Modal } from '../../../components/ui/Modal.jsx';
 import { Spinner } from '../../../components/ui/Spinner.jsx';
 import { Toast } from '../../../components/ui/Toast.jsx';
+import { ArchiveClientDialog } from './ArchiveClientDialog.jsx';
 import { ClientFilters } from './ClientFilters.jsx';
 import { ClientFormDialog } from './ClientFormDialog.jsx';
 import { ClientsTable } from './ClientsTable.jsx';
@@ -69,14 +69,15 @@ export function ClientListPage() {
     setDialogLoading(true);
     try {
       if (dialog.mode === 'create') {
-        await createClient(form);
-        setToast(createToast('הלקוח נוצר בהצלחה.', 'success'));
+        const result = await createClient(form);
+        if (result?.warning) setToast(createToast(`הלקוח נוצר. ${result.warning}`, 'info'));
+        else setToast(createToast('הלקוח נוצר בהצלחה.', 'success'));
       } else {
         await updateClient(dialog.client.id, form);
         setToast(createToast('פרטי הלקוח עודכנו בהצלחה.', 'success'));
       }
       setDialog(null);
-      await loadClients();
+      loadClients();
     } catch (saveError) {
       setToast(createToast(mapErrorMessage(saveError), 'error'));
     } finally {
@@ -157,29 +158,12 @@ export function ClientListPage() {
       ) : null}
 
       {dialog?.mode === 'archive' ? (
-        <Modal
-          title="ארכיון לקוח"
-          icon="!"
-          size="narrow"
+        <ArchiveClientDialog
+          client={dialog.client}
+          loading={dialogLoading}
           onClose={() => !dialogLoading && setDialog(null)}
-          footer={
-            <div className="dialog-actions">
-              <Button variant="secondary" onClick={() => setDialog(null)} disabled={dialogLoading}>
-                ביטול
-              </Button>
-              <Button variant="danger" onClick={handleArchiveConfirmed} disabled={dialogLoading}>
-                {dialogLoading ? 'מעביר לארכיון...' : 'ארכיון'}
-              </Button>
-            </div>
-          }
-        >
-          <div className="dialog-copy">
-            <p>האם להעביר את הלקוח <strong>{dialog.client.name}</strong> לארכיון?</p>
-            <p className="dialog-copy__subtext">
-              כל הפרויקטים והמשימות שלו יוסתרו מהתפריטים של המשתמשים.
-            </p>
-          </div>
-        </Modal>
+          onConfirm={handleArchiveConfirmed}
+        />
       ) : null}
     </div>
   );

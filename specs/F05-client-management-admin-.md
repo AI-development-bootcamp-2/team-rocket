@@ -31,7 +31,7 @@ Admin CRUD for clients: create, edit, soft delete (archive). Clients default to 
 - [x] Filter by active/inactive
 - [x] Create client via modal form (ClientForm.jsx): שם לקוח (required), פרטי קשר (optional), is_active defaults to true
 - [x] Edit client via modal form (ClientForm.jsx): update name, contact info, toggle is_active status
-- [ ] Archive confirmation with warning: 'This client has X active projects'
+- [x] Archive confirmation with warning: 'This client has X active projects'
 - [ ] Mobile responsive
 
 ### 2b. Required UI states (v3.2 §14.1)
@@ -40,7 +40,7 @@ Admin CRUD for clients: create, edit, soft delete (archive). Clients default to 
 - [x] **Empty**: 'No clients yet' with create button
 - [x] **Save success**: toast after create/edit
 - [x] **Delete confirm**: dialog before archive ('All projects and tasks will be hidden from user dropdowns')
-- [ ] **Validation error**: duplicate name shows inline warning (not a block — allow with warning)
+- [x] **Validation error**: duplicate name shows inline warning (not a block — allow with warning)
 - [x] **Server error**: toast on 500
 
 ### 3. Tests
