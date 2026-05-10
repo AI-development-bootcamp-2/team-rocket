@@ -6,9 +6,6 @@
  * - TRUNCATE … RESTART IDENTITY CASCADE in beforeEach for isolation
  * - reuses the createUser / loginAndGetTokens / waitForAuditLog helper style
  *
- * These tests are written BEFORE the /clients module exists. They are expected
- * to fail in the TDD red phase (no route → 404, no service → 500). That is the
- * entire point — the implementation is the next step.
  */
 import type { Knex } from 'knex';
 import bcrypt from 'bcryptjs';
@@ -268,11 +265,7 @@ describe('Clients API', () => {
       });
     });
 
-    it('user reading a client they have no assignment to is rejected (404 — implementations should not leak existence; matches F04 single-user 404 style)', async () => {
-      // F04 returns 404 on /users/:id for unknown ids and 403 for non-admin
-      // role at all. For F05 reads are User+Admin so the natural choice is to
-      // hide existence — assert 404. If the implementation chooses 403 instead,
-      // this test should be updated to match (single source of truth: spec).
+    it('404: user reading a client they have no assignment to — existence must not be leaked', async () => {
       const userLogin = await loginAndGetTokens({ role: 'user' });
       const otherClient = await insertClient({ name: 'No Access' });
 
@@ -280,7 +273,7 @@ describe('Clients API', () => {
         .get(`/clients/${otherClient.id}`)
         .set('Authorization', `Bearer ${userLogin.accessToken}`);
 
-      expect([403, 404]).toContain(res.status);
+      expect(res.status).toBe(404);
     });
   });
 
@@ -320,10 +313,10 @@ describe('Clients API', () => {
         .send({ name: 'New Client', contact_info: 'phone: 050-0000000' });
 
       expect(res.status).toBe(201);
-      const created = (res.body.data ?? res.body) as { id: number; name: string; isActive?: boolean; is_active?: boolean };
+      const created = res.body as { id: number; name: string; isActive: boolean };
       expect(created.id).toEqual(expect.any(Number));
       expect(created.name).toBe('New Client');
-      expect(created.isActive ?? created.is_active).toBe(true);
+      expect(created.isActive).toBe(true);
 
       const log = await waitForAuditLog({
         action: 'CREATE',
@@ -343,8 +336,8 @@ describe('Clients API', () => {
         .send({ name: 'Numbered Client', client_number: '#042' });
 
       expect(res.status).toBe(201);
-      const created = (res.body.data ?? res.body) as { clientNumber?: string; client_number?: string };
-      expect(created.clientNumber ?? created.client_number).toBe('#042');
+      const created = res.body as { clientNumber: string };
+      expect(created.clientNumber).toBe('#042');
     });
 
     it('409: duplicate client_number is rejected (matches F04 isUniqueViolation → 409 pattern)', async () => {
@@ -428,7 +421,7 @@ describe('Clients API', () => {
         });
 
       expect(res.status).toBe(200);
-      const updated = (res.body.data ?? res.body) as { name: string };
+      const updated = res.body as { name: string };
       expect(updated.name).toBe('Updated Name');
 
       const log = await waitForAuditLog({
@@ -512,6 +505,40 @@ describe('Clients API', () => {
         target_entity_id: target.id,
       });
       expect(log).toBeDefined();
+    });
+
+    it('spec acceptance: archived client disappears from user-scoped GET /clients and GET /clients/:id returns 404', async () => {
+      const admin = await loginAndGetTokens({ email: 'admin-arc@test.com', role: 'admin' });
+      const user = await loginAndGetTokens({ email: 'user-arc@test.com', role: 'user' });
+
+      const client = await insertClient({ name: 'Dropdown Client' });
+      const project = await insertProject({ clientId: client.id });
+      const task = await insertTask({ projectId: project.id });
+      await assignUserToTask(user.userId, task.id);
+
+      // User can see the client before it is archived
+      const before = await request(app)
+        .get('/clients')
+        .set('Authorization', `Bearer ${user.accessToken}`);
+      expect(before.body.data).toHaveLength(1);
+
+      // Admin archives the client
+      await request(app)
+        .delete(`/clients/${client.id}`)
+        .set('Authorization', `Bearer ${admin.accessToken}`);
+
+      // Archived client must not appear in user-scoped list
+      const afterList = await request(app)
+        .get('/clients')
+        .set('Authorization', `Bearer ${user.accessToken}`);
+      expect(afterList.status).toBe(200);
+      expect(afterList.body.data).toHaveLength(0);
+
+      // And must return 404 on the single-resource route
+      const afterById = await request(app)
+        .get(`/clients/${client.id}`)
+        .set('Authorization', `Bearer ${user.accessToken}`);
+      expect(afterById.status).toBe(404);
     });
 
     it('200 with warning: archiving a client that has active projects returns a warning field about the related projects', async () => {

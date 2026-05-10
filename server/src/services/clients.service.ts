@@ -30,7 +30,7 @@ const CLIENT_COLUMNS = [
   'updated_at',
 ] as const;
 
-const CLIENT_ORDER: ReadonlyArray<{ column: string; order: 'asc' }> = [
+const CLIENT_ORDER: Array<{ column: string; order: 'asc' }> = [
   { column: 'name', order: 'asc' },
   { column: 'id', order: 'asc' },
 ];
@@ -39,13 +39,15 @@ const CLIENT_ORDER: ReadonlyArray<{ column: string; order: 'asc' }> = [
 export async function listAllClients(): Promise<ClientRow[]> {
   return db<ClientRow>('clients')
     .select(...CLIENT_COLUMNS)
-    .orderBy([...CLIENT_ORDER]);
+    .orderBy(CLIENT_ORDER);
 }
 
 /**
- * Returns the clients that `userId` can reach through an active task
- * assignment. DISTINCT is required because a single user can be assigned to
- * multiple tasks belonging to the same client.
+ * Returns the active clients that `userId` can reach through an active task
+ * assignment. Filters c.is_active=true so archived clients disappear from
+ * user-facing dropdowns immediately after archiving. DISTINCT is required
+ * because a single user can be assigned to multiple tasks belonging to the
+ * same client.
  */
 export async function listClientsForUser(userId: number): Promise<ClientRow[]> {
   const rows = await db('clients as c')
@@ -55,6 +57,7 @@ export async function listClientsForUser(userId: number): Promise<ClientRow[]> {
     .innerJoin('user_task_assignments as uta', 'uta.task_id', 't.id')
     .where('uta.user_id', userId)
     .where('uta.is_active', true)
+    .where('c.is_active', true)
     .orderBy(CLIENT_ORDER.map((o) => ({ ...o, column: `c.${o.column}` })));
   return rows as ClientRow[];
 }
@@ -69,8 +72,9 @@ export async function findClientByIdForAdmin(id: number): Promise<ClientRow | un
 
 /**
  * Returns the client only if `userId` can reach it via an active task
- * assignment. Returning undefined on no-access lets the controller respond
- * with 404, which avoids leaking the existence of clients the user can't see.
+ * assignment AND the client is active. Returning undefined on no-access lets
+ * the controller respond with 404, which avoids leaking the existence of
+ * clients the user can't see (including archived ones).
  */
 export async function findClientByIdForUser(
   userId: number,
@@ -84,6 +88,7 @@ export async function findClientByIdForUser(
     .where('c.id', clientId)
     .where('uta.user_id', userId)
     .where('uta.is_active', true)
+    .where('c.is_active', true)
     .first();
   return row as ClientRow | undefined;
 }
@@ -125,40 +130,43 @@ export interface CreateClientInput {
 }
 
 /**
- * Inserts a new client row. Reports `nameDuplicate=true` when an *active*
- * client already shares the same name (case-insensitive) — the controller
- * uses that flag to attach a warning to the 201 response per spec §1.
+ * Inserts a new client row inside a transaction so the duplicate-name check
+ * and INSERT are atomic. Reports `nameDuplicate=true` when an *active* client
+ * already shares the same name (case-insensitive) — the controller uses that
+ * flag to attach a warning to the 201 response per spec §1.
  * Archived clients don't trigger the warning since reusing a freed name is
  * normal. Duplicate `client_number` raises Postgres 23505 → AppError(409).
  */
 export async function createClientForAdmin(
   input: CreateClientInput,
 ): Promise<{ client: ClientRow; nameDuplicate: boolean }> {
-  const dup = await db<ClientRow>('clients')
-    .select('id')
-    .whereRaw('LOWER(name) = LOWER(?)', [input.name])
-    .where({ is_active: true })
-    .first();
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const dup = await trx<ClientRow>('clients')
+      .select('id')
+      .whereRaw('LOWER(name) = LOWER(?)', [input.name])
+      .where({ is_active: true })
+      .first();
 
-  try {
-    const [row] = (await db('clients')
-      .insert({
-        name: input.name,
-        client_number: input.clientNumber ?? null,
-        contact_info: input.contactInfo ?? null,
-        is_active: true,
-        created_at: new Date(),
-        updated_at: new Date(),
-      })
-      .returning([...CLIENT_COLUMNS])) as ClientRow[];
+    try {
+      const [row] = (await trx('clients')
+        .insert({
+          name: input.name,
+          client_number: input.clientNumber ?? null,
+          contact_info: input.contactInfo ?? null,
+          is_active: true,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .returning([...CLIENT_COLUMNS])) as ClientRow[];
 
-    return { client: row, nameDuplicate: !!dup };
-  } catch (error) {
-    if (isUniqueViolation(error)) {
-      throw new AppError('client_number already exists', 409);
+      return { client: row, nameDuplicate: !!dup };
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new AppError('client_number already exists', 409);
+      }
+      throw error;
     }
-    throw error;
-  }
+  });
 }
 
 /** Coerces a boolean field; throws AppError(400) on a non-boolean non-null value. */
@@ -176,78 +184,93 @@ export interface UpdateClientInput {
 }
 
 /**
- * Applies a partial update. Fields that are `undefined` in `input` are
- * preserved from the current DB row; `null` (where the schema allows it)
- * clears the field. Touches `updated_at` on every successful update.
- * Returns both the before and after rows so the caller can write a diff
- * to the audit log.
+ * Applies a partial update inside a transaction with a row-level lock so
+ * concurrent admin requests can't produce a stale audit `before` snapshot.
+ * Fields that are `undefined` in `input` are preserved from the locked row;
+ * `null` (where the schema allows it) clears the field. Touches `updated_at`
+ * on every successful update. Returns both the before and after rows so the
+ * caller can write a diff to the audit log.
  */
 export async function updateClientForAdmin(
   id: number,
   input: UpdateClientInput,
 ): Promise<{ before: ClientRow; after: ClientRow }> {
-  const existing = await findClientByIdForAdmin(id);
-  if (!existing) {
-    throw new AppError('Client not found', 404);
-  }
-
-  try {
-    const [updated] = (await db('clients')
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const existing = await trx<ClientRow>('clients')
+      .select(...CLIENT_COLUMNS)
       .where({ id })
-      .update({
-        name: input.name === undefined ? existing.name : input.name,
-        client_number:
-          input.clientNumber === undefined ? existing.client_number : input.clientNumber,
-        contact_info:
-          input.contactInfo === undefined ? existing.contact_info : input.contactInfo,
-        is_active: input.isActive === undefined ? existing.is_active : input.isActive,
-        updated_at: new Date(),
-      })
-      .returning([...CLIENT_COLUMNS])) as ClientRow[];
+      .forUpdate()
+      .first();
 
-    if (!updated) {
+    if (!existing) {
       throw new AppError('Client not found', 404);
     }
 
-    return { before: existing, after: updated };
-  } catch (error) {
-    if (isUniqueViolation(error)) {
-      throw new AppError('client_number already exists', 409);
+    try {
+      const [updated] = (await trx('clients')
+        .where({ id })
+        .update({
+          name: input.name === undefined ? existing.name : input.name,
+          client_number:
+            input.clientNumber === undefined ? existing.client_number : input.clientNumber,
+          contact_info:
+            input.contactInfo === undefined ? existing.contact_info : input.contactInfo,
+          is_active: input.isActive === undefined ? existing.is_active : input.isActive,
+          updated_at: new Date(),
+        })
+        .returning([...CLIENT_COLUMNS])) as ClientRow[];
+
+      if (!updated) {
+        throw new AppError('Client not found', 404);
+      }
+
+      return { before: existing, after: updated };
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new AppError('client_number already exists', 409);
+      }
+      throw error;
     }
-    throw error;
-  }
+  });
 }
 
 /**
- * Soft-deletes a client by flipping is_active to false. Returns the count of
- * the client's currently-active projects measured *before* the archive — the
- * controller turns that into a warning string when non-zero. Idempotent:
- * archiving an already-archived client succeeds (matches F04's
- * deactivateUserForAdmin, which doesn't guard against double-deactivation).
+ * Soft-deletes a client inside a transaction with a row-level lock. Counts
+ * the client's active projects *within the same transaction* so the warning
+ * count is consistent with the row being archived. Returns the count so the
+ * controller can build the warning string. Idempotent: archiving an already-
+ * archived client succeeds (matches F04's deactivateUserForAdmin).
  */
 export async function deactivateClientForAdmin(
   id: number,
 ): Promise<{ before: ClientRow; after: ClientRow; activeProjectCount: number }> {
-  const existing = await findClientByIdForAdmin(id);
-  if (!existing) {
-    throw new AppError('Client not found', 404);
-  }
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const existing = await trx<ClientRow>('clients')
+      .select(...CLIENT_COLUMNS)
+      .where({ id })
+      .forUpdate()
+      .first();
 
-  const projectCountResult = await db('projects')
-    .where({ client_id: id, is_active: true })
-    .count<{ count: string | number }>('* as count')
-    .first();
-  const activeProjectCount = Number(projectCountResult?.count ?? 0);
+    if (!existing) {
+      throw new AppError('Client not found', 404);
+    }
 
-  const [updated] = (await db('clients')
-    .where({ id })
-    .update({
-      is_active: false,
-      updated_at: new Date(),
-    })
-    .returning([...CLIENT_COLUMNS])) as ClientRow[];
+    const projectCountResult = await trx('projects')
+      .where({ client_id: id, is_active: true })
+      .count<{ count: string | number }>('* as count')
+      .first();
+    const activeProjectCount = Number(projectCountResult?.count ?? 0);
 
-  return { before: existing, after: updated, activeProjectCount };
+    const [updated] = (await trx('clients')
+      .where({ id })
+      .update({
+        is_active: false,
+        updated_at: new Date(),
+      })
+      .returning([...CLIENT_COLUMNS])) as ClientRow[];
+
+    return { before: existing, after: updated, activeProjectCount };
+  });
 }
 
 /** Normalises a client row to the JSON shape stored in audit_logs.new_value / old_value. */

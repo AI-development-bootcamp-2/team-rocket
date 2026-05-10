@@ -33,6 +33,11 @@ function getAuthUser(req: Request): AuthenticatedUser {
   return req.user;
 }
 
+/** Returns true when the authenticated user holds the admin role. */
+function isAdmin(user: AuthenticatedUser): boolean {
+  return user.role === 'admin';
+}
+
 /** Maps a snake_case DB row to the camelCase API representation. */
 function toClientListItem(client: ClientRow) {
   return {
@@ -46,10 +51,10 @@ function toClientListItem(client: ClientRow) {
   };
 }
 
-/** GET /clients — admin gets every client, user gets only assignment-reachable ones. */
+/** GET /clients — admin gets every client, user gets only assignment-reachable active ones. */
 export async function getClients(req: Request, res: Response): Promise<void> {
-  const actor = getAuthUser(req);
-  const clients = actor.role === 'admin' ? await listAllClients() : await listClientsForUser(actor.id);
+  const user = getAuthUser(req);
+  const clients = isAdmin(user) ? await listAllClients() : await listClientsForUser(user.id);
   res.json({ data: clients.map(toClientListItem) });
 }
 
@@ -59,12 +64,11 @@ export async function getClients(req: Request, res: Response): Promise<void> {
  * (not 403) so the existence of unrelated clients is not leaked.
  */
 export async function getClientById(req: Request, res: Response): Promise<void> {
-  const actor = getAuthUser(req);
+  const user = getAuthUser(req);
   const clientId = parseClientId(req.params.id);
-  const client =
-    actor.role === 'admin'
-      ? await findClientByIdForAdmin(clientId)
-      : await findClientByIdForUser(actor.id, clientId);
+  const client = isAdmin(user)
+    ? await findClientByIdForAdmin(clientId)
+    : await findClientByIdForUser(user.id, clientId);
 
   if (!client) {
     throw new AppError('Client not found', 404);
@@ -99,26 +103,30 @@ function parseClientCreateBody(body: Record<string, unknown>): {
  * CREATE audit row.
  */
 export async function createClient(req: Request, res: Response): Promise<void> {
-  const actor = getAuthUser(req);
+  const user = getAuthUser(req);
   const ip = extractIp(req);
 
   let result: Awaited<ReturnType<typeof createClientForAdmin>>;
   try {
     result = await createClientForAdmin(parseClientCreateBody(req.body as Record<string, unknown>));
   } catch (err) {
-    writeAuditLog({
-      actorUserId: actor.id,
-      entityType: 'CLIENT',
-      entityId: null,
-      action: 'CREATE',
-      newValue: { success: false, reason: err instanceof Error ? err.message : 'unknown' },
-      ipAddress: ip,
-    }).catch((e: unknown) => console.error('[audit] createClient failure:', e));
+    try {
+      await writeAuditLog({
+        actorUserId: user.id,
+        entityType: 'CLIENT',
+        entityId: null,
+        action: 'CREATE',
+        newValue: { success: false, reason: err instanceof Error ? err.message : 'unknown' },
+        ipAddress: ip,
+      });
+    } catch (auditErr) {
+      console.error('[audit] createClient failure:', auditErr);
+    }
     throw err;
   }
 
   await writeAuditLog({
-    actorUserId: actor.id,
+    actorUserId: user.id,
     entityType: 'CLIENT',
     entityId: result.client.id,
     action: 'CREATE',
@@ -166,7 +174,7 @@ function parseClientUpdateBody(body: Record<string, unknown>): UpdateClientInput
  * old_value and new_value) and on failure (with the error reason).
  */
 export async function updateClient(req: Request, res: Response): Promise<void> {
-  const actor = getAuthUser(req);
+  const user = getAuthUser(req);
   const clientId = parseClientId(req.params.id);
   const ip = extractIp(req);
 
@@ -178,19 +186,23 @@ export async function updateClient(req: Request, res: Response): Promise<void> {
       parseClientUpdateBody(req.body as Record<string, unknown>),
     ));
   } catch (err) {
-    writeAuditLog({
-      actorUserId: actor.id,
-      entityType: 'CLIENT',
-      entityId: clientId,
-      action: 'UPDATE',
-      newValue: { success: false, reason: err instanceof Error ? err.message : 'unknown' },
-      ipAddress: ip,
-    }).catch((e: unknown) => console.error('[audit] updateClient failure:', e));
+    try {
+      await writeAuditLog({
+        actorUserId: user.id,
+        entityType: 'CLIENT',
+        entityId: clientId,
+        action: 'UPDATE',
+        newValue: { success: false, reason: err instanceof Error ? err.message : 'unknown' },
+        ipAddress: ip,
+      });
+    } catch (auditErr) {
+      console.error('[audit] updateClient failure:', auditErr);
+    }
     throw err;
   }
 
   await writeAuditLog({
-    actorUserId: actor.id,
+    actorUserId: user.id,
     entityType: 'CLIENT',
     entityId: clientId,
     action: 'UPDATE',
@@ -209,7 +221,7 @@ export async function updateClient(req: Request, res: Response): Promise<void> {
  * `warning` body when the archived client still has active projects.
  */
 export async function deactivateClient(req: Request, res: Response): Promise<void> {
-  const actor = getAuthUser(req);
+  const user = getAuthUser(req);
   const clientId = parseClientId(req.params.id);
   const ip = extractIp(req);
 
@@ -217,19 +229,23 @@ export async function deactivateClient(req: Request, res: Response): Promise<voi
   try {
     result = await deactivateClientForAdmin(clientId);
   } catch (err) {
-    writeAuditLog({
-      actorUserId: actor.id,
-      entityType: 'CLIENT',
-      entityId: clientId,
-      action: 'DEACTIVATE',
-      newValue: { success: false, reason: err instanceof Error ? err.message : 'unknown' },
-      ipAddress: ip,
-    }).catch((e: unknown) => console.error('[audit] deactivateClient failure:', e));
+    try {
+      await writeAuditLog({
+        actorUserId: user.id,
+        entityType: 'CLIENT',
+        entityId: clientId,
+        action: 'DEACTIVATE',
+        newValue: { success: false, reason: err instanceof Error ? err.message : 'unknown' },
+        ipAddress: ip,
+      });
+    } catch (auditErr) {
+      console.error('[audit] deactivateClient failure:', auditErr);
+    }
     throw err;
   }
 
   await writeAuditLog({
-    actorUserId: actor.id,
+    actorUserId: user.id,
     entityType: 'CLIENT',
     entityId: clientId,
     action: 'DEACTIVATE',

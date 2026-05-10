@@ -24,7 +24,7 @@ const options = {
     security: [{ bearerAuth: [] }],
   },
   // Scan all route files for JSDoc @swagger annotations
-  apis: ['./src/routes/**/*.js', './src/app.js'],
+  apis: ['./src/routes/**/*.ts', './src/routes/**/*.js', './src/app.ts', './src/app.js'],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
