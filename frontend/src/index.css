@@ -1187,6 +1187,66 @@ button:disabled {
   box-shadow: 0 0 0 3px rgba(107, 47, 170, 0.1);
 }
 
+.client-form__field--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.client-form__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.client-form__toggle-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.client-form__toggle-track {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: #D1D5DB;
+  transition: background 180ms ease;
+  flex-shrink: 0;
+}
+
+.client-form__toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: transform 180ms ease;
+}
+
+.client-form__toggle-input:checked ~ .client-form__toggle-track {
+  background: #0C69FF;
+}
+
+.client-form__toggle-input:checked ~ .client-form__toggle-track::after {
+  transform: translateX(-20px);
+}
+
+.client-form__toggle-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-body);
+  min-width: 40px;
+}
+
 .client-modal__cta {
   display: inline-flex;
   align-items: center;
