@@ -18,7 +18,7 @@ export function ClientForm({ id, initialValues, onSubmit }) {
           type="text"
           name="name"
           className="client-form__input"
-          placeholder="הזן שם הלקוח"
+          placeholder="מה שם הלקוח"
           defaultValue={v.name ?? ''}
           required
           autoFocus
@@ -30,7 +30,7 @@ export function ClientForm({ id, initialValues, onSubmit }) {
         <textarea
           name="contact_info"
           className="client-form__textarea"
-          placeholder="הזן בקצרה תאור הלקוח..."
+          placeholder="תאר בקצרה את הלקוח"
           defaultValue={v.contactInfo ?? ''}
         />
       </label>
