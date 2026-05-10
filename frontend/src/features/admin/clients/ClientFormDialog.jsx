@@ -44,7 +44,10 @@ export function ClientFormDialog({ mode = 'create', client, onClose, onSubmit, s
               </svg>
             </div>
             <div className="client-modal__header-text">
-              <h2 className="client-modal__title">{title}</h2>
+              <div className="client-modal__title-row">
+                <h2 className="client-modal__title">{title}</h2>
+                {isEdit && <span className="client-modal__edit-badge">עריכה</span>}
+              </div>
               <p className="client-modal__subtitle">{subtitle}</p>
             </div>
           </div>
