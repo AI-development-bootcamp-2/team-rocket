@@ -214,26 +214,31 @@ export async function archiveProject(
 
   const activeTaskCount = parseInt(count, 10);
 
-  // Soft delete: set is_active = false
-  const [archived] = await db<ProjectListRow>('projects')
-    .where('id', projectId)
-    .update({ is_active: false, updated_at: db.fn.now() })
-    .returning([
-      'id', 'name', 'is_active', 'client_id', 'manager_user_id',
-      'start_date', 'end_date', 'description', 'created_at', 'updated_at',
-    ]);
+  // Both writes must succeed together: if the permission_flags scrub fails after
+  // the project flip, scoped users would still see the archived project via stale
+  // scoped_project_ids entries — exactly the access leak the scrub exists to prevent.
+  const archived = await db.transaction(async (trx) => {
+    const [row] = await trx<ProjectListRow>('projects')
+      .where('id', projectId)
+      .update({ is_active: false, updated_at: db.fn.now() })
+      .returning([
+        'id', 'name', 'is_active', 'client_id', 'manager_user_id',
+        'start_date', 'end_date', 'description', 'created_at', 'updated_at',
+      ]);
 
-  // Remove this project from all permission_flags.scoped_project_ids (jsonb array) entries
-  await db.raw(
-    `UPDATE permission_flags
-     SET scoped_project_ids = (
-       SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)
-       FROM jsonb_array_elements(scoped_project_ids) AS t(elem)
-       WHERE elem::text::integer != ?
-     )
-     WHERE scoped_project_ids @> ?::jsonb`,
-    [projectId, JSON.stringify([projectId])],
-  );
+    await trx.raw(
+      `UPDATE permission_flags
+       SET scoped_project_ids = (
+         SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)
+         FROM jsonb_array_elements(scoped_project_ids) AS t(elem)
+         WHERE elem::text::integer != ?
+       )
+       WHERE scoped_project_ids @> ?::jsonb`,
+      [projectId, JSON.stringify([projectId])],
+    );
+
+    return row;
+  });
 
   return { project: archived, activeTaskCount };
 }
