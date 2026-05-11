@@ -137,44 +137,46 @@ export function TaskListPage() {
       actions={
         isAdmin ? (
           <Button onClick={() => setDialog({ type: 'form', mode: 'create', task: null })}>
-            + משימה חדשה
+             משימה חדשה
           </Button>
         ) : null
       }
     >
-      <TaskFilters
-        projectId={projectFilter}
-        status={statusFilter}
-        projects={projects}
-        onProjectChange={setProjectFilter}
-        onStatusChange={setStatusFilter}
-      />
+      <section className="users-page">
+        <TaskFilters
+          projectId={projectFilter}
+          status={statusFilter}
+          projects={projects}
+          onProjectChange={setProjectFilter}
+          onStatusChange={setStatusFilter}
+        />
 
-      {error ? (
-        <ErrorState
-          title="שגיאה בטעינה"
-          description={error}
-          actionLabel="נסה שוב"
-          onAction={loadTasks}
-        />
-      ) : loading ? (
-        <TasksTable tasks={[]} isAdmin={isAdmin} onEdit={() => {}} onArchive={() => {}} loading />
-      ) : tasks.length === 0 ? (
-        <EmptyState
-          title="אין משימות עדיין"
-          description={isAdmin ? 'צור את המשימה הראשונה לפרויקט קיים.' : 'אין משימות זמינות כרגע.'}
-          actionLabel={isAdmin ? '+ משימה חדשה' : undefined}
-          onAction={isAdmin ? () => setDialog({ type: 'form', mode: 'create', task: null }) : undefined}
-        />
-      ) : (
-        <TasksTable
-          tasks={tasks}
-          isAdmin={isAdmin}
-          onEdit={(task) => setDialog({ type: 'form', mode: 'edit', task })}
-          onArchive={(task) => setDialog({ type: 'archive', task })}
-          loading={false}
-        />
-      )}
+        {error ? (
+          <ErrorState
+            title="שגיאה בטעינה"
+            description={error}
+            actionLabel="נסה שוב"
+            onAction={loadTasks}
+          />
+        ) : loading ? (
+          <TasksTable tasks={[]} isAdmin={isAdmin} onEdit={() => {}} onArchive={() => {}} loading />
+        ) : tasks.length === 0 ? (
+          <EmptyState
+            title="אין משימות עדיין"
+            description={isAdmin ? 'צור את המשימה הראשונה לפרויקט קיים.' : 'אין משימות זמינות כרגע.'}
+            actionLabel={isAdmin ? '+ משימה חדשה' : undefined}
+            onAction={isAdmin ? () => setDialog({ type: 'form', mode: 'create', task: null }) : undefined}
+          />
+        ) : (
+          <TasksTable
+            tasks={tasks}
+            isAdmin={isAdmin}
+            onEdit={(task) => setDialog({ type: 'form', mode: 'edit', task })}
+            onArchive={(task) => setDialog({ type: 'archive', task })}
+            loading={false}
+          />
+        )}
+      </section>
 
       {dialog?.type === 'form' ? (
         <TaskFormDialog

@@ -207,6 +207,50 @@ describe('Clients API', () => {
       expect(names).toEqual(['Active Client', 'Archived Client']);
     });
 
+    it('200: each client item includes activeProjectsCount — counts only is_active=true projects', async () => {
+      const admin = await loginAndGetTokens({ email: 'admin-count@test.com', role: 'admin' });
+      const client = await insertClient({ name: 'Count Client' });
+      await insertProject({ clientId: client.id, isActive: true });
+      await insertProject({ clientId: client.id, isActive: true });
+      await insertProject({ clientId: client.id, isActive: false });
+
+      const res = await request(app)
+        .get('/clients')
+        .set('Authorization', `Bearer ${admin.accessToken}`);
+
+      expect(res.status).toBe(200);
+      const item = (res.body.data as Array<{ id: number; activeProjectsCount: number }>).find(
+        (c) => c.id === client.id,
+      );
+      expect(item?.activeProjectsCount).toBe(2);
+    });
+
+    it('200: ?is_active=true returns only active clients; ?is_active=false only inactive; omitting returns all', async () => {
+      const admin = await loginAndGetTokens({ email: 'admin-filter@test.com', role: 'admin' });
+      await insertClient({ name: 'Active Client', isActive: true });
+      await insertClient({ name: 'Inactive Client', isActive: false });
+
+      const active = await request(app)
+        .get('/clients?is_active=true')
+        .set('Authorization', `Bearer ${admin.accessToken}`);
+      expect(active.status).toBe(200);
+      expect((active.body.data as Array<{ isActive: boolean }>).every((c) => c.isActive)).toBe(true);
+      expect(active.body.data).toHaveLength(1);
+
+      const inactive = await request(app)
+        .get('/clients?is_active=false')
+        .set('Authorization', `Bearer ${admin.accessToken}`);
+      expect(inactive.status).toBe(200);
+      expect((inactive.body.data as Array<{ isActive: boolean }>).every((c) => !c.isActive)).toBe(true);
+      expect(inactive.body.data).toHaveLength(1);
+
+      const all = await request(app)
+        .get('/clients')
+        .set('Authorization', `Bearer ${admin.accessToken}`);
+      expect(all.status).toBe(200);
+      expect(all.body.data).toHaveLength(2);
+    });
+
     it('200: user sees only clients reachable via their user_task_assignments', async () => {
       const userLogin = await loginAndGetTokens({ email: 'scoped-user@test.com', role: 'user' });
 

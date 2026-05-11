@@ -37,7 +37,21 @@ app.use(errorMiddleware);
 // ── DB helpers ────────────────────────────────────────────────────────────────
 
 async function clearTables(): Promise<void> {
-  await db.raw('TRUNCATE users, audit_logs RESTART IDENTITY CASCADE');
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await db.raw('TRUNCATE users, audit_logs RESTART IDENTITY CASCADE');
+      return;
+    } catch (err: unknown) {
+      const isDeadlock =
+        err instanceof Error &&
+        (err.message.includes('deadlock') || (err as { code?: string }).code === '40P01');
+      if (isDeadlock && attempt < 3) {
+        await new Promise((r) => setTimeout(r, 30 * attempt));
+        continue;
+      }
+      throw err;
+    }
+  }
 }
 
 interface UserSeed {
