@@ -1,4 +1,4 @@
-export function Modal({ title, icon = 'O', children, onClose, footer, size = 'default' }) {
+export function Modal({ title, subtitle = null, headerExtra = null, icon = 'O', children, onClose, footer, size = 'default' }) {
   return (
     <div className="ui-modal-backdrop" role="presentation" onClick={onClose}>
       <section
@@ -13,12 +13,18 @@ export function Modal({ title, icon = 'O', children, onClose, footer, size = 'de
         </button>
 
         <header className="ui-modal__header">
-          <div>
-            <h2 className="ui-modal__title">{title}</h2>
+          <div className="ui-modal__header-group">
+            {icon && (
+              <div className="ui-modal__icon" aria-hidden="true">
+                {icon}
+              </div>
+            )}
+            <div className="ui-modal__header-text">
+              <h2 className="ui-modal__title">{title}</h2>
+              {subtitle && <p className="ui-modal__subtitle">{subtitle}</p>}
+            </div>
           </div>
-          <div className="ui-modal__icon" aria-hidden="true">
-            {icon}
-          </div>
+          {headerExtra}
         </header>
 
         <div className="ui-modal__content">{children}</div>
