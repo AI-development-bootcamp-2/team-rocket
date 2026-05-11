@@ -316,8 +316,6 @@ export function UserListPage() {
           mode={dialog.mode}
           user={dialog.user}
           permissionFlag={dialog.permissionFlag}
-          projects={projects}
-          loadingMeta={dialogMetaLoading}
           saving={dialogLoading}
           onClose={() => setDialog(null)}
           onSubmit={handleSaveUser}

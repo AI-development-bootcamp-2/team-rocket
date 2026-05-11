@@ -9,7 +9,7 @@ export function UserFormDialog({ mode = 'create', user, permissionFlag, onClose,
     ? 'עדכון פרטי המשתמש במערכת'
     : 'כאן תיצור את המשתמש החדש שיופיע במערכת';
 
-  const [isFormValid, setIsFormValid] = useState(false);
+  const [isFormValid, setIsFormValid] = useState(isEdit);
   const isReady = isFormValid;
 
   const formKey = JSON.stringify(getInitialUserFormState(user, permissionFlag));
@@ -42,7 +42,6 @@ export function UserFormDialog({ mode = 'create', user, permissionFlag, onClose,
               <p className="client-modal__subtitle">{subtitle}</p>
             </div>
           </div>
-          {isEdit && <span className="client-modal__edit-badge">עריכה</span>}
         </header>
 
         <UserForm
