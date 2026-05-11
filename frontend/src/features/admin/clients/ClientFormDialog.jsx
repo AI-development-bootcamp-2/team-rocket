@@ -63,6 +63,7 @@ export function ClientFormDialog({ mode = 'create', client, onClose, onSubmit, s
 
         <ClientForm
           id="client-form"
+          mode={mode}
           initialValues={client}
           onSubmit={onSubmit}
           onNameChange={setNameValue}
