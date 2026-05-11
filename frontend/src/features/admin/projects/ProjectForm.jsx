@@ -1,16 +1,35 @@
+import { useState } from 'react';
 import { Input } from '../../../components/ui/Input.jsx';
 import { Select } from '../../../components/ui/Select.jsx';
 
 export function ProjectForm({ id, initialValues, clients, users, onSubmit, onValuesChange }) {
+  const [errors, setErrors] = useState({});
+
   function handleSubmit(e) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const name = (fd.get('name') ?? '').trim();
+    const clientId = fd.get('client_id');
+    const startDate = fd.get('start_date') || null;
+    const endDate = fd.get('end_date') || null;
+
+    const nextErrors = {};
+    if (!name) nextErrors.name = 'שם הפרויקט הוא שדה חובה';
+    else if (name.length > 255) nextErrors.name = 'שם הפרויקט לא יכול לעלות על 255 תווים';
+    if (!clientId) nextErrors.client_id = 'יש לבחור לקוח';
+    if (startDate && endDate && endDate < startDate) {
+      nextErrors.end_date = 'תאריך הסיום חייב להיות אחרי תאריך ההתחלה';
+    }
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
     onSubmit({
-      name: fd.get('name'),
-      client_id: Number(fd.get('client_id')),
+      name,
+      client_id: Number(clientId),
       manager_user_id: fd.get('manager_user_id') ? Number(fd.get('manager_user_id')) : null,
-      start_date: fd.get('start_date') || null,
-      end_date: fd.get('end_date') || null,
+      start_date: startDate,
+      end_date: endDate,
       description: fd.get('description') || null,
     });
   }
@@ -34,6 +53,7 @@ export function ProjectForm({ id, initialValues, clients, users, onSubmit, onVal
           defaultValue={v.name ?? ''}
           required
         />
+        {errors.name && <span className="ui-field__error">{errors.name}</span>}
       </div>
 
       <div className="user-form__field">
@@ -45,6 +65,7 @@ export function ProjectForm({ id, initialValues, clients, users, onSubmit, onVal
             </option>
           ))}
         </Select>
+        {errors.client_id && <span className="ui-field__error">{errors.client_id}</span>}
       </div>
 
       <div className="user-form__field">
@@ -75,6 +96,7 @@ export function ProjectForm({ id, initialValues, clients, users, onSubmit, onVal
             type="date"
             defaultValue={v.endDate ?? ''}
           />
+          {errors.end_date && <span className="ui-field__error">{errors.end_date}</span>}
         </div>
       </div>
 
