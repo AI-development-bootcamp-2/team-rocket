@@ -137,7 +137,7 @@ export function TaskListPage() {
       actions={
         isAdmin ? (
           <Button onClick={() => setDialog({ type: 'form', mode: 'create', task: null })}>
-            + משימה חדשה
+             משימה חדשה
           </Button>
         ) : null
       }

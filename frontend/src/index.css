@@ -700,13 +700,25 @@ button:disabled {
 }
 
 .ui-modal__icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.close-task-dialog .ui-modal__icon {
+  position: absolute;
+  right: 24px;
+  top: 24px;
+  width: 48px;
+  height: 48px;
   border-radius: 8px;
-  background: var(--color-nav-button);
-  color: #fff;
+  background: #E53E3E;
+  flex-shrink: 0;
+}
+
+.close-task-dialog .ui-modal__header {
+  padding-right: 80px;
 }
 
 .ui-modal__content {
@@ -1209,11 +1221,10 @@ button:disabled {
 }
 
 .client-modal__header {
-  position: relative;
   display: flex;
   flex-direction: row;
-  justify-content: flex-start;
-  align-items: flex-start;
+  justify-content: space-between;
+  align-items: center;
   height: 48px;
 }
 
@@ -1268,10 +1279,7 @@ button:disabled {
 }
 
 .client-modal__edit-badge {
-  position: absolute;
-  left: 150px;
-  top: -2px;
-  z-index: 1;
+  flex-shrink: 0;
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -1289,7 +1297,6 @@ button:disabled {
 
 .client-modal__title {
   margin: 0;
-  width: 280px;
   height: 24px;
   font-family: var(--font-base);
   font-style: normal;
@@ -1314,9 +1321,6 @@ button:disabled {
   color: #212525;
 }
 
-.client-modal__footer {
-  /* container gap handles spacing */
-}
 
 .client-form {
   display: flex;
