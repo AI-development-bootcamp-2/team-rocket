@@ -145,7 +145,7 @@ export function ProjectListPage() {
       actions={
         isAdmin && (
           <Button onClick={() => setDialog({ type: 'form', mode: 'create', project: null })}>
-            + פרויקט חדש
+            פרויקט חדש
           </Button>
         )
       }
@@ -172,7 +172,7 @@ export function ProjectListPage() {
         <EmptyState
           title="אין פרויקטים עדיין"
           description={isAdmin ? 'צור את הפרויקט הראשון.' : 'אין פרויקטים זמינים.'}
-          actionLabel={isAdmin ? '+ פרויקט חדש' : undefined}
+          actionLabel={isAdmin ? ' פרויקט חדש' : undefined}
           onAction={isAdmin ? () => setDialog({ type: 'form', mode: 'create', project: null }) : undefined}
         />
       ) : (
