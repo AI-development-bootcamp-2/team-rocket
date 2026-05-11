@@ -28,14 +28,6 @@ export function Modal({ title, subtitle = null, headerExtra = null, icon = 'O', 
               <h2 className="ui-modal__title">{title}</h2>
               {subtitle && <p className="ui-modal__subtitle">{subtitle}</p>}
             </div>
-
-          <div>
-            <h2 className="ui-modal__title">{title}</h2>
-            {subtitle ? <p className="ui-modal__subtitle">{subtitle}</p> : null}
-          </div>
-          <div className="ui-modal__icon" aria-hidden="true">
-            {icon}
-
           </div>
           {headerExtra}
         </header>
