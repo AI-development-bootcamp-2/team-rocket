@@ -1,3 +1,4 @@
+
 const SAFE_CSS_CLASS = /[^a-zA-Z0-9_\- ]/g;
 export function Modal({ title, subtitle = null, headerExtra = null, icon = 'O', children, onClose, footer, size = 'default', className = '' }) {
   const safeClassName = className.replace(SAFE_CSS_CLASS, '');

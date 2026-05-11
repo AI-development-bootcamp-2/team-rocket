@@ -88,8 +88,11 @@ export function ClientListPage() {
   async function handleArchiveConfirmed() {
     setDialogLoading(true);
     try {
-      await archiveClient(dialog.client.id);
-      setToast(createToast('הלקוח הועבר לארכיון בהצלחה.', 'success'));
+      const result = await archiveClient(dialog.client.id);
+      setToast(createToast(
+        result?.warning ? `הלקוח הועבר לארכיון. ${result.warning}` : 'הלקוח הועבר לארכיון בהצלחה.',
+        result?.warning ? 'info' : 'success'
+      ));
       setDialog(null);
       await loadClients();
     } catch (archiveError) {
@@ -132,9 +135,7 @@ export function ClientListPage() {
               actionLabel="יצירת לקוח"
               onAction={() => setDialog({ mode: 'create', client: null })}
             />
-          ) : null}
-
-          {!error ? (
+          ) : !loading && !error && clients.length > 0 ? (
             <div className="users-page__desktop">
               <ClientsTable
                 clients={clients}

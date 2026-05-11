@@ -1,8 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-export function ClientForm({ id, initialValues, onSubmit, onNameChange }) {
+export function ClientForm({ id, mode = 'create', initialValues, onSubmit, onNameChange }) {
   const v = initialValues ?? {};
   const [active, setActive] = useState(v.is_active ?? true);
+  const isEdit = mode === 'edit';
+
+  useEffect(() => {
+    setActive(v.is_active ?? true);
+  }, [v.is_active]);
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -10,7 +15,7 @@ export function ClientForm({ id, initialValues, onSubmit, onNameChange }) {
     onSubmit({
       name: fd.get('name')?.toString().trim() ?? '',
       contact_info: fd.get('contact_info')?.toString().trim() || null,
-      is_active: active,
+      is_active: isEdit ? active : true,
     });
   }
 
@@ -40,19 +45,21 @@ export function ClientForm({ id, initialValues, onSubmit, onNameChange }) {
         />
       </label>
 
-      <div className="client-form__field client-form__field--row">
-        <span className="client-form__label">סטטוס לקוח</span>
-        <label className="client-form__toggle">
-          <input
-            type="checkbox"
-            className="client-form__toggle-input"
-            checked={active}
-            onChange={(e) => setActive(e.target.checked)}
-          />
-          <span className="client-form__toggle-track" aria-hidden="true" />
-          <span className="client-form__toggle-label">{active ? 'פעיל' : 'לא פעיל'}</span>
-        </label>
-      </div>
+      {isEdit && (
+        <div className="client-form__field client-form__field--row">
+          <span className="client-form__label">סטטוס לקוח</span>
+          <label className="client-form__toggle">
+            <input
+              type="checkbox"
+              className="client-form__toggle-input"
+              checked={active}
+              onChange={(e) => setActive(e.target.checked)}
+            />
+            <span className="client-form__toggle-track" aria-hidden="true" />
+            <span className="client-form__toggle-label">{active ? 'פעיל' : 'לא פעיל'}</span>
+          </label>
+        </div>
+      )}
     </form>
   );
 }
