@@ -1,6 +1,4 @@
-
 const SAFE_CSS_CLASS = /[^a-zA-Z0-9_\- ]/g;
-
 export function Modal({ title, subtitle = null, headerExtra = null, icon = 'O', children, onClose, footer, size = 'default', className = '' }) {
   const safeClassName = className.replace(SAFE_CSS_CLASS, '');
   return (
@@ -17,6 +15,7 @@ export function Modal({ title, subtitle = null, headerExtra = null, icon = 'O', 
         </button>
 
         <header className="ui-modal__header">
+
           <div className="ui-modal__header-group">
             {icon && (
               <div className="ui-modal__icon" aria-hidden="true">
