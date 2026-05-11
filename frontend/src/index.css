@@ -1381,6 +1381,7 @@ button:disabled {
 }
 
 .client-form__toggle {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1425,6 +1426,10 @@ button:disabled {
 
 .client-form__toggle-input:checked ~ .client-form__toggle-track::after {
   transform: translateX(-20px);
+}
+
+.client-form__toggle-input:focus-visible ~ .client-form__toggle-track {
+  box-shadow: 0 0 0 3px rgba(12,105,255,0.35);
 }
 
 .client-form__toggle-label {
