@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ClientForm } from './ClientForm.jsx';
 
 export function ClientFormDialog({ mode = 'create', client, onClose, onSubmit, saving }) {
@@ -6,7 +7,9 @@ export function ClientFormDialog({ mode = 'create', client, onClose, onSubmit, s
   const subtitle = isEdit
     ? 'עדכון פרטי הלקוח במערכת'
     : 'כאן תיצור את הלקוח החדש שיופיע במערכת';
-  const cta = isEdit ? 'שמירה' : 'צור לקוח חדש';
+
+  const [nameValue, setNameValue] = useState(client?.name ?? '');
+  const isReady = nameValue.trim().length > 0;
 
   return (
     <div
@@ -21,6 +24,16 @@ export function ClientFormDialog({ mode = 'create', client, onClose, onSubmit, s
         aria-label={title}
         onClick={(event) => event.stopPropagation()}
       >
+        <button
+          type="button"
+          className="client-modal__close"
+          onClick={onClose}
+          aria-label="סגירה"
+        >
+          <svg width="11.67" height="11.67" viewBox="0 0 11.67 11.67" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 0L11.67 11.67M11.67 0L0 11.67" stroke="#212525" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </button>
         <header className="client-modal__header">
           <div className="client-modal__header-group">
             <div className="client-modal__icon" aria-hidden="true">
@@ -45,22 +58,14 @@ export function ClientFormDialog({ mode = 'create', client, onClose, onSubmit, s
               <p className="client-modal__subtitle">{subtitle}</p>
             </div>
           </div>
-          <button
-            type="button"
-            className="client-modal__close"
-            onClick={onClose}
-            aria-label="סגירה"
-          >
-            <svg width="11.67" height="11.67" viewBox="0 0 11.67 11.67" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M0 0L11.67 11.67M11.67 0L0 11.67" stroke="#212525" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
+          {isEdit && <span className="client-modal__edit-badge">עריכה</span>}
         </header>
 
         <ClientForm
           id="client-form"
           initialValues={client}
           onSubmit={onSubmit}
+          onNameChange={setNameValue}
         />
 
         <footer className="client-modal__footer">
@@ -68,13 +73,14 @@ export function ClientFormDialog({ mode = 'create', client, onClose, onSubmit, s
             type="submit"
             form="client-form"
             className="client-modal__cta"
-            disabled={saving}
+            disabled={!isReady || saving}
+            style={isReady ? { backgroundColor: '#0C69FF', pointerEvents: saving ? 'none' : undefined } : { pointerEvents: 'none' }}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="1.5"/>
               <path d="M12 8V16M8 12H16" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
-            <span>{saving ? 'שומר...' : cta}</span>
+            <span>{saving ? 'שומר...' : 'שמירה'}</span>
           </button>
         </footer>
       </section>

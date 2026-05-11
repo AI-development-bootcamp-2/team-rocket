@@ -1,14 +1,18 @@
-export function ClientForm({ id, initialValues, onSubmit }) {
+import { useState } from 'react';
+
+export function ClientForm({ id, initialValues, onSubmit, onNameChange }) {
+  const v = initialValues ?? {};
+  const [active, setActive] = useState(v.is_active ?? true);
+
   function handleSubmit(event) {
     event.preventDefault();
     const fd = new FormData(event.currentTarget);
     onSubmit({
       name: fd.get('name')?.toString().trim() ?? '',
       contact_info: fd.get('contact_info')?.toString().trim() || null,
+      is_active: active,
     });
   }
-
-  const v = initialValues ?? {};
 
   return (
     <form id={id} className="client-form" onSubmit={handleSubmit} noValidate>
@@ -22,18 +26,33 @@ export function ClientForm({ id, initialValues, onSubmit }) {
           defaultValue={v.name ?? ''}
           required
           autoFocus
+          onChange={(e) => onNameChange?.(e.target.value)}
         />
       </label>
 
       <label className="client-form__field">
-        <span className="client-form__label">תאור הלקוח</span>
+        <span className="client-form__label">פרטי קשר</span>
         <textarea
           name="contact_info"
           className="client-form__textarea"
-          placeholder="תאר בקצרה את הלקוח"
-          defaultValue={v.contactInfo ?? ''}
+          placeholder="פרטי קשר של הלקוח"
+          defaultValue={v.contact_info ?? ''}
         />
       </label>
+
+      <div className="client-form__field client-form__field--row">
+        <span className="client-form__label">סטטוס לקוח</span>
+        <label className="client-form__toggle">
+          <input
+            type="checkbox"
+            className="client-form__toggle-input"
+            checked={active}
+            onChange={(e) => setActive(e.target.checked)}
+          />
+          <span className="client-form__toggle-track" aria-hidden="true" />
+          <span className="client-form__toggle-label">{active ? 'פעיל' : 'לא פעיל'}</span>
+        </label>
+      </div>
     </form>
   );
 }
