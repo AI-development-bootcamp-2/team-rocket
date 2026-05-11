@@ -48,13 +48,18 @@ function toClientListItem(client: ClientRow) {
     isActive: client.is_active,
     createdAt: client.created_at,
     updatedAt: client.updated_at,
+    activeProjectsCount: client.active_projects_count ?? null,
   };
 }
 
 /** GET /clients — admin gets every client, user gets only assignment-reachable active ones. */
 export async function getClients(req: Request, res: Response): Promise<void> {
   const user = getAuthUser(req);
-  const clients = isAdmin(user) ? await listAllClients() : await listClientsForUser(user.id);
+  const isActiveFilter =
+    req.query.is_active === 'true' ? true : req.query.is_active === 'false' ? false : null;
+  const clients = isAdmin(user)
+    ? await listAllClients(isActiveFilter)
+    : await listClientsForUser(user.id);
   res.json({ data: clients.map(toClientListItem) });
 }
 

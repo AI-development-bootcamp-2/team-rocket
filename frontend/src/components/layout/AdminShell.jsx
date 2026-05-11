@@ -4,14 +4,6 @@ import { useAuth } from '../../contexts/AuthContext';
 export function AdminShell({ title, subtitle, actions, children }) {
   const { logout, user } = useAuth();
 
-  const initials = user?.fullName
-    ? user.fullName
-        .split(' ')
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join('')
-    : '?';
-
   return (
     <div className="admin-shell" dir="rtl" lang="he">
       <aside className="admin-sidebar">
