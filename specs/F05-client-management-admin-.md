@@ -22,23 +22,26 @@ Admin CRUD for clients: create, edit, soft delete (archive). Clients default to 
 - [x] PUT /clients/:id — update (Admin only): `name`, `contact_info`, `client_number`, `is_active`
 - [x] DELETE /clients/:id — soft delete: set is_active=false (Admin only). Warning if has active projects. **Archiving a client removes all its projects and tasks from all user-facing reporting dropdowns immediately (GET /projects and GET /tasks filter by client.is_active=true).**
 - [x] All mutations audit logged
+- [ ] GET /clients — include `activeProjectsCount` in each client response (count of projects where `is_active=true` belonging to that client)
+- [ ] GET /clients — support `?is_active=true|false` query param to filter results; omitting the param returns all clients
 
 ### 2. Frontend: Client list page
 
-- [ ] Create ClientListPage.jsx with table: name, contact info, status, project count, actions
-- [ ] Filter by active/inactive
-- [x] Create/edit via modal form (ClientForm.jsx)
-- [ ] Archive confirmation with warning: 'This client has X active projects'
+- [x] Create ClientListPage.jsx with table: name, contact info, status, project count, actions
+- [x] Filter by active/inactive
+- [x] Create client via modal form (ClientForm.jsx): שם לקוח (required), פרטי קשר (optional), is_active defaults to true
+- [x] Edit client via modal form (ClientForm.jsx): update name, contact info, toggle is_active status
+- [x] Archive confirmation with warning: 'This client has X active projects'
 - [ ] Mobile responsive
 
 ### 2b. Required UI states (v3.2 §14.1)
 
-- [ ] **Loading**: skeleton while list fetches
-- [ ] **Empty**: 'No clients yet' with create button
-- [ ] **Save success**: toast after create/edit
-- [ ] **Delete confirm**: dialog before archive ('All projects and tasks will be hidden from user dropdowns')
-- [ ] **Validation error**: duplicate name shows inline warning (not a block — allow with warning)
-- [ ] **Server error**: toast on 500
+- [x] **Loading**: skeleton while list fetches
+- [x] **Empty**: 'No clients yet' with create button
+- [x] **Save success**: toast after create/edit
+- [x] **Delete confirm**: dialog before archive ('All projects and tasks will be hidden from user dropdowns')
+- [x] **Validation error**: duplicate name shows inline warning (not a block — allow with warning)
+- [x] **Server error**: toast on 500
 
 ### 3. Tests
 
