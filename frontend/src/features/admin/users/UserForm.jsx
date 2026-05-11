@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Input } from '../../../components/ui/Input.jsx';
 import { Select } from '../../../components/ui/Select.jsx';
 import { getInitialUserFormState } from './userFormState.js';
@@ -10,6 +10,7 @@ export function UserForm({
   user,
   permissionFlag,
   onSubmit,
+  onValidChange,
 }) {
   const [form, setForm] = useState(getInitialUserFormState(user, permissionFlag));
 
@@ -38,6 +39,8 @@ export function UserForm({
   }, [form, mode]);
 
   const hasErrors = Object.values(errors).some(Boolean);
+
+  useEffect(() => { onValidChange?.(!hasErrors); }, [hasErrors, onValidChange]);
 
   function setField(name, value) {
     setForm((current) => ({ ...current, [name]: value }));

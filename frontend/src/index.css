@@ -1322,3 +1322,33 @@ button:disabled {
   background: var(--color-disabled);
   cursor: not-allowed;
 }
+
+.user-modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 40px;
+  gap: 40px;
+  width: 480px;
+  max-width: calc(100vw - 48px);
+  border-radius: 20px;
+  background: #FFFFFF;
+  box-shadow:
+    0px 454px 182px rgba(0, 0, 0, 0.01),
+    0px 255px 153px rgba(0, 0, 0, 0.05),
+    0px 114px 114px rgba(0, 0, 0, 0.09),
+    0px 28px 62px rgba(0, 0, 0, 0.10);
+  direction: rtl;
+}
+
+.user-modal .ui-input,
+.user-modal .ui-select {
+  height: 48px;
+  text-align: right;
+  direction: rtl;
+}
+
+.user-modal .ui-field__label {
+  text-align: right;
+}
