@@ -14,13 +14,13 @@
 /* ── Main ── */
 .main {
   margin-top: 80px; /* matches header height */
-  padding: 24px 24px 40px;
-  max-width: 900px;
+  padding: 26px 46px 40px;
+  max-width: 1180px;
   width: 100%;
   margin-inline: auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
 /* ── Top Section Header (Month nav + Title) ── */
@@ -29,7 +29,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 20px;
+  margin-bottom: 8px;
 }
 
 .monthNavSection {
@@ -38,6 +38,13 @@
   justify-content: center;
   gap: 12px;
   flex-shrink: 0;
+  width: 192px;
+  height: 44px;
+  padding: 4px 16px 8px;
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 1000px;
+  box-sizing: border-box;
 }
 
 .monthNavArrow {
@@ -79,16 +86,17 @@
 
 .pageTitle {
   margin: 0;
-  font-size: 18px;
+  font-size: 38px;
   font-weight: 700;
-  color: #111827;
+  color: #2e3446;
+  line-height: 1.05;
 }
 
 .pageSubtitle {
   margin: 0;
-  font-size: 13px;
-  color: #6b7280;
-  font-weight: 400;
+  font-size: 15px;
+  color: #9197a6;
+  font-weight: 500;
 }
 
 /* ── Summary card ── */
@@ -365,7 +373,8 @@
 .entriesSection {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  width: 100%;
 }
 
 .entriesHeader {
