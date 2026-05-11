@@ -1,8 +1,8 @@
-export function Modal({ title, icon = 'O', children, onClose, footer, size = 'default' }) {
+export function Modal({ title, icon = 'O', children, onClose, footer, size = 'default', className = '' }) {
   return (
     <div className="ui-modal-backdrop" role="presentation" onClick={onClose}>
       <section
-        className={`ui-modal${size === 'narrow' ? ' ui-modal--narrow' : ''}`}
+        className={`ui-modal${size === 'narrow' ? ' ui-modal--narrow' : ''}${className ? ` ${className}` : ''}`}
         role="dialog"
         aria-modal="true"
         aria-label={title}

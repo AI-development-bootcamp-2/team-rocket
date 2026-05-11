@@ -1,7 +1,7 @@
 import { Input } from '../../../components/ui/Input.jsx';
 import { Select } from '../../../components/ui/Select.jsx';
 
-export function TaskForm({ id, initialValues, projects, onSubmit, mode }) {
+export function TaskForm({ id, initialValues, projects, onSubmit, mode, onNameChange }) {
   function handleSubmit(e) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -25,6 +25,8 @@ export function TaskForm({ id, initialValues, projects, onSubmit, mode }) {
         name="name"
         defaultValue={v.name ?? ''}
         required
+        autoFocus
+        onChange={(e) => onNameChange?.(e.target.value)}
       />
 
       <Select
@@ -70,15 +72,16 @@ export function TaskForm({ id, initialValues, projects, onSubmit, mode }) {
         </div>
       </div>
 
-      <div className="user-form__field">
-        <label className="ui-input__label">תיאור המשימה</label>
+      <label className="ui-field">
+        <span className="ui-field__label">תיאור המשימה</span>
         <textarea
           name="description"
-          className="ui-input__control"
+          className="ui-input"
           style={{ minHeight: 80, resize: 'vertical' }}
+          placeholder="תיאור קצר של המשימה"
           defaultValue={v.description ?? ''}
         />
-      </div>
+      </label>
     </form>
   );
 }
