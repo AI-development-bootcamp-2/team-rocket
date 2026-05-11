@@ -40,11 +40,19 @@ export function ProjectRowActions({ project, isAdmin, onEdit, onArchive }) {
         type="button"
         className="user-row-actions__button user-row-actions__button--danger"
         onClick={() => onArchive(project)}
+<<<<<<< fix/archive-project-labels
         disabled={archiveDisabled}
         aria-label={`העברה לארכיון ${project.name}`}
         data-tooltip={archiveTooltip}
       >
         <ArchiveIcon />
+=======
+        disabled={!isAdmin || !project.isActive}
+        title={!isAdmin ? 'Admin only' : !project.isActive ? 'פרויקט כבר מושבת' : undefined}
+        aria-label={`העברה לארכיון ${project.name}`}
+      >
+        העברה לארכיון
+>>>>>>> main
       </button>
     </div>
   );
