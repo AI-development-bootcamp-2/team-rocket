@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export function ClientForm({ id, mode = 'create', initialValues, onSubmit, onNameChange }) {
   const v = initialValues ?? {};
   const [active, setActive] = useState(v.is_active ?? true);
   const isEdit = mode === 'edit';
+
+  useEffect(() => {
+    setActive(v.is_active ?? true);
+  }, [v.is_active]);
 
   function handleSubmit(event) {
     event.preventDefault();
