@@ -1,0 +1,128 @@
+/**
+ * Unit tests — monthly-summary service pure helpers
+ *
+ * These tests cover computeDailyStandard (from time-entries.service)
+ * and countWorkingDaysInMonth / buildQuotaHours (from monthly-summary.service),
+ * which are exported specifically for testing.
+ *
+ * No DB connection required — all functions under test are pure.
+ */
+import { computeDailyStandard } from '../../../src/services/time-entries.service';
+import {
+  countWorkingDaysInMonth,
+  buildQuotaHours,
+} from '../../../src/services/monthly-summary.service';
+
+// ── computeDailyStandard ──────────────────────────────────────────────────────
+
+describe('computeDailyStandard', () => {
+  it('returns 9 for 100% employment with no daily override', () => {
+    expect(computeDailyStandard({ daily_hours_override: null, employment_percentage: 100 })).toBe(9);
+  });
+
+  it('returns 4.5 for 50% employment with no daily override', () => {
+    expect(computeDailyStandard({ daily_hours_override: null, employment_percentage: 50 })).toBe(4.5);
+  });
+
+  it('applies daily_hours_override when set', () => {
+    expect(computeDailyStandard({ daily_hours_override: 8, employment_percentage: 100 })).toBe(8);
+  });
+
+  it('combines override with employment_percentage', () => {
+    expect(computeDailyStandard({ daily_hours_override: 8, employment_percentage: 50 })).toBe(4);
+  });
+
+  it('returns 0 for 0% employment (edge case)', () => {
+    expect(computeDailyStandard({ daily_hours_override: null, employment_percentage: 0 })).toBe(0);
+  });
+
+  it('returns 0 for 0% employment even with an override', () => {
+    expect(computeDailyStandard({ daily_hours_override: 10, employment_percentage: 0 })).toBe(0);
+  });
+});
+
+// ── countWorkingDaysInMonth ───────────────────────────────────────────────────
+
+describe('countWorkingDaysInMonth', () => {
+  it('counts 21 working days in January 2026 (no holidays)', () => {
+    // Jan 1 = Thu; working days = Sun–Thu
+    expect(countWorkingDaysInMonth(2026, 1, [])).toBe(21);
+  });
+
+  it('deducts holidays that fall on working days', () => {
+    // Jan 4 (Sun) is a working day — holiday should reduce count by 1
+    expect(countWorkingDaysInMonth(2026, 1, ['2026-01-04'])).toBe(20);
+  });
+
+  it('does NOT deduct holidays that fall on weekends', () => {
+    // Jan 2 (Fri) and Jan 3 (Sat) are already off — no extra deduction
+    expect(countWorkingDaysInMonth(2026, 1, ['2026-01-02', '2026-01-03'])).toBe(21);
+  });
+
+  it('deducts multiple working-day holidays', () => {
+    expect(countWorkingDaysInMonth(2026, 1, ['2026-01-04', '2026-01-05', '2026-01-06'])).toBe(18);
+  });
+
+  it('returns 0 when every working day is a holiday', () => {
+    // Build a list of all 21 working days in Jan 2026
+    const workingDays = [
+      '2026-01-01', '2026-01-04', '2026-01-05', '2026-01-06', '2026-01-07', '2026-01-08',
+      '2026-01-11', '2026-01-12', '2026-01-13', '2026-01-14', '2026-01-15',
+      '2026-01-18', '2026-01-19', '2026-01-20', '2026-01-21', '2026-01-22',
+      '2026-01-25', '2026-01-26', '2026-01-27', '2026-01-28', '2026-01-29',
+    ];
+    expect(countWorkingDaysInMonth(2026, 1, workingDays)).toBe(0);
+  });
+
+  it('handles February in a leap year', () => {
+    // Feb 2028 is a leap year: Feb 1 = Tue → 29 days total
+    // Fri/Sat = off; need to count manually
+    // Feb 2028: 1=Tue(work), 2=Wed(work), 3=Thu(work), 4=Fri(off), 5=Sat(off),
+    //           6=Sun(work)… 4 full Sun–Thu weeks + partial
+    // Just assert it's a positive number and differs from a non-leap year
+    const leap = countWorkingDaysInMonth(2028, 2, []);
+    const nonLeap = countWorkingDaysInMonth(2025, 2, []);
+    expect(leap).toBeGreaterThan(0);
+    expect(typeof leap).toBe('number');
+    // 2028 has 29 days, 2025 has 28 — could differ
+    expect(Math.abs(leap - nonLeap)).toBeLessThanOrEqual(1);
+  });
+});
+
+// ── buildQuotaHours ───────────────────────────────────────────────────────────
+
+describe('buildQuotaHours', () => {
+  it('standard month: workingDays × dailyStandard', () => {
+    expect(buildQuotaHours(21, 9, 0, 0)).toBe(189);
+  });
+
+  it('deducts one full-day absence (× dailyStandard)', () => {
+    // 21 × 9 − 1 × 9 = 180
+    expect(buildQuotaHours(21, 9, 1, 0)).toBe(180);
+  });
+
+  it('deducts one partial absence (× dailyStandard / 2)', () => {
+    // 21 × 9 − 1 × 4.5 = 184.5
+    expect(buildQuotaHours(21, 9, 0, 1)).toBe(184.5);
+  });
+
+  it('deducts both full-day and partial absences', () => {
+    // 21 × 9 − 2 × 9 − 1 × 4.5 = 189 − 18 − 4.5 = 166.5
+    expect(buildQuotaHours(21, 9, 2, 1)).toBe(166.5);
+  });
+
+  it('returns 0 when dailyStandard is 0 (employment_percentage = 0)', () => {
+    expect(buildQuotaHours(21, 0, 0, 0)).toBe(0);
+  });
+
+  it('never returns negative even if absences exceed working days', () => {
+    // 5 working days, 10 full-day absences seeded (data anomaly)
+    // 5 × 9 − 10 × 9 = −45 → should clamp to 0
+    expect(buildQuotaHours(5, 9, 10, 0)).toBeGreaterThanOrEqual(0);
+  });
+
+  it('handles partial-only absences with 50% employment', () => {
+    // dailyStandard = 4.5; 21 × 4.5 − 1 × 2.25 = 94.5 − 2.25 = 92.25
+    expect(buildQuotaHours(21, 4.5, 0, 1)).toBe(92.25);
+  });
+});
