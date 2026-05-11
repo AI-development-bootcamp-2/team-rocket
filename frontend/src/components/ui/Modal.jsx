@@ -1,6 +1,6 @@
 const SAFE_CSS_CLASS = /[^a-zA-Z0-9_\- ]/g;
 
-export function Modal({ title, subtitle, icon = 'O', children, onClose, footer, size = 'default', className = '' }) {
+export function Modal({ title, subtitle = undefined, icon = 'O', children, onClose, footer, size = 'default', className = '' }) {
   const safeClassName = className.replace(SAFE_CSS_CLASS, '');
   return (
     <div className="ui-modal-backdrop" role="presentation" onClick={onClose}>

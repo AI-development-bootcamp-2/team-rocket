@@ -1014,6 +1014,21 @@ button:disabled {
   color: var(--color-text-secondary);
 }
 
+/* ── Archive Project Dialog ────────────────────────────── */
+.archive-project-dialog .ui-modal__header {
+  padding-right: calc(24px + 48px + 12px);
+  align-items: flex-start;
+}
+
+.archive-project-dialog .ui-modal__icon {
+  position: absolute;
+  right: 24px;
+  top: 24px;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
 .dialog-copy__password {
   direction: ltr;
   display: inline-flex;
