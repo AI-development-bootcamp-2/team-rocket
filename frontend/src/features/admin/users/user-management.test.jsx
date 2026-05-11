@@ -178,7 +178,6 @@ describe('user management UI', () => {
   });
 
   it('loads users, filters them, creates a user, updates a user, deactivates, and resets password', async () => {
-    jest.setTimeout(15000);
     render(<UserListPage />);
 
     expect((await screen.findAllByText('ada@test.com')).length).toBeGreaterThan(0);
@@ -226,7 +225,7 @@ describe('user management UI', () => {
         temporary_password: 'ResetPass1!',
       }),
     );
-  });
+  }, 15000);
 
   it('renders empty and permission-error states', async () => {
     mockApi.listUsers.mockReset();

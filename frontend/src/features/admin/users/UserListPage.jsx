@@ -6,7 +6,6 @@ import {
   deactivateUser,
   deletePermissionFlag,
   listPermissionFlags,
-  listProjects,
   listUsers,
   resetUserPassword,
   updateUser,
@@ -62,8 +61,6 @@ export function UserListPage() {
   const [status, setStatus] = useState('all');
   const [dialog, setDialog] = useState(null);
   const [dialogLoading, setDialogLoading] = useState(false);
-  const [projects, setProjects] = useState([]);
-  const [dialogMetaLoading, setDialogMetaLoading] = useState(false);
 
   const deferredSearch = useDeferredValue(search);
 
@@ -95,29 +92,20 @@ export function UserListPage() {
     if (!dialog || dialog.type !== 'form' || dialog.permissionFlag !== undefined) return;
 
     async function run() {
-      setDialogMetaLoading(true);
-
       try {
-        const [projectsResponse, permissionsResponse] = await Promise.all([
-          listProjects({ isActive: true }),
-          dialog.user?.id ? listPermissionFlags(dialog.user.id) : Promise.resolve({ data: [] }),
-        ]);
+        const permissionsResponse = await (
+          dialog.user?.id ? listPermissionFlags(dialog.user.id) : Promise.resolve({ data: [] })
+        );
 
-        setProjects(projectsResponse.data ?? []);
         const permissionFlag =
           permissionsResponse.data?.find((flag) => flag.flagName === 'canAssignProjectTasks') ?? null;
 
         setDialog((current) => {
           if (!current || current.type !== 'form') return current;
-          return {
-            ...current,
-            permissionFlag,
-          };
+          return { ...current, permissionFlag };
         });
       } catch (metaError) {
         setToast(createToast(mapErrorMessage(metaError), 'error'));
-      } finally {
-        setDialogMetaLoading(false);
       }
     }
 
