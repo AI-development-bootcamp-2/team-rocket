@@ -2,7 +2,7 @@ export function Modal({ title, icon = 'O', children, onClose, footer, size = 'de
   return (
     <div className="ui-modal-backdrop" role="presentation" onClick={onClose}>
       <section
-        className={`ui-modal${size === 'narrow' ? ' ui-modal--narrow' : ''}`}
+        className={`ui-modal${size === 'narrow' ? ' ui-modal--narrow' : size === 'form' ? ' ui-modal--form' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-label={title}

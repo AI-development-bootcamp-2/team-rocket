@@ -4,19 +4,11 @@ import { Select } from '../../../components/ui/Select.jsx';
 import { getInitialUserFormState } from './userFormState.js';
 import { EMAIL_RE, validatePasswordStrength } from '../../../utils/validation';
 
-const EMPLOYMENT_TYPES = [
-  { value: '', label: 'לא הוגדר' },
-  { value: 'full_time', label: 'משרה מלאה' },
-  { value: 'part_time', label: 'משרה חלקית' },
-  { value: 'contractor', label: 'קבלן' },
-];
 
 export function UserForm({
   mode,
   user,
   permissionFlag,
-  projects,
-  loadingMeta,
   onSubmit,
 }) {
   const [form, setForm] = useState(getInitialUserFormState(user, permissionFlag));
@@ -40,10 +32,6 @@ export function UserForm({
           : Number(form.employment_percentage) >= 0 && Number(form.employment_percentage) <= 100
             ? ''
             : 'יש להזין ערך בין 0 ל-100',
-      scoped_project_ids:
-        form.can_assign_project_tasks && form.scoped_project_ids.length === 0
-          ? 'יש לבחור לפחות פרויקט אחד'
-          : '',
     };
 
     return nextErrors;
@@ -53,18 +41,6 @@ export function UserForm({
 
   function setField(name, value) {
     setForm((current) => ({ ...current, [name]: value }));
-  }
-
-  function toggleProject(projectId) {
-    setForm((current) => {
-      const exists = current.scoped_project_ids.includes(projectId);
-      return {
-        ...current,
-        scoped_project_ids: exists
-          ? current.scoped_project_ids.filter((id) => id !== projectId)
-          : [...current.scoped_project_ids, projectId],
-      };
-    });
   }
 
   function handleSubmit(event) {
@@ -77,7 +53,6 @@ export function UserForm({
         form.employment_percentage === '' ? '' : Number.parseInt(form.employment_percentage, 10),
       daily_hours_override:
         form.daily_hours_override === '' ? '' : Number.parseInt(form.daily_hours_override, 10),
-      scoped_project_ids: form.scoped_project_ids.map((id) => Number.parseInt(id, 10)),
     });
   }
 
@@ -127,14 +102,6 @@ export function UserForm({
           </div>
         ) : null}
 
-        <Select
-          label="סטטוס"
-          value={String(form.is_active)}
-          onChange={(event) => setField('is_active', event.target.value === 'true')}
-        >
-          <option value="true">פעיל</option>
-          <option value="false">לא פעיל</option>
-        </Select>
       </div>
 
       <section className="user-form__section">
@@ -143,22 +110,6 @@ export function UserForm({
         </header>
 
         <div className="user-form__grid">
-          <Input
-            label="מספר עובד"
-            value={form.employee_number}
-            onChange={(event) => setField('employee_number', event.target.value)}
-          />
-          <Select
-            label="סוג העסקה"
-            value={form.employment_type}
-            onChange={(event) => setField('employment_type', event.target.value)}
-          >
-            {EMPLOYMENT_TYPES.map((option) => (
-              <option key={option.value || 'empty'} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </Select>
           <Input
             label="אחוז משרה"
             type="number"
@@ -169,12 +120,7 @@ export function UserForm({
             onChange={(event) => setField('employment_percentage', event.target.value)}
           />
           <Input
-            label="מחלקה"
-            value={form.department}
-            onChange={(event) => setField('department', event.target.value)}
-          />
-          <Input
-            label="דריסת שעות יומיות"
+            label="שעות יומיות"
             type="number"
             min="0"
             value={form.daily_hours_override}
@@ -183,68 +129,6 @@ export function UserForm({
         </div>
       </section>
 
-      <section className="user-form__section">
-        <header className="user-form__section-header">
-          <h3 className="user-form__section-title">הרשאות</h3>
-        </header>
-
-        <label className="permission-toggle">
-          <div>
-            <span className="permission-toggle__title">הקצאת משימות לפי פרויקט</span>
-            <span className="permission-toggle__subtitle">
-              אפשר להגביל הקצאת משימות רק לפרויקטים שנבחרו.
-            </span>
-          </div>
-          <button
-            type="button"
-            className={`permission-toggle__switch ${
-              form.can_assign_project_tasks ? 'permission-toggle__switch--active' : ''
-            }`}
-            onClick={() =>
-              setForm((current) => ({
-                ...current,
-                can_assign_project_tasks: !current.can_assign_project_tasks,
-                scoped_project_ids: !current.can_assign_project_tasks ? current.scoped_project_ids : [],
-              }))
-            }
-            aria-pressed={form.can_assign_project_tasks}
-            aria-label="החלפת מצב של הרשאת הקצאת משימות לפי פרויקט"
-          >
-            <span className="permission-toggle__thumb" />
-          </button>
-        </label>
-
-        {form.can_assign_project_tasks ? (
-          <div className="project-picker">
-            <p className="project-picker__label">פרויקטים מורשים</p>
-            <div className="project-picker__list">
-              {loadingMeta ? (
-                <div className="users-table__skeleton" />
-              ) : projects.length > 0 ? (
-                projects.map((project) => {
-                  const selected = form.scoped_project_ids.includes(String(project.id));
-
-                  return (
-                    <button
-                      key={project.id}
-                      type="button"
-                      className={`project-pill ${selected ? 'project-pill--selected' : ''}`}
-                      onClick={() => toggleProject(String(project.id))}
-                    >
-                      {project.name}
-                    </button>
-                  );
-                })
-              ) : (
-                <p className="project-picker__empty">כרגע אין פרויקטים פעילים זמינים.</p>
-              )}
-            </div>
-            {errors.scoped_project_ids ? (
-              <span className="ui-field__error">{errors.scoped_project_ids}</span>
-            ) : null}
-          </div>
-        ) : null}
-      </section>
     </form>
   );
 }

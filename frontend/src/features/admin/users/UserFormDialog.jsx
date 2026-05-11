@@ -7,8 +7,6 @@ export function UserFormDialog({
   mode,
   user,
   permissionFlag,
-  projects,
-  loadingMeta,
   onClose,
   onSubmit,
   saving,
@@ -19,9 +17,10 @@ export function UserFormDialog({
     <Modal
       title={mode === 'create' ? 'יצירת משתמש' : 'עריכת משתמש'}
       icon="U"
+      size="form"
       onClose={onClose}
       footer={
-        <Button type="submit" form="user-form" disabled={saving || loadingMeta}>
+        <Button type="submit" form="user-form" disabled={saving}>
           {saving ? 'שומר...' : 'שמירה'}
         </Button>
       }
@@ -31,8 +30,6 @@ export function UserFormDialog({
         mode={mode}
         user={user}
         permissionFlag={permissionFlag}
-        projects={projects}
-        loadingMeta={loadingMeta}
         onSubmit={onSubmit}
       />
     </Modal>

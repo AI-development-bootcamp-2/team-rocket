@@ -655,6 +655,32 @@ button:disabled {
   width: min(420px, 100%);
 }
 
+.ui-modal--form {
+  width: min(480px, 100%);
+  border-radius: 20px;
+  box-shadow: 0px 454px 182px rgba(0, 0, 0, 0.01), 0px 255px 153px rgba(0, 0, 0, 0.05), 0px 114px 114px rgba(0, 0, 0, 0.09), 0px 28px 62px rgba(0, 0, 0, 0.1);
+}
+
+.ui-modal--form .ui-modal__header,
+.ui-modal--form .ui-modal__content,
+.ui-modal--form .ui-modal__footer {
+  padding-inline: 40px;
+}
+
+.ui-modal--form .ui-modal__header {
+  padding-top: 40px;
+}
+
+.ui-modal--form .ui-modal__content {
+  padding-top: 40px;
+  padding-bottom: 0;
+}
+
+.ui-modal--form .ui-modal__footer {
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
 .ui-modal__close {
   position: absolute;
   top: 18px;
