@@ -692,6 +692,13 @@ button:disabled {
   font-weight: 700;
 }
 
+.ui-modal__subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 400;
+}
+
 .ui-modal__icon {
   display: grid;
   place-items: center;
@@ -709,6 +716,143 @@ button:disabled {
 
 .ui-modal__footer {
   padding-bottom: 24px;
+}
+
+/* ── Project Form Modal ────────────────────────────────── */
+.project-form-modal {
+  width: 480px;
+}
+
+.project-form-modal .ui-modal__header,
+.project-form-modal .ui-modal__content,
+.project-form-modal .ui-modal__footer {
+  padding-inline: 40px;
+}
+
+.project-form-modal .ui-modal__header {
+  padding-top: 40px;
+  padding-bottom: 0;
+  padding-right: calc(40px + 48px + 12px);
+  align-items: flex-start;
+}
+
+.project-form-modal .ui-modal__icon {
+  position: absolute;
+  right: 40px;
+  top: 40px;
+}
+
+.project-form-modal .ui-modal__content {
+  padding-top: 40px;
+  padding-bottom: 0;
+}
+
+.project-form-modal .ui-modal__footer {
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+.project-form-modal .ui-modal__title {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 48px;
+  margin: 0;
+}
+
+.project-form-modal .ui-modal__subtitle {
+  font-size: 16px;
+  width: 294px;
+  margin: 0;
+  line-height: 1;
+}
+
+.project-form-modal .ui-modal__icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.project-form-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.project-form-modal .ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 400px;
+}
+
+.project-form-modal .ui-field__label {
+  font-size: 16px;
+  line-height: 16px;
+}
+
+.project-form-modal .ui-input,
+.project-form-modal .ui-select {
+  width: 400px;
+  height: 48px;
+  padding: 12px;
+  box-sizing: border-box;
+  border-radius: 8px;
+}
+
+/* Date row */
+.project-form-modal .user-form__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  width: 400px;
+}
+
+.project-form-modal .user-form__row .user-form__field {
+  flex: 0 0 174.5px;
+}
+
+.project-form-modal .user-form__row .ui-field {
+  width: 174.5px;
+}
+
+.project-form-modal .user-form__row .ui-input {
+  width: 174.5px;
+  height: 48px;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.project-date-sep {
+  flex: 1;
+  text-align: center;
+  padding-bottom: 12px;
+  font-size: 16px;
+  color: #6b7280;
+  line-height: 48px;
+  align-self: flex-end;
+}
+
+/* Description */
+.project-form-modal textarea.ui-input {
+  height: 114px;
+  resize: none;
+}
+
+/* Submit button */
+.project-form-modal__cta {
+  background: var(--color-disabled);
+  color: #fff;
+  cursor: not-allowed;
+  border-radius: 20px;
+}
+
+.project-form-modal__cta--active {
+  background: #0052d6;
+  cursor: pointer;
+}
+
+.project-form-modal__cta--active:hover {
+  background: #0044b3;
 }
 
 .user-form__grid {
@@ -868,6 +1012,21 @@ button:disabled {
 
 .dialog-copy__subtext {
   color: var(--color-text-secondary);
+}
+
+/* ── Archive Project Dialog ────────────────────────────── */
+.archive-project-dialog .ui-modal__header {
+  padding-right: calc(24px + 48px + 12px);
+  align-items: flex-start;
+}
+
+.archive-project-dialog .ui-modal__icon {
+  position: absolute;
+  right: 24px;
+  top: 24px;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
 }
 
 .dialog-copy__password {

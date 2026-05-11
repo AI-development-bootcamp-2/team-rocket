@@ -18,6 +18,7 @@ export interface ClientRow {
   is_active: boolean;
   created_at: Date;
   updated_at: Date;
+  active_projects_count?: number;
 }
 
 const CLIENT_COLUMNS = [
@@ -30,16 +31,26 @@ const CLIENT_COLUMNS = [
   'updated_at',
 ] as const;
 
+const ACTIVE_PROJECTS_COUNT = (tableAlias: string) =>
+  db.raw(
+    `(SELECT COUNT(*)::int FROM projects WHERE client_id = ??.id AND is_active = true) AS active_projects_count`,
+    [tableAlias],
+  );
+
 const CLIENT_ORDER: Array<{ column: string; order: 'asc' }> = [
   { column: 'name', order: 'asc' },
   { column: 'id', order: 'asc' },
 ];
 
 /** Returns every client row, including archived ones — admin-only view. */
-export async function listAllClients(): Promise<ClientRow[]> {
-  return db<ClientRow>('clients')
-    .select(...CLIENT_COLUMNS)
+export async function listAllClients(isActive?: boolean | null): Promise<ClientRow[]> {
+  const query = db<ClientRow>('clients')
+    .select(...CLIENT_COLUMNS, ACTIVE_PROJECTS_COUNT('clients'))
     .orderBy(CLIENT_ORDER);
+  if (isActive !== null && isActive !== undefined) {
+    void query.where({ is_active: isActive });
+  }
+  return query;
 }
 
 /**
@@ -51,7 +62,7 @@ export async function listAllClients(): Promise<ClientRow[]> {
  */
 export async function listClientsForUser(userId: number): Promise<ClientRow[]> {
   const rows = await db('clients as c')
-    .distinct(CLIENT_COLUMNS.map((col) => `c.${col}`))
+    .distinct([...CLIENT_COLUMNS.map((col) => `c.${col}`), ACTIVE_PROJECTS_COUNT('c')])
     .innerJoin('projects as p', 'p.client_id', 'c.id')
     .innerJoin('tasks as t', 't.project_id', 'p.id')
     .innerJoin('user_task_assignments as uta', 'uta.task_id', 't.id')
