@@ -1,8 +1,11 @@
-export function Modal({ title, icon = 'O', children, onClose, footer, size = 'default' }) {
+const SAFE_CSS_CLASS = /[^a-zA-Z0-9_\- ]/g;
+
+export function Modal({ title, subtitle, icon = 'O', children, onClose, footer, size = 'default', className = '' }) {
+  const safeClassName = className.replace(SAFE_CSS_CLASS, '');
   return (
     <div className="ui-modal-backdrop" role="presentation" onClick={onClose}>
       <section
-        className={`ui-modal${size === 'narrow' ? ' ui-modal--narrow' : size === 'form' ? ' ui-modal--form' : ''}`}
+        className={`ui-modal${size === 'narrow' ? ' ui-modal--narrow' : ''}${safeClassName ? ` ${safeClassName}` : ''}`}
         role="dialog"
         aria-modal="true"
         aria-label={title}
@@ -15,6 +18,7 @@ export function Modal({ title, icon = 'O', children, onClose, footer, size = 'de
         <header className="ui-modal__header">
           <div>
             <h2 className="ui-modal__title">{title}</h2>
+            {subtitle ? <p className="ui-modal__subtitle">{subtitle}</p> : null}
           </div>
           <div className="ui-modal__icon" aria-hidden="true">
             {icon}
