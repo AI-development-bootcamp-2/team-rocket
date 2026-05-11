@@ -1,80 +1,34 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { getDailySummary, getDropdownData, listTimeEntries } from '../../api/timeEntries.api';
 import { AppHeader } from '../../components/AppHeader';
 import { ExistingEntriesList } from './ExistingEntriesList';
 import { ReportForm } from './ReportForm';
 import styles from './DailyReportPage.module.css';
 
-// Format date as YYYY-MM-DD in local time (no UTC shift)
 function toLocalDateString(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
-// Hebrew day names (week starts Sunday)
-const HE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
-
-// Hebrew month names
 const HE_MONTHS = [
   'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
   'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
 ];
 
-function formatHebrewDate(date) {
-  return `${HE_DAYS[date.getDay()]}, ${date.getDate()} ב${HE_MONTHS[date.getMonth()]} ${date.getFullYear()}`;
-}
-
-function minutesToHours(minutes) {
-  if (!minutes && minutes !== 0) return 0;
-  return Math.round((minutes / 60) * 100) / 100;
-}
-
-function ProgressBar({ reported, standard }) {
-  const pct = standard > 0 ? Math.min((reported / standard) * 100, 100) : 0;
-  const isOver = reported > standard;
-  const isFull = reported >= standard;
-
-  let fillColor = 'var(--color-brand-orange, #F59E0B)';
-  if (isFull) fillColor = 'var(--color-success, #16A34A)';
-  if (isOver) fillColor = 'var(--color-danger, #EF4444)';
-
-  return (
-    <div className={styles.progressBar}>
-      <div
-        className={styles.progressFill}
-        style={{ width: `${pct}%`, background: fillColor }}
-        role="presentation"
-      />
-      {pct > 0 && pct < 100 && (
-        <span
-          className={styles.progressDot}
-          style={{ left: `${pct}%`, background: fillColor }}
-          aria-hidden="true"
-        />
-      )}
-    </div>
-  );
-}
-
 export function DailyReportPage() {
-  const { user, logout } = useAuth();
-
   const [selectedDate, setSelectedDate] = useState(() => toLocalDateString(new Date()));
   const [summary, setSummary] = useState(null);
-  const [loadingSummary, setLoadingSummary] = useState(false);
-  const [summaryError, setSummaryError] = useState(null);
-
   const [entries, setEntries] = useState([]);
   const [loadingEntries, setLoadingEntries] = useState(false);
-
   const [dropdownData, setDropdownData] = useState(null);
   const [forbidden, setForbidden] = useState(false);
-
-  // Online/offline indicator
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const [formEntry, setFormEntry] = useState(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [formDirty, setFormDirty] = useState(false);
+
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
     const goOffline = () => setIsOnline(false);
@@ -86,48 +40,42 @@ export function DailyReportPage() {
     };
   }, []);
 
-  // form state: null = closed, 'new' = create mode, entry object = edit mode
-  const [formEntry, setFormEntry] = useState(null);
-  const [formOpen, setFormOpen] = useState(false);
-  const [formDirty, setFormDirty] = useState(false);
-
-  // Block browser tab/window close when form has unsaved changes
   useEffect(() => {
-    const handler = (e) => {
-      if (formOpen && formDirty) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
+    const handleBeforeUnload = (event) => {
+      if (!formOpen || !formDirty) return;
+      event.preventDefault();
+      event.returnValue = '';
     };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [formOpen, formDirty]);
 
+  const currentMonth = selectedDate.slice(0, 7);
+  const selectedDateObject = new Date(`${selectedDate}T00:00:00`);
+  const currentMonthLabel = HE_MONTHS[selectedDateObject.getMonth()];
+  const currentYearLabel = selectedDateObject.getFullYear();
+
   const fetchSummary = useCallback(async (date) => {
-    setLoadingSummary(true);
-    setSummaryError(null);
     try {
       const data = await getDailySummary({ date });
       setSummary(data);
     } catch (err) {
       if (err?.response?.status === 403) {
         setForbidden(true);
-      } else {
-        setSummaryError('לא ניתן לטעון את סיכום היום. נסה שוב.');
       }
-    } finally {
-      setLoadingSummary(false);
     }
   }, []);
 
-  const fetchEntries = useCallback(async (date) => {
+  const fetchEntries = useCallback(async (month) => {
     setLoadingEntries(true);
     try {
-      const data = await listTimeEntries({ date });
+      const data = await listTimeEntries({ month });
       setEntries(Array.isArray(data) ? data : data?.data ?? []);
     } catch (err) {
-      if (err?.response?.status === 403) setForbidden(true);
-      // other errors: list stays empty
+      if (err?.response?.status === 403) {
+        setForbidden(true);
+      }
     } finally {
       setLoadingEntries(false);
     }
@@ -138,59 +86,36 @@ export function DailyReportPage() {
       const data = await getDropdownData();
       setDropdownData(data);
     } catch {
-      // non-fatal: dropdowns will be empty
+      // non-fatal: picker lists will be empty
     }
   }, []);
 
   useEffect(() => {
     fetchSummary(selectedDate);
-    fetchEntries(selectedDate);
-  }, [selectedDate, fetchSummary, fetchEntries]);
+  }, [selectedDate, fetchSummary]);
 
-  // Fetch dropdown data once on mount
+  useEffect(() => {
+    fetchEntries(currentMonth);
+  }, [currentMonth, fetchEntries]);
+
   useEffect(() => {
     fetchDropdownData();
   }, [fetchDropdownData]);
 
-  const reported = minutesToHours(summary?.total_hours != null ? summary.total_hours * 60 : null) || (summary?.total_hours ?? 0);
-  // daily-summary returns hours directly (not minutes), so use as-is
-  const reportedHours = summary?.total_hours ?? 0;
   const standardHours = summary?.standard_hours ?? 9;
-  const remainingHours = summary?.remaining_hours ?? (standardHours - reportedHours);
 
-  const isWeekend = summary?.status === 'day_off';
-  const isOverStandard = reportedHours > standardHours;
-  const isUnderStandard = !isWeekend && reportedHours < standardHours && reportedHours > 0;
-  const isFull = reportedHours >= standardHours;
-  // Quota warning: backend sets quota_warning=true in daily summary when monthly reported ≥90% of quota
-  const showQuotaWarning = Boolean(summary?.quota_warning);
-
-  const progressPct = standardHours > 0 ? Math.min((reportedHours / standardHours) * 100, 100) : 0;
-
-  const selectedDateObj = new Date(selectedDate + 'T00:00:00');
-  const hebrewDateLabel = formatHebrewDate(selectedDateObj);
-
-  const today = toLocalDateString(new Date());
-
-  const currentMonth = selectedDate.substring(0, 7); // YYYY-MM format
-
-  const handleMonthChange = useCallback((newDate) => {
-    // Set to first day of new month
-    const year = newDate.getFullYear();
-    const month = String(newDate.getMonth() + 1).padStart(2, '0');
-    const newMonthStr = `${year}-${month}-01`;
-    setSelectedDate(newMonthStr);
+  const handleMonthChange = useCallback((nextDate) => {
+    const year = nextDate.getFullYear();
+    const month = String(nextDate.getMonth() + 1).padStart(2, '0');
+    setSelectedDate(`${year}-${month}-01`);
   }, []);
 
-  // 403 — no permission state (replaces the whole main area)
   if (forbidden) {
     return (
       <div className={styles.page} dir="rtl" lang="he">
         <AppHeader
-          currentMonth={currentMonth}
-          onMonthChange={handleMonthChange}
           onManualReport={() => { setFormEntry(null); setFormOpen(true); }}
-          onTimerToggle={() => { /* TODO: implement timer */ }}
+          onTimerToggle={() => {}}
         />
         <main className={styles.main}>
           <div className={styles.forbiddenState} role="alert">
@@ -205,66 +130,74 @@ export function DailyReportPage() {
 
   return (
     <div className={styles.page} dir="rtl" lang="he">
-      {/* ── Header bar ── */}
       <AppHeader
-        onManualReport={() => { setFormEntry(null); setFormOpen(true); }}
-        onTimerToggle={() => { /* TODO: implement timer */ }}
+        onManualReport={() => {
+          setFormEntry(null);
+          setFormOpen(true);
+        }}
+        onTimerToggle={() => {}}
       />
 
-      {/* ── Main content ── */}
       <main className={styles.main}>
-        {/* Month navigator + section title header */}
         <div className={styles.topSectionHeader}>
           <div className={styles.monthNavSection}>
             <button
               className={styles.monthNavArrow}
-              onClick={() => {
-                const parts = currentMonth.split('-');
-                const newMonth = new Date(parseInt(parts[0]), parseInt(parts[1]) - 2, 1);
-                handleMonthChange(newMonth);
-              }}
-              aria-label="חודש קודם"
               type="button"
+              aria-label="חודש קודם"
+              onClick={() => {
+                const [year, month] = currentMonth.split('-').map(Number);
+                handleMonthChange(new Date(year, month - 2, 1));
+              }}
             >
               ‹
             </button>
-            <span className={styles.currentMonthLabel}>
-              {HE_MONTHS[parseInt(currentMonth.split('-')[1]) - 1]}
-            </span>
+            <span className={styles.currentMonthLabel}>{currentMonthLabel}</span>
             <button
               className={styles.monthNavArrow}
-              onClick={() => {
-                const parts = currentMonth.split('-');
-                const newMonth = new Date(parseInt(parts[0]), parseInt(parts[1]), 1);
-                handleMonthChange(newMonth);
-              }}
-              aria-label="חודש הבא"
               type="button"
+              aria-label="חודש הבא"
+              onClick={() => {
+                const [year, month] = currentMonth.split('-').map(Number);
+                handleMonthChange(new Date(year, month, 1));
+              }}
             >
               ›
             </button>
           </div>
+
           <div className={styles.titleSection}>
             <h1 className={styles.pageTitle}>דיווח שעות</h1>
-            <p className={styles.pageSubtitle}>
-              רשימת הדיווחים לחודש - {hebrewDateLabel}
-            </p>
+            <p className={styles.pageSubtitle}>רשימת דיווחים יומיים - לחודש {currentMonthLabel} {currentYearLabel}</p>
           </div>
         </div>
 
-        {/* Entries section */}
-        <section className={styles.entriesSection} aria-label="דיווחים ליום זה">
+        <section className={styles.entriesSection} aria-label="רשימת דיווחים חודשית">
           <ExistingEntriesList
             entries={entries}
             dropdownData={dropdownData}
             loading={loadingEntries}
-            onEdit={(entry) => { setFormEntry(entry); setFormOpen(true); }}
-            onRefresh={() => { fetchEntries(selectedDate); fetchSummary(selectedDate); }}
+            currentMonth={currentMonth}
+            selectedDate={selectedDate}
+            standardHours={standardHours}
+            onAddEntry={(date) => {
+              setSelectedDate(date);
+              setFormEntry(null);
+              setFormOpen(true);
+            }}
+            onEdit={(entry) => {
+              setSelectedDate(entry.date);
+              setFormEntry(entry);
+              setFormOpen(true);
+            }}
+            onRefresh={() => {
+              fetchEntries(currentMonth);
+              fetchSummary(selectedDate);
+            }}
           />
         </section>
       </main>
 
-      {/* ── Report form drawer ── */}
       {formOpen && (
         <ReportForm
           dropdownData={dropdownData}
@@ -273,23 +206,22 @@ export function DailyReportPage() {
           standardHours={standardHours}
           isOnline={isOnline}
           onSave={() => {
-            // Called only on EDIT success — close drawer and refetch
             setFormOpen(false);
             setFormDirty(false);
-            fetchEntries(selectedDate);
+            fetchEntries(currentMonth);
             fetchSummary(selectedDate);
           }}
           onEntryCreated={() => {
-            // Called on CREATE success — drawer stays open; just refetch list
-            fetchEntries(selectedDate);
+            fetchEntries(currentMonth);
             fetchSummary(selectedDate);
           }}
-          onDirtyChange={(dirty) => setFormDirty(dirty)}
-          onCancel={() => { setFormOpen(false); setFormDirty(false); }}
+          onDirtyChange={setFormDirty}
+          onCancel={() => {
+            setFormOpen(false);
+            setFormDirty(false);
+          }}
         />
       )}
-
-      {/* ── (Route-change guard handled by beforeunload + drawer's own unsaved dialog) ── */}
     </div>
   );
 }

@@ -1,229 +1,250 @@
-import { useState } from 'react';
-import { deleteTimeEntry } from '../../api/timeEntries.api';
+import { useEffect, useMemo, useState } from 'react';
 import styles from './ExistingEntriesList.module.css';
 
-const LOCATION_LABELS = { office: 'משרד', home: 'בית', client: 'לקוח' };
-const HE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+const HE_DAYS_SHORT = ["א'", "ב'", "ג'", "ד'", "ה'", "ו'", "ש'"];
 
-function formatTime(t) {
-  if (!t) return '—';
-  return String(t).slice(0, 5);
+function formatTime(timeValue) {
+  if (!timeValue) return '—';
+  return String(timeValue).slice(0, 5);
 }
 
 function formatDuration(minutes) {
-  if (!minutes && minutes !== 0) return '—';
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${h}:${String(m).padStart(2, '0')}`;
+  if (!minutes && minutes !== 0) return '00:00';
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return `${String(hours).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`;
 }
 
-function getStatusColor(totalMinutes, standardMinutes) {
-  if (!totalMinutes) return styles.statusMissing;
-  if (totalMinutes >= standardMinutes) return styles.statusComplete;
-  if (totalMinutes > 0) return styles.statusPartial;
-  return styles.statusMissing;
+function buildMonthDates(monthString) {
+  if (!monthString) return [];
+  const [year, month] = monthString.split('-').map(Number);
+  const totalDays = new Date(year, month, 0).getDate();
+  const dates = [];
+
+  for (let day = totalDays; day >= 1; day -= 1) {
+    dates.push(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
+  }
+
+  return dates;
 }
 
 function resolveNames(entry, dropdownData) {
-  if (!dropdownData?.clients) return { clientName: null, projectName: null, taskName: null };
+  if (!dropdownData?.clients) return { clientName: '', projectName: '', taskName: '' };
+
   for (const client of dropdownData.clients) {
-    if (client.id === entry.client_id) {
-      for (const project of client.projects) {
-        if (project.id === entry.project_id) {
-          for (const task of project.tasks) {
-            if (task.id === entry.task_id) {
-              return {
-                clientName: client.name,
-                projectName: project.name,
-                taskName: task.name,
-              };
-            }
-          }
-          return { clientName: client.name, projectName: project.name, taskName: null };
-        }
-      }
-      return { clientName: client.name, projectName: null, taskName: null };
+    for (const project of client.projects) {
+      if (project.id !== entry.project_id) continue;
+
+      const task = project.tasks.find((item) => item.id === entry.task_id);
+      return {
+        clientName: client.name,
+        projectName: project.name,
+        taskName: task?.name ?? '',
+      };
     }
   }
-  return { clientName: null, projectName: null, taskName: null };
+
+  return { clientName: '', projectName: '', taskName: '' };
 }
 
-function DeleteConfirmDialog({ entry, onConfirm, onCancel, loading }) {
+function statusMeta(date, dayEntries, standardHours) {
+  const dateObject = new Date(`${date}T00:00:00`);
+  const day = dateObject.getDay();
+  const totalMinutes = dayEntries.reduce((sum, entry) => sum + (entry.duration_minutes ?? 0), 0);
+  const standardMinutes = standardHours * 60;
+  const isWeekend = day === 5 || day === 6;
+
+  if (isWeekend && totalMinutes === 0) {
+    return {
+      key: 'weekend',
+      label: 'סופ"ש',
+      className: styles.statusWeekend,
+    };
+  }
+
+  if (totalMinutes === 0) {
+    return {
+      key: 'missing',
+      label: 'חסר',
+      className: styles.statusMissing,
+    };
+  }
+
+  if (totalMinutes >= standardMinutes) {
+    return {
+      key: 'filled',
+      label: `${formatDuration(totalMinutes)} ש'`,
+      className: styles.statusFilled,
+    };
+  }
+
+  return {
+    key: 'partial',
+    label: `${formatDuration(totalMinutes)} ש'`,
+    className: styles.statusPartial,
+  };
+}
+
+function BriefcaseIcon() {
   return (
-    <div className={styles.dialogBackdrop} role="presentation">
-      <div className={styles.dialog} role="alertdialog" aria-modal="true">
-        <h3 className={styles.dialogTitle}>מחיקת דיווח</h3>
-        <p className={styles.dialogBody}>
-          האם אתה בטוח שברצונך למחוק את הדיווח?
-          <br />
-          <strong>{formatTime(entry.start_time)} – {formatTime(entry.end_time)}</strong>
-        </p>
-        <div className={styles.dialogActions}>
-          <button className={styles.dialogCancelBtn} onClick={onCancel} disabled={loading} type="button">
-            ביטול
-          </button>
-          <button className={styles.dialogDeleteBtn} onClick={onConfirm} disabled={loading} type="button">
-            {loading ? 'מוחק…' : 'מחק'}
-          </button>
-        </div>
-      </div>
-    </div>
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3.5" y="7.5" width="17" height="12" rx="2.5" />
+      <path d="M8.5 7.5V6.4a1.9 1.9 0 0 1 1.9-1.9h3.2a1.9 1.9 0 0 1 1.9 1.9v1.1" />
+      <path d="M3.5 12.5h17" />
+    </svg>
   );
 }
 
-export function ExistingEntriesList({ entries, dropdownData, loading, onEdit, onRefresh, standardHours = 9 }) {
-  const [deletingId, setDeletingId] = useState(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [expandedDate, setExpandedDate] = useState(null);
+function ChevronIcon({ expanded }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      className={`${styles.chevronIcon} ${expanded ? styles.chevronExpanded : ''}`}
+      aria-hidden="true"
+    >
+      <path d="M5 8.5 10 13.5 15 8.5" />
+    </svg>
+  );
+}
 
-  async function handleDeleteConfirm() {
-    setDeleteLoading(true);
-    try {
-      await deleteTimeEntry(deletingId);
-      setDeletingId(null);
-      onRefresh();
-    } catch (err) {
-      // error handled by parent
-    } finally {
-      setDeleteLoading(false);
-    }
-  }
+function EditPencil() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true">
+      <path d="M12.8 2.8a1.8 1.8 0 1 1 2.6 2.6l-7.6 7.6-3 0.5 0.5-3 7.5-7.7Z" />
+      <path d="M11.6 4l2.4 2.4" />
+    </svg>
+  );
+}
+
+export function ExistingEntriesList({
+  entries,
+  dropdownData,
+  loading,
+  onEdit,
+  onAddEntry,
+  standardHours = 9,
+  currentMonth,
+  selectedDate,
+}) {
+  const [expandedDate, setExpandedDate] = useState(selectedDate ?? null);
+
+  useEffect(() => {
+    setExpandedDate(selectedDate ?? null);
+  }, [selectedDate, currentMonth]);
+
+  const entriesByDate = useMemo(() => {
+    const result = {};
+    (entries ?? []).forEach((entry) => {
+      if (!result[entry.date]) result[entry.date] = [];
+      result[entry.date].push(entry);
+    });
+
+    Object.values(result).forEach((dayEntries) => {
+      dayEntries.sort((a, b) => String(a.start_time).localeCompare(String(b.start_time)));
+    });
+
+    return result;
+  }, [entries]);
+
+  const monthDates = useMemo(() => buildMonthDates(currentMonth), [currentMonth]);
 
   if (loading) {
-    return <div className={styles.list} aria-busy="true" aria-label="טוען דיווחים" />;
-  }
-
-  if (!entries || entries.length === 0) {
     return (
-      <div className={styles.emptyState}>
-        <span className={styles.emptyIcon}>📋</span>
-        <p className={styles.emptyTitle}>אין דיווחים ליום זה</p>
-        <p className={styles.emptyBody}>לחץ על "הוספת דיווח" כדי לדווח שעות</p>
+      <div className={styles.list} aria-busy="true" aria-label="טוען דיווחים">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div key={index} className={styles.loadingCard} />
+        ))}
       </div>
     );
   }
 
-  // Group entries by date
-  const entriesByDate = {};
-  entries.forEach((entry) => {
-    if (!entriesByDate[entry.date]) {
-      entriesByDate[entry.date] = [];
-    }
-    entriesByDate[entry.date].push(entry);
-  });
-
-  const sortedDates = Object.keys(entriesByDate).sort().reverse();
-
-  const entryBeingDeleted = deletingId ? entries.find((e) => e.id === deletingId) : null;
-
   return (
-    <>
-      <div className={styles.list}>
-        {sortedDates.map((date) => {
-          const dayEntries = entriesByDate[date];
-          const totalMinutes = dayEntries.reduce((sum, e) => sum + (e.duration_minutes || 0), 0);
-          const standardMinutes = standardHours * 60;
+    <div className={styles.list}>
+      {monthDates.map((date) => {
+        const dayEntries = entriesByDate[date] ?? [];
+        const meta = statusMeta(date, dayEntries, standardHours);
+        const expanded = expandedDate === date;
+        const dateObject = new Date(`${date}T00:00:00`);
+        const dateLabel = `${HE_DAYS_SHORT[dateObject.getDay()]},${String(dateObject.getDate()).padStart(2, '0')}/${String(dateObject.getMonth() + 1).padStart(2, '0')}/${String(dateObject.getFullYear()).slice(2)}`;
 
-          const dateObj = new Date(date + 'T00:00:00');
-          const dayName = HE_DAYS[dateObj.getDay()];
-          const dateStr = `${dateObj.getDate()}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()}`;
-          const isExpanded = expandedDate === date;
-
-          return (
-            <div key={date} className={styles.daySection}>
-              {/* Day header (collapsible) */}
-              <button
-                type="button"
-                className={styles.dayHeader}
-                onClick={() => setExpandedDate(isExpanded ? null : date)}
-                aria-expanded={isExpanded}
-              >
-                {/* Left: chevron */}
-                <span className={`${styles.chevron} ${isExpanded ? styles.expanded : ''}`}>
-                  ‹
+        return (
+          <div key={date} className={`${styles.daySection} ${expanded ? styles.daySectionExpanded : ''}`}>
+            <button
+              type="button"
+              className={styles.dayHeader}
+              onClick={() => setExpandedDate(expanded ? null : date)}
+              aria-expanded={expanded}
+            >
+              <div className={styles.dayHeaderRight}>
+                <span className={styles.dayDate}>{dateLabel}</span>
+                <span className={styles.dateIconWrap} aria-hidden="true">
+                  <BriefcaseIcon />
                 </span>
+              </div>
 
-                {/* Center: status badge + location badge + project count */}
-                <div className={styles.dayHeaderCenter}>
-                  <span className={`${styles.statusBadge} ${getStatusColor(totalMinutes, standardMinutes)}`}>
-                    {formatDuration(totalMinutes)}
-                  </span>
-                </div>
+              <div className={styles.dayHeaderLeft}>
+                <ChevronIcon expanded={expanded} />
+                <span className={`${styles.statusBadge} ${meta.className}`}>{meta.label}</span>
+              </div>
+            </button>
 
-                {/* Right: date + day name + calendar icon */}
-                <div className={styles.dayHeaderRight}>
-                  <span className={styles.dateText}>
-                    {dayName} {dateStr}
-                  </span>
-                  <span className={styles.dateIcon}>📅</span>
-                </div>
-              </button>
+            {expanded && (
+              <div className={styles.dayBody}>
+                {dayEntries.length > 0 ? (
+                  <>
+                    {dayEntries.map((entry) => {
+                      const { clientName, projectName, taskName } = resolveNames(entry, dropdownData);
+                      const editable = entry.status === 'draft' || entry.status === 'rejected';
 
-              {/* Expanded entries */}
-              {isExpanded && (
-                <div className={styles.dayEntriesContainer}>
-                  {dayEntries.map((entry) => {
-                    const { projectName, clientName } = resolveNames(entry, dropdownData);
-                    const editable = entry.status === 'draft' || entry.status === 'rejected';
+                      return (
+                        <div key={entry.id} className={styles.entryBlock}>
+                          <div className={styles.entryHead}>
+                            <button
+                              type="button"
+                              className={styles.editButton}
+                              onClick={() => onEdit(entry)}
+                              disabled={!editable}
+                            >
+                              <EditPencil />
+                              עריכה
+                            </button>
+                            <span className={styles.entryTime}>{formatTime(entry.start_time)}-{formatTime(entry.end_time)}</span>
+                          </div>
 
-                    return (
-                      <div key={entry.id} className={styles.entryRow}>
-                        <div className={styles.entryLeft}>
-                          <button
-                            className={styles.editLink}
-                            onClick={() => onEdit(entry)}
-                            disabled={!editable}
-                            type="button"
-                          >
-                            ✏️
-                          </button>
-                          <span className={styles.timeRange}>
-                            {formatTime(entry.start_time)}–{formatTime(entry.end_time)}
-                          </span>
-                        </div>
+                          <div className={styles.entryRow}>
+                            <span className={styles.entryName}>{projectName || `פרויקט #${entry.project_id}`}</span>
+                            <span className={styles.entryHours}>{formatDuration(entry.duration_minutes ?? 0)} ש'</span>
+                          </div>
 
-                        <div className={styles.entryCenter}>
-                          <span className={styles.projectNameText}>
-                            {projectName || `פרויקט #${entry.project_id}`}
-                          </span>
-                          {clientName && (
-                            <span className={styles.clientNameText}>{clientName}</span>
+                          {(clientName || taskName) && (
+                            <div className={styles.entryRowSecondary}>
+                              {clientName && <span className={styles.entrySecondaryText}>{clientName}</span>}
+                              {taskName && <span className={styles.entrySecondaryText}>{taskName}</span>}
+                            </div>
                           )}
                         </div>
+                      );
+                    })}
 
-                        <div className={styles.entryRight}>
-                          {entry.location && (
-                            <span className={styles.locationBadge}>
-                              {LOCATION_LABELS[entry.location]}
-                            </span>
-                          )}
-                          <button
-                            className={styles.deleteLink}
-                            onClick={() => setDeletingId(entry.id)}
-                            disabled={!editable}
-                            type="button"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {entryBeingDeleted && (
-        <DeleteConfirmDialog
-          entry={entryBeingDeleted}
-          onConfirm={handleDeleteConfirm}
-          onCancel={() => setDeletingId(null)}
-          loading={deleteLoading}
-        />
-      )}
-    </>
+                    <button type="button" className={styles.addReportButton} onClick={() => onAddEntry(date)}>
+                      הוספת דיווח
+                    </button>
+                  </>
+                ) : (
+                  <div className={styles.emptyDayBody}>
+                    <span className={styles.emptyDayText}>אין דיווחים ליום זה</span>
+                    {meta.key !== 'weekend' && (
+                      <button type="button" className={styles.addReportButton} onClick={() => onAddEntry(date)}>
+                        הוספת דיווח
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }
