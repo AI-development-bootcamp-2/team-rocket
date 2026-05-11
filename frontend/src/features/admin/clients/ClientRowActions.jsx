@@ -16,15 +16,14 @@ function ArchiveIcon() {
   );
 }
 
-export function TaskRowActions({ task, isAdmin, onEdit, onArchive }) {
+export function ClientRowActions({ client, onEdit, onArchive }) {
   return (
     <div className="user-row-actions">
       <button
         type="button"
         className="user-row-actions__button"
-        onClick={() => onEdit(task)}
-        disabled={!isAdmin}
-        aria-label={`עריכת ${task.name}`}
+        onClick={() => onEdit(client)}
+        aria-label={`עריכת ${client.name}`}
         data-tooltip="עריכה"
       >
         <PencilIcon />
@@ -32,10 +31,9 @@ export function TaskRowActions({ task, isAdmin, onEdit, onArchive }) {
       <button
         type="button"
         className="user-row-actions__button user-row-actions__button--danger"
-        onClick={() => onArchive(task)}
-        disabled={!isAdmin || task.status === 'closed'}
-        aria-label={`סגירת ${task.name}`}
-        data-tooltip={task.status === 'closed' ? 'המשימה כבר סגורה' : 'סגירה'}
+        onClick={() => onArchive(client)}
+        aria-label={`ארכיון ${client.name}`}
+        data-tooltip="ארכיון"
       >
         <ArchiveIcon />
       </button>
