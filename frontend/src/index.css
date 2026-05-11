@@ -726,13 +726,25 @@ button:disabled {
 }
 
 .ui-modal__icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.close-task-dialog .ui-modal__icon {
+  position: absolute;
+  right: 24px;
+  top: 24px;
+  width: 48px;
+  height: 48px;
   border-radius: 8px;
-  background: var(--color-nav-button);
-  color: #fff;
+  background: #E53E3E;
+  flex-shrink: 0;
+}
+
+.close-task-dialog .ui-modal__header {
+  padding-right: 80px;
 }
 
 .ui-modal__content {
@@ -1040,6 +1052,21 @@ button:disabled {
   color: var(--color-text-secondary);
 }
 
+/* ── Archive Project Dialog ────────────────────────────── */
+.archive-project-dialog .ui-modal__header {
+  padding-right: calc(24px + 48px + 12px);
+  align-items: flex-start;
+}
+
+.archive-project-dialog .ui-modal__icon {
+  position: absolute;
+  right: 24px;
+  top: 24px;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
 .dialog-copy__password {
   direction: ltr;
   display: inline-flex;
@@ -1220,11 +1247,10 @@ button:disabled {
 }
 
 .client-modal__header {
-  position: relative;
   display: flex;
   flex-direction: row;
-  justify-content: flex-start;
-  align-items: flex-start;
+  justify-content: space-between;
+  align-items: center;
   height: 48px;
 }
 
@@ -1279,10 +1305,7 @@ button:disabled {
 }
 
 .client-modal__edit-badge {
-  position: absolute;
-  left: 150px;
-  top: -2px;
-  z-index: 1;
+  flex-shrink: 0;
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -1300,7 +1323,6 @@ button:disabled {
 
 .client-modal__title {
   margin: 0;
-  width: 280px;
   height: 24px;
   font-family: var(--font-base);
   font-style: normal;
@@ -1325,9 +1347,6 @@ button:disabled {
   color: #212525;
 }
 
-.client-modal__footer {
-  /* container gap handles spacing */
-}
 
 .client-form {
   display: flex;
@@ -1392,6 +1411,7 @@ button:disabled {
 }
 
 .client-form__toggle {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1436,6 +1456,10 @@ button:disabled {
 
 .client-form__toggle-input:checked ~ .client-form__toggle-track::after {
   transform: translateX(-20px);
+}
+
+.client-form__toggle-input:focus-visible ~ .client-form__toggle-track {
+  box-shadow: 0 0 0 3px rgba(12,105,255,0.35);
 }
 
 .client-form__toggle-label {
