@@ -13,6 +13,7 @@ import projectsRouter from './routes/projects.routes';
 import tasksRouter from './routes/tasks.routes';
 import usersRouter from './routes/users.routes';
 import timeEntriesRouter from './routes/time-entries.routes';
+import monthlySummaryRouter from './routes/monthly-summary.routes';
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use('/auth', authRouter);
 app.use('/clients', clientsRouter);
 app.use('/projects', projectsRouter);
 app.use('/tasks', tasksRouter);
+app.use('/monthly-summary', monthlySummaryRouter);
 app.use('/time-entries', timeEntriesRouter);
 app.use('/users', usersRouter);
 

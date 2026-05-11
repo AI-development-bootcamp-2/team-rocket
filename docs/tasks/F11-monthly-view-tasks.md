@@ -19,10 +19,10 @@
 **Purpose**: Wire up the new endpoint and param validation before any story work begins.  
 **⚠️ CRITICAL**: All story phases depend on this being complete first.
 
-- [ ] T001 Add `GET /monthly-summary` route (before `/:id`) in `server/src/routes/time-entries.routes.ts`, wired to a placeholder handler that returns `501 Not Implemented`
-- [ ] T002 Create `getMonthlySummaryHandler` skeleton in `server/src/controllers/time-entries.controller.ts` — validate `year` (4-digit integer) and `month` (1–12) query params, return 400 on invalid input
-- [ ] T003 Create `getMonthlySummary` service function skeleton in `server/src/services/time-entries.service.ts` — accepts `{ userId, year, month, caller }`, returns empty object for now
-- [ ] T004 Add `MonthlySummaryResponse` TypeScript interface in `server/src/services/time-entries.service.ts` with all fields from the API contract (quotaHours, reportedHours, completionPercentage, missingHoursToDate, absenceHours, daysWithoutReport, projectBreakdown, dayStatuses)
+- [x] T001 Create `server/src/routes/monthly-summary.routes.ts` with `GET /` route wired to `getMonthlySummaryHandler` (returning 501), and register it in `server/src/app.ts` at `/monthly-summary`
+- [x] T002 Create `server/src/controllers/monthly-summary.controller.ts` with `getMonthlySummaryHandler` skeleton — validate `year` (4-digit integer) and `month` (1–12) query params, return 400 on invalid input, 501 otherwise
+- [x] T003 Create `getMonthlySummary` service function skeleton in `server/src/services/monthly-summary.service.ts` — accepts `{ userId, year, month, caller }`, returns empty object for now
+- [x] T004 Add `MonthlySummaryResponse`, `DayStatus`, and `ProjectBreakdownItem` TypeScript interfaces in `server/src/services/monthly-summary.service.ts` with all fields from the API contract (quotaHours, reportedHours, completionPercentage, missingHoursToDate, absenceHours, daysWithoutReport, projectBreakdown, dayStatuses) — DayStatus: `full | missing | day_off | half_day_off`
 
 **Checkpoint**: `GET /monthly-summary?year=2026&month=5` returns 501 (or 400 for bad params). Route is live.
 
