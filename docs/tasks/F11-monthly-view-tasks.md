@@ -174,7 +174,7 @@
 
 ### Implementation for FR-012
 
-- [ ] T051 Extend `getTimeEntriesHandler` in `server/src/controllers/time-entries.controller.ts` — when `month` is a numeric 1–12 value, require `year` param and combine into `YYYY-MM` format before passing to `listTimeEntries`; when only `year` provided without `month` → 400
+- [x] T051 Extend `getTimeEntriesHandler` in `server/src/controllers/time-entries.controller.ts` — when `month` is a numeric 1–12 value, require `year` param and combine into `YYYY-MM` format before passing to `listTimeEntries`; when only `year` provided without `month` → 400
 
 **Checkpoint**: T049–T050 all pass. Existing `?month=YYYY-MM` format still works.
 
