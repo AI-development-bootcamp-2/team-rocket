@@ -147,9 +147,9 @@ describe('App routing and shell', () => {
       logout,
     });
 
-    expect(screen.getByText(/שלום, Dana Admin/i)).toBeInTheDocument();
-    expect(screen.getByText(/החשבון שלך מחובר ומוכן לעבוד/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /התנתקות/i }));
+    expect(screen.getByRole('heading', { name: /דיווח שעות/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/רשימת דיווחים חודשית/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /יציאה/i }));
     expect(logout).toHaveBeenCalled();
   });
 
