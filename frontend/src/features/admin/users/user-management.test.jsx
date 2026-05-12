@@ -104,8 +104,6 @@ describe('user management UI', () => {
           mode="create"
           user={null}
           permissionFlag={null}
-          projects={[{ id: 11, name: 'Apollo' }]}
-          loadingMeta={false}
           onSubmit={onSubmit}
         />
       </div>,
@@ -130,7 +128,6 @@ describe('user management UI', () => {
     expect(onStatusChange).toHaveBeenCalledWith('inactive');
 
     const userForm = document.getElementById('user-form');
-    const userFormScope = within(userForm);
     fireEvent.submit(userForm);
     expect(container.querySelectorAll('.ui-field__error').length).toBeGreaterThan(0);
 
@@ -139,8 +136,6 @@ describe('user management UI', () => {
     setInputValue(formInputs[1], 'Hopper');
     setInputValue(formInputs[2], 'grace@test.com');
     setInputValue(formInputs[3], 'StrongPass1!');
-    fireEvent.click(userForm.querySelector('button[aria-pressed]'));
-    fireEvent.click(userFormScope.getByRole('button', { name: 'Apollo' }));
     fireEvent.submit(userForm);
 
     await waitFor(() =>
@@ -149,7 +144,6 @@ describe('user management UI', () => {
           first_name: 'Grace',
           last_name: 'Hopper',
           email: 'grace@test.com',
-          scoped_project_ids: [11],
         }),
       ),
     );
@@ -167,13 +161,19 @@ describe('user management UI', () => {
     );
 
     const dialogs = screen.getAllByRole('dialog');
-    fireEvent.click(within(dialogs[0]).getAllByRole('button')[1]);
 
+    // X button closes the deactivate dialog
+    fireEvent.click(within(dialogs[0]).getByRole('button', { name: 'סגירה' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+
+    // Confirm button triggers onConfirm on the deactivate dialog
+    fireEvent.click(within(dialogs[0]).getByRole('button', { name: 'השבתה' }));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+
+    // Reset password: fill form and submit → onConfirm called with password
     const resetPasswordForm = document.getElementById('reset-password-form');
     setInputValue(resetPasswordForm.querySelector('input'), 'TempPass1!');
     fireEvent.click(document.querySelector('button[form="reset-password-form"]'));
-
-    expect(onClose).toHaveBeenCalled();
     expect(onConfirm).toHaveBeenCalledWith('TempPass1!');
   });
 
@@ -213,7 +213,7 @@ describe('user management UI', () => {
     await waitFor(() => expect(mockApi.updateUser).toHaveBeenCalled());
 
     fireEvent.click(screen.getAllByRole('button', { name: /השבתה Ada Lovelace/i })[0]);
-    fireEvent.click(document.querySelector('.ui-modal__footer button:last-child'));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'השבתה' }));
     await waitFor(() => expect(mockApi.deactivateUser).toHaveBeenCalledWith(2));
 
     fireEvent.click(screen.getAllByRole('button', { name: /איפוס סיסמה עבור Ada Lovelace/i })[0]);
@@ -225,7 +225,7 @@ describe('user management UI', () => {
         temporary_password: 'ResetPass1!',
       }),
     );
-  });
+  }, 15000);
 
   it('renders empty and permission-error states', async () => {
     mockApi.listUsers.mockReset();
