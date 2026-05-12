@@ -37,7 +37,7 @@ export async function getMonthlySummaryHandler(req: Request, res: Response): Pro
     userId = parsed;
   }
 
-  await getMonthlySummary({ userId, year, month, caller });
+  const summary = await getMonthlySummary({ userId, year, month, caller });
 
-  res.status(501).json({ message: 'Not Implemented' });
+  res.status(200).json(summary);
 }

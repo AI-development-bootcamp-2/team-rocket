@@ -45,8 +45,8 @@
 
 - [x] T010 [US1] Implement `computeDailyStandard(user)` helper in `server/src/services/time-entries.service.ts` — `(daily_hours_override ?? 9) × (employment_percentage / 100)`
 - [x] T011 [US1] Implement `computeQuotaHours(userId, year, month, dailyStandard)` in service — count working days (Sun–Thu), deduct holidays from `holiday_calendar`, deduct full-day absences × dailyStandard and partial absences × dailyStandard/2
-- [ ] T012 [US1] Implement `reportedHours` query in `getMonthlySummary` — `SUM(duration_minutes)/60` from `time_entries` for the month (non-deleted)
-- [ ] T013 [US1] Wire `quotaHours`, `reportedHours`, `completionPercentage` into `getMonthlySummary` response and connect handler to return 200
+- [x] T012 [US1] Implement `reportedHours` query in `getMonthlySummary` — `SUM(duration_minutes)/60` from `time_entries` for the month (non-deleted)
+- [x] T013 [US1] Wire `quotaHours`, `reportedHours`, `completionPercentage` into `getMonthlySummary` response and connect handler to return 200
 
 **Checkpoint**: T005–T009 all pass. `GET /monthly-summary` returns correct progress fields.
 

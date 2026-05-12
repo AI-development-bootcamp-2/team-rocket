@@ -13,19 +13,22 @@ export function computeDailyStandard(user: {
   return baseHours * (user.employment_percentage / 100);
 }
 
+// Pads a single-digit number with a leading zero (e.g. 5 → "05")
 function pad2(n: number): string {
   return String(n).padStart(2, '0');
 }
 
+// Returns the number of calendar days in the given month
 function totalDaysInMonth(year: number, month: number): number {
   return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 
+// Builds a "YYYY-MM-DD" string from year/month/day parts
 function dateStr(year: number, month: number, day: number): string {
   return `${year}-${pad2(month)}-${pad2(day)}`;
 }
 
-// Returns true for Israel weekends: getUTCDay() returns 5=Fri, 6=Sat
+// Returns true for Israel weekends: Fri(5) and Sat(6)
 function isWeekend(dow: number): boolean {
   return dow === 5 || dow === 6;
 }
@@ -136,11 +139,48 @@ export interface MonthlySummaryResponse {
   dayStatuses: Record<string, DayStatus>;
 }
 
-export async function getMonthlySummary(_params: {
+export async function getMonthlySummary(params: {
   userId: number;
   year: number;
   month: number;
   caller: AuthenticatedUser;
 }): Promise<MonthlySummaryResponse> {
-  return {} as MonthlySummaryResponse;
+  const { userId, year, month } = params;
+
+  const user = (await db('users')
+    .where('id', userId)
+    .select('daily_hours_override', 'employment_percentage')
+    .first()) as { daily_hours_override: number | null; employment_percentage: number } | undefined;
+
+  if (!user) {
+    const { AppError } = await import('../middleware/error.middleware');
+    throw new AppError('User not found', 404);
+  }
+
+  const dailyStandard = computeDailyStandard(user);
+  const quotaHours = await computeQuotaHours(userId, year, month, dailyStandard);
+
+  // Sum logged hours for the month, excluding soft-deleted entries
+  const [{ total }] = (await db('time_entries')
+    .where('user_id', userId)
+    .whereNull('deleted_at')
+    .whereRaw('EXTRACT(YEAR FROM date) = ? AND EXTRACT(MONTH FROM date) = ?', [year, month])
+    .sum('duration_minutes as total')) as [{ total: string | null }];
+
+  const reportedHours = Math.round((Number(total ?? 0) / 60) * 100) / 100;
+  const completionPercentage =
+    quotaHours > 0 ? Math.floor((reportedHours / quotaHours) * 100) : 0;
+
+  return {
+    year,
+    month,
+    quotaHours,
+    reportedHours,
+    completionPercentage,
+    missingHoursToDate: 0,
+    absenceHours: 0,
+    daysWithoutReport: 0,
+    projectBreakdown: [],
+    dayStatuses: {},
+  };
 }
