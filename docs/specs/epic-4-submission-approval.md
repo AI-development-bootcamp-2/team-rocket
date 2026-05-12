@@ -210,62 +210,88 @@ When an entry is rejected:
 ### Business Rules (MAJOR)
 
 - Only **ONE timer** may run at a time per user
-- Timer state is **persisted server-side** — survives page refresh, browser close, device switch
-- **Auto-stop** after 12 hours of continuous running (forgot-to-stop protection)
-- **Reminder notification** (in-app) after 10 hours of continuous running
+- Timer state is **persisted server-side** via an open `time_entries` row — survives page refresh, browser close, and device switch
+- **No separate DB table**: a running timer is a `time_entries` row where `end_time IS NULL`
+- **On start**: a new `time_entries` row is created with `user_id`, `date`, and `start_time`; all other fields remain null
+- **On stop**: a dialog opens for client/project/task/location/description; submitting the dialog sends those details to the server which updates the open row, completing the entry
+- **Timer is date-scoped**: only a row with `date = today` counts as a running timer. An open row from a previous date is a missing/incomplete report — the user sees it flagged as missing and gets a fresh timer for the current day
+- **No auto-stop**: the user must stop the timer manually. If they forget, the open row from the previous day becomes a missing report they must complete
 - If a timer is running, **monthly submission is BLOCKED**
-- On stop: dialog opens for client/project/task/location/description entry
-- On dialog submit: a time entry is created with the timer's start time and stop time
 
-### DB Table
+### DB Notes
 
+No separate timer table. Detection: `SELECT * FROM time_entries WHERE user_id = ? AND end_time IS NULL`.
+
+A partial unique index enforces one open timer row per user per date:
 ```sql
-active_timers
-  id UUID PK
-  user_id UUID FK → users UNIQUE    -- only one timer per user at a time
-  start_time TIMESTAMPTZ NOT NULL
-  created_at TIMESTAMPTZ
+CREATE UNIQUE INDEX unique_running_timer_per_user_per_day
+  ON time_entries (user_id, date)
+  WHERE end_time IS NULL AND deleted_at IS NULL;
 ```
+
+Columns made nullable to support the partial timer row (completed on stop):
+- `end_time`, `duration_minutes`, `client_id`, `project_id`, `task_id`, `location`, `description`
 
 ### API Endpoints
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/timer` | User | Get current timer state (running or null) |
-| POST | `/timer/start` | User | Start timer (fails if one already running) |
-| POST | `/timer/stop` | User | Stop timer, returns duration, opens completion dialog |
+| GET | `/timer` | User | Get running timer state (`start_time` + `time_entry_id`), or null |
+| POST | `/timer/start` | User | Start timer — creates partial `time_entries` row |
+| POST | `/timer/stop` | User | Complete the open row with entry details |
 
-#### Start Response
+#### GET /timer Response
 
 ```json
-// POST /timer/start
-// 200 OK
-{ "startTime": "2026-05-06T09:00:00Z", "elapsedMinutes": 0 }
+// No running timer
+{ "running": false }
+
+// Timer running
+{ "running": true, "timeEntryId": 42, "startTime": "2026-05-06T09:00:00Z", "elapsedSeconds": 3600 }
+```
+
+Frontend stores `startTime` locally; calls GET `/timer` on load if local value is null (e.g. after the 15-min access-token expiry + re-login).
+
+#### POST /timer/start Response
+
+```json
+// 201 Created
+{ "timeEntryId": 42, "startTime": "2026-05-06T09:00:00Z" }
 
 // 409 Conflict if timer already running
 { "error": "A timer is already running since 09:00" }
 ```
 
-#### Stop Response
+#### POST /timer/stop Request + Response
 
 ```json
-// POST /timer/stop
+// Request body — all fields required
 {
+  "clientId": "uuid",
+  "projectId": "uuid",
+  "taskId": "uuid",
+  "location": "משרד",
+  "description": "Implemented login page"
+}
+
+// 200 OK
+{
+  "timeEntryId": 42,
   "startTime": "2026-05-06T09:00:00Z",
   "stopTime": "2026-05-06T12:30:00Z",
   "durationMinutes": 210
 }
-// After this, frontend opens the completion dialog for entry details
 ```
 
 ### Timer UI
 
 - **Start/Stop button** visible on the daily report screen
-- **Running state**: shows elapsed time (live counter), stop button, reminder at 10h
+- **Running state**: shows elapsed time (live counter updating every second), stop button
+- Frontend tracks elapsed time from locally stored `startTime`; fetches GET `/timer` on page load when local value is absent
 - **Completion dialog** (on stop):
   - Client, Project, Task, Location, Description fields (all required)
   - Pre-filled date = today, start/end times from timer
-  - Submit → creates time entry
+  - Submit → PATCH `/timer/stop` with details → entry is saved
 
 ---
 
@@ -280,9 +306,10 @@ active_timers
 | Integration | POST /monthly-submissions/:id/approve — status changes to approved | CRITICAL |
 | Integration | POST /time-entries/:id/reject — reason required, monthly submission moves to rejected | CRITICAL |
 | Integration | Rejected entry → user can edit and resubmit month | CRITICAL |
-| Integration | POST /timer/start — fails if timer already running | MAJOR |
-| Integration | Timer auto-stop after 12 hours | MAJOR |
-| Integration | POST /timer/stop — creates time entry with correct start/end | MAJOR |
+| Integration | POST /timer/start — fails if timer already running today | MAJOR |
+| Integration | POST /timer/start — succeeds even if open row exists from a previous date | MAJOR |
+| Integration | POST /timer/stop — completes time entry with correct start/end and all fields | MAJOR |
+| Integration | GET /timer — returns running:false when open row is from a previous date | MAJOR |
 | Permission | Only admin can approve/reject | CRITICAL |
 | Permission | User cannot see other users' submission status | CRITICAL |
 | Audit | Approval, rejection, resubmission all logged | MAJOR |

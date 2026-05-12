@@ -54,7 +54,6 @@ export type AuditAction =
   | 'LOCK'
   | 'UNLOCK'
   | 'ADMIN_EDIT'
-  | 'TIMER_AUTO_STOPPED'
   | 'WEEK_RESUBMITTED'
   | 'EXPORT'
   | 'PASSWORD_RESET'
