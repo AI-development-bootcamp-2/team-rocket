@@ -161,10 +161,8 @@ export function MonthLockPage() {
                     <tr>
                       <th>חודש</th>
                       <th>סטטוס</th>
-                      <th>נועל / פותח</th>
+                      <th>נועל על ידי</th>
                       <th>תאריך נעילה</th>
-                      <th>שבועות מאושרים</th>
-                      <th>שבועות שלא אושרו</th>
                       <th>פעולות</th>
                     </tr>
                   </thead>
@@ -186,12 +184,6 @@ export function MonthLockPage() {
                           </td>
                           <td className="month-lock-table__actor">{m.locked_by ?? '—'}</td>
                           <td>{formatDate(m.locked_at)}</td>
-                          <td className="month-lock-table__count month-lock-table__count--approved">
-                            {m.approved_week_count ?? '—'}
-                          </td>
-                          <td className="month-lock-table__count month-lock-table__count--unapproved">
-                            {m.unapproved_week_count ?? '—'}
-                          </td>
                           <td>
                             {m.is_locked ? (
                               <Button
