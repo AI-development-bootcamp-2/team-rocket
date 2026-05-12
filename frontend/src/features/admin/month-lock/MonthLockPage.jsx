@@ -1,7 +1,6 @@
 import { startTransition, useCallback, useEffect, useState } from 'react';
 import { getMonthStatus, listMonths, lockMonth, unlockMonth } from '../../../api/monthLocks.api.js';
 import { AdminShell } from '../../../components/layout/AdminShell.jsx';
-import { Button } from '../../../components/ui/Button.jsx';
 import { ErrorState } from '../../../components/ui/ErrorState.jsx';
 import { Spinner } from '../../../components/ui/Spinner.jsx';
 import { Toast } from '../../../components/ui/Toast.jsx';
@@ -10,6 +9,24 @@ import { MonthStatusBadge } from './MonthStatusBadge.jsx';
 import { UnlockReasonDialog } from './UnlockReasonDialog.jsx';
 
 const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+
+function LockIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function UnlockIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M5 7V5a3 3 0 0 1 6 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
 
 function buildMonthGrid(lockRecords) {
   const now = new Date();
@@ -30,8 +47,6 @@ function buildMonthGrid(lockRecords) {
         is_locked: record?.is_locked ?? false,
         locked_by_name: record?.locked_by_name ?? null,
         locked_at: record?.locked_at ?? null,
-        approved_week_count: record?.approved_week_count ?? null,
-        unapproved_week_count: record?.unapproved_week_count ?? null,
       });
     }
   }
@@ -156,13 +171,13 @@ export function MonthLockPage() {
           {!loading && !error ? (
             <div className="users-page__desktop">
               <div className="users-table-card">
-                <table className="month-lock-table">
+                <table className="users-table">
                   <thead>
                     <tr>
                       <th>חודש</th>
                       <th>סטטוס</th>
-                      <th>נועל על ידי</th>
-                      <th>תאריך נעילה</th>
+                      <th>בוצע על ידי</th>
+                      <th>תאריך עדכון</th>
                       <th>פעולות</th>
                     </tr>
                   </thead>
@@ -175,33 +190,38 @@ export function MonthLockPage() {
 
                       return (
                         <tr key={`${year}-${month}`}>
-                          <td className="month-lock-table__month-cell">{monthName} {year}</td>
+                          <td><strong>{monthName} {year}</strong></td>
                           <td>
-                            <MonthStatusBadge
-                              isLocked={m.is_locked}
-                              unapprovedWeekCount={m.unapproved_week_count ?? 0}
-                            />
+                            <MonthStatusBadge isLocked={m.is_locked} />
                           </td>
-                          <td className="month-lock-table__actor">{m.locked_by_name ?? '—'}</td>
+                          <td>{m.locked_by_name ?? '—'}</td>
                           <td>{formatDate(m.locked_at)}</td>
                           <td>
-                            {m.is_locked ? (
-                              <Button
-                                className="month-lock-action-btn month-lock-action-btn--unlock"
-                                onClick={() => setDialog({ mode: 'unlock', year, month })}
-                                disabled={dialogLoading}
-                              >
-                                פתח
-                              </Button>
-                            ) : (
-                              <Button
-                                className="month-lock-action-btn month-lock-action-btn--lock"
-                                onClick={() => handleLockClick(year, month)}
-                                disabled={isRowLocking || dialogLoading}
-                              >
-                                {isRowLocking ? '...' : 'נעל'}
-                              </Button>
-                            )}
+                            <div className="user-row-actions">
+                              {m.is_locked ? (
+                                <button
+                                  type="button"
+                                  className="user-row-actions__button user-row-actions__button--success"
+                                  onClick={() => setDialog({ mode: 'unlock', year, month })}
+                                  disabled={dialogLoading}
+                                  data-tooltip="פתח חודש"
+                                  aria-label={`פתח את חודש ${monthName} ${year}`}
+                                >
+                                  <UnlockIcon />
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="user-row-actions__button user-row-actions__button--danger"
+                                  onClick={() => handleLockClick(year, month)}
+                                  disabled={isRowLocking || dialogLoading}
+                                  data-tooltip="נעל חודש"
+                                  aria-label={`נעל את חודש ${monthName} ${year}`}
+                                >
+                                  {isRowLocking ? '...' : <LockIcon />}
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
