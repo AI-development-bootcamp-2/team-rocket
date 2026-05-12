@@ -135,9 +135,7 @@ TimerButton (component on DailyReportPage), TimerCompletionDialog
 - [ ] Timer starts and shows elapsed time
 - [ ] Only one timer at a time
 - [ ] Stop opens completion dialog
-- [ ] Auto-stop at 12h
 - [ ] Persists across refresh
 - [ ] Auto-stop creates TIMER_AUTO_STOPPED audit log entry with actor=SYSTEM
-- [ ] 10h running triggers in-app notification (deduplicated per session)
 - [ ] Completion dialog validates for time overlaps before saving entry
 
