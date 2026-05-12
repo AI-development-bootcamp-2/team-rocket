@@ -59,10 +59,10 @@
 
 ### ⚠️ Write tests FIRST — confirm they FAIL before Phase 3 implementation
 
-- [ ] T014 [US2] Write failing integration test: `missingHoursToDate` equals gap between expected-by-today and reported (mid-month scenario) — in `server/tests/integration/monthly-summary.test.ts`
-- [ ] T015 [US2] Write failing integration test: `missingHoursToDate = 0` when user is fully caught up (reported ≥ expected by today) — in `server/tests/integration/monthly-summary.test.ts`
-- [ ] T016 [US2] Write failing integration test: `missingHoursToDate = 0` for a future month (no elapsed days) — in `server/tests/integration/monthly-summary.test.ts`
-- [ ] T017 [US2] Write failing integration test: past month — `missingHoursToDate = max(0, quotaHours − reportedHours)` — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T014 [US2] Write failing integration test: `missingHoursToDate` equals gap between expected-by-today and reported (mid-month scenario) — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T015 [US2] Write failing integration test: `missingHoursToDate = 0` when user is fully caught up (reported ≥ expected by today) — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T016 [US2] Write failing integration test: `missingHoursToDate = 0` for a future month (no elapsed days) — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T017 [US2] Write failing integration test: past month — `missingHoursToDate = max(0, quotaHours − reportedHours)` — in `server/tests/integration/monthly-summary.test.ts`
 
 ### Implementation for US2
 

@@ -11,6 +11,8 @@ import {
   computeDailyStandard,
   countWorkingDaysInMonth,
   buildQuotaHours,
+  countElapsedWorkingDays,
+  buildMissingHoursToDate,
 } from '../../../src/services/monthly-summary.service';
 
 // ── computeDailyStandard ──────────────────────────────────────────────────────
@@ -124,5 +126,79 @@ describe('buildQuotaHours', () => {
   it('handles partial-only absences with 50% employment', () => {
     // dailyStandard = 4.5; 21 × 4.5 − 1 × 2.25 = 94.5 − 2.25 = 92.25
     expect(buildQuotaHours(21, 4.5, 0, 1)).toBe(92.25);
+  });
+});
+
+// ── countElapsedWorkingDays ───────────────────────────────────────────────────
+//
+// January 2026 reference (Sun–Thu working week):
+//   Jan 1=Thu, 4=Sun, 5=Mon, 6=Tue, 7=Wed, 8=Thu,
+//   11=Sun, 12=Mon, 13=Tue, 14=Wed, 15=Thu  →  11 working days by day 15
+
+describe('countElapsedWorkingDays', () => {
+  it('counts 11 working days up to Jan 15', () => {
+    expect(countElapsedWorkingDays(2026, 1, 15, [])).toBe(11);
+  });
+
+  it('counts all 21 working days when cutoff is the last day of the month', () => {
+    expect(countElapsedWorkingDays(2026, 1, 31, [])).toBe(21);
+  });
+
+  it('counts 1 when cutoff is Jan 1 (a working day)', () => {
+    expect(countElapsedWorkingDays(2026, 1, 1, [])).toBe(1);
+  });
+
+  it('counts 1 when cutoff is Jan 2 (Friday = weekend, but Jan 1 already counted)', () => {
+    expect(countElapsedWorkingDays(2026, 1, 2, [])).toBe(1);
+  });
+
+  it('returns 0 when cutoff is before the month starts', () => {
+    expect(countElapsedWorkingDays(2026, 1, 0, [])).toBe(0);
+  });
+
+  it('deducts a holiday that falls within the elapsed period', () => {
+    // Jan 4 (Sun) is a working day — one holiday → 10 instead of 11
+    expect(countElapsedWorkingDays(2026, 1, 15, ['2026-01-04'])).toBe(10);
+  });
+
+  it('ignores a holiday that falls after the cutoff', () => {
+    // Jan 20 is after cutoff Jan 15 → no change
+    expect(countElapsedWorkingDays(2026, 1, 15, ['2026-01-20'])).toBe(11);
+  });
+
+  it('ignores a holiday on a weekend (already off)', () => {
+    // Jan 2 (Fri) is already a weekend — adding it as holiday changes nothing
+    expect(countElapsedWorkingDays(2026, 1, 15, ['2026-01-02'])).toBe(11);
+  });
+});
+
+// ── buildMissingHoursToDate ───────────────────────────────────────────────────
+
+describe('buildMissingHoursToDate', () => {
+  it('returns the gap when reported is below expected', () => {
+    // 11 elapsed × 9h = 99h expected; 54h reported → 45h missing
+    expect(buildMissingHoursToDate(11, 9, 54)).toBe(45);
+  });
+
+  it('returns 0 when reported equals expected exactly', () => {
+    expect(buildMissingHoursToDate(11, 9, 99)).toBe(0);
+  });
+
+  it('returns 0 when user over-reported (extra hours carry over, never negative)', () => {
+    // 11 × 9 = 99h expected; 110h reported (10h/day) → max(0, 99 − 110) = 0
+    expect(buildMissingHoursToDate(11, 9, 110)).toBe(0);
+  });
+
+  it('returns 0 when no working days have elapsed yet', () => {
+    expect(buildMissingHoursToDate(0, 9, 0)).toBe(0);
+  });
+
+  it('returns 0 for a 0% employment user (dailyStandard = 0)', () => {
+    expect(buildMissingHoursToDate(21, 0, 0)).toBe(0);
+  });
+
+  it('handles fractional daily standards (50% employment)', () => {
+    // dailyStandard = 4.5; 11 × 4.5 = 49.5 expected; 27h reported → 22.5 missing
+    expect(buildMissingHoursToDate(11, 4.5, 27)).toBe(22.5);
   });
 });

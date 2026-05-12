@@ -1,12 +1,8 @@
 /// <reference types="jest" />
 /**
- * Integration tests — Monthly Summary module (F11)
- *
+ * Integration tests for GET /monthly-summary.
  * Requires a running Postgres instance at DATABASE_URL (set in tests/setup.ts).
  * Isolation: beforeEach truncates users + audit_logs + clients CASCADE.
- *
- * Phase 2 coverage (T005–T009):
- *   quotaHours, reportedHours, completionPercentage
  */
 import type { Knex } from 'knex';
 import bcrypt from 'bcryptjs';
@@ -211,14 +207,9 @@ afterAll(async () => {
   await db.destroy();
 });
 
-// ── Phase 2: quotaHours, reportedHours, completionPercentage ──────────────────
-//
-// Reference month: January 2026
-//   Jan 1 = Thursday  →  working days (Sun–Thu): 21
-//   quotaHours (100%, no holidays, no absences): 21 × 9 = 189
+// January 2026: Jan 1 = Thursday → 21 working days (Sun–Thu) → quotaHours = 189h
 
-describe('GET /monthly-summary — Phase 2: US1', () => {
-  // T005
+describe('GET /monthly-summary — quota, reported hours & completion', () => {
   it('returns correct quotaHours for a standard month with no holidays or absences', async () => {
     const { token } = await scaffold();
 
@@ -230,7 +221,6 @@ describe('GET /monthly-summary — Phase 2: US1', () => {
     expect(res.body.quotaHours).toBe(189); // 21 working days × 9h
   });
 
-  // T006
   it('deducts 1 national holiday and 1 full-day absence from quotaHours', async () => {
     const { user, token } = await scaffold();
 
@@ -248,7 +238,6 @@ describe('GET /monthly-summary — Phase 2: US1', () => {
     expect(res.body.quotaHours).toBe(171);
   });
 
-  // T007
   it('scales quotaHours with employment_percentage (50%)', async () => {
     const { token } = await scaffold({ employmentPercentage: 50 });
 
@@ -261,7 +250,6 @@ describe('GET /monthly-summary — Phase 2: US1', () => {
     expect(res.body.quotaHours).toBe(94.5);
   });
 
-  // T008
   it('reportedHours equals sum of non-deleted time entries in the month', async () => {
     const { user, client, project, task, token } = await scaffold();
 
@@ -278,7 +266,6 @@ describe('GET /monthly-summary — Phase 2: US1', () => {
     expect(res.body.reportedHours).toBe(9); // 540 min / 60
   });
 
-  // T009
   it('completionPercentage = floor(reportedHours / quotaHours × 100)', async () => {
     const { user, client, project, task, token } = await scaffold();
 
@@ -297,7 +284,6 @@ describe('GET /monthly-summary — Phase 2: US1', () => {
     expect(res.body.completionPercentage).toBe(9);
   });
 
-  // Basic smoke-test: year/month echoed in response
   it('response includes year and month fields', async () => {
     const { token } = await scaffold();
 
@@ -308,5 +294,107 @@ describe('GET /monthly-summary — Phase 2: US1', () => {
     expect(res.status).toBe(200);
     expect(res.body.year).toBe(2026);
     expect(res.body.month).toBe(1);
+  });
+});
+
+// T014/T015 pin today to 2026-01-15: 11 elapsed working days (Sun–Thu) → expected = 99h.
+// Only `Date` is faked; async/timer primitives are left real so db calls work.
+
+describe('GET /monthly-summary — missingHoursToDate', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('equals gap between expected-by-today and reported hours (mid-month gap)', async () => {
+    jest.useFakeTimers({
+      now: new Date('2026-01-15T12:00:00.000Z'),
+      doNotFake: [
+        'hrtime', 'nextTick', 'performance', 'queueMicrotask',
+        'setImmediate', 'clearImmediate',
+        'setInterval', 'clearInterval',
+        'setTimeout', 'clearTimeout',
+      ],
+    });
+
+    const { user, client, project, task, token } = await scaffold();
+
+    // 6 × 9h = 54h reported; expected = 99h → gap = 45h
+    for (const date of ['2026-01-04', '2026-01-05', '2026-01-06', '2026-01-07', '2026-01-08', '2026-01-11']) {
+      await seedTimeEntry({ userId: user.id, date, durationMinutes: 540, clientId: client.id, projectId: project.id, taskId: task.id });
+    }
+
+    const res = await request(app)
+      .get('/monthly-summary?year=2026&month=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.reportedHours).toBe(54);
+    // 11 elapsed working days × 9h = 99h expected; 54h reported → 99 − 54 = 45h
+    expect(res.body.missingHoursToDate).toBe(45);
+  });
+
+  it('returns 0 when user over-reports (extra hours carry over, result is clamped to 0)', async () => {
+    jest.useFakeTimers({
+      now: new Date('2026-01-15T12:00:00.000Z'),
+      doNotFake: [
+        'hrtime', 'nextTick', 'performance', 'queueMicrotask',
+        'setImmediate', 'clearImmediate',
+        'setInterval', 'clearInterval',
+        'setTimeout', 'clearTimeout',
+      ],
+    });
+
+    const { user, client, project, task, token } = await scaffold();
+
+    // 11 × 10h = 110h — user logged 1h extra each day (standard is 9h)
+    // expected = 11 × 9h = 99h; reported = 110h → max(0, 99 − 110) = 0
+    for (const date of [
+      '2026-01-01', '2026-01-04', '2026-01-05', '2026-01-06', '2026-01-07', '2026-01-08',
+      '2026-01-11', '2026-01-12', '2026-01-13', '2026-01-14', '2026-01-15',
+    ]) {
+      await seedTimeEntry({ userId: user.id, date, durationMinutes: 600, clientId: client.id, projectId: project.id, taskId: task.id });
+    }
+
+    const res = await request(app)
+      .get('/monthly-summary?year=2026&month=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.reportedHours).toBe(110);
+    expect(res.body.missingHoursToDate).toBe(0); // never negative even when over-reported
+  });
+
+  it('returns 0 for a future month (no elapsed working days)', async () => {
+    const { token } = await scaffold();
+
+    // 2027-01 is entirely in the future from today (2026-05-12); no entries needed
+    const res = await request(app)
+      .get('/monthly-summary?year=2027&month=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.missingHoursToDate).toBe(0);
+  });
+
+  it('for a past month equals max(0, quotaHours − reportedHours)', async () => {
+    const { user, client, project, task, token } = await scaffold();
+
+    // January 2026 is past; cutoff = Jan 31; quotaHours = 189h (21 × 9h)
+    // Seed 10 × 9h = 90h → gap = 189 − 90 = 99h
+    for (const date of [
+      '2026-01-04', '2026-01-05', '2026-01-06', '2026-01-07', '2026-01-08',
+      '2026-01-11', '2026-01-12', '2026-01-13', '2026-01-14', '2026-01-15',
+    ]) {
+      await seedTimeEntry({ userId: user.id, date, durationMinutes: 540, clientId: client.id, projectId: project.id, taskId: task.id });
+    }
+
+    const res = await request(app)
+      .get('/monthly-summary?year=2026&month=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.reportedHours).toBe(90);
+    expect(res.body.quotaHours).toBe(189);
+    expect(res.body.missingHoursToDate).toBe(99); // 189 − 90
   });
 });
