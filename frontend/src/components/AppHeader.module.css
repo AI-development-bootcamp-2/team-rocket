@@ -1,0 +1,176 @@
+/* AppHeader — Simplified main webapp header */
+
+.header {
+  box-sizing: border-box;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: #ffffff;
+  border-bottom: 1px solid #ececec;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 32px;
+  gap: 20px;
+  z-index: 100;
+}
+
+/* Right (RTL start): Logo */
+.headerBrand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.headerLogo {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Center: Action buttons */
+.headerCenter {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Timer button (pink gradient) */
+.timerBtn {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 4px 8px 16px;
+  gap: 8px;
+  width: auto;
+  min-width: 140px;
+  height: 36px;
+  background: linear-gradient(132.32deg, #FE5A89 13.16%, #CB2555 87.63%);
+  box-shadow: 0px 4px 16px rgba(224, 59, 107, 0.48);
+  border-radius: 9999px;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.timerBtn:hover {
+  opacity: 0.88;
+}
+
+.timerBtn:active {
+  opacity: 0.75;
+}
+
+.timerBtnLabel {
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+  color: #ffffff;
+  white-space: nowrap;
+  order: 0;
+}
+
+.timerBtnIcon {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(132.32deg, #FF92B1 13.16%, #E34170 87.63%);
+  border-radius: 50%;
+  flex-shrink: 0;
+  order: 1;
+}
+
+/* Manual report button (orange gradient) */
+.manualReportBtn {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 4px 8px 16px;
+  gap: 8px;
+  width: auto;
+  min-width: 130px;
+  height: 36px;
+  background: linear-gradient(94.76deg, #FF9F00 0.6%, #FF6B00 98.94%);
+  box-shadow: 0px 4px 16px rgba(255, 140, 1, 0.48);
+  border-radius: 9999px;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.manualReportBtn:hover {
+  opacity: 0.88;
+}
+
+.manualReportBtn:active {
+  opacity: 0.75;
+}
+
+.manualBtnLabel {
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+  color: #ffffff;
+  white-space: nowrap;
+  order: 0;
+}
+
+.manualBtnIcon {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(94.76deg, #FF9446 0.6%, #FFB741 98.94%);
+  border-radius: 50%;
+  flex-shrink: 0;
+  order: 1;
+}
+
+/* Left (RTL end): Logout button */
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: #3b82f6;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.logoutBtn:hover {
+  color: #1d4ed8;
+}
+
+.logoutArrow {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}

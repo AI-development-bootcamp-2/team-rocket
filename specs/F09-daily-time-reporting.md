@@ -42,41 +42,41 @@ The core user feature. Daily report form with cascading dropdowns, existing entr
 
 ### 3. Frontend: Daily report page (default/home screen)
 
-- [ ] Create DailyReportPage.jsx — this is the default screen after login
-- [ ] Show: date picker (default: today), daily standard (9h), progress indicator showing hours reported vs standard
-- [ ] Show existing entries for selected date (ExistingEntriesList.jsx) with edit/delete actions
-- [ ] ReportForm.jsx: location dropdown, start time, end time, auto-calculated duration, client→project→task cascading dropdowns, description textarea
-- [ ] Auto-select if only one option in dropdown
-- [ ] Sort toggle (alphabetical / frequency) persisted per user
-- [ ] Save button: call POST, show success toast, reset form for next entry
-- [ ] Cancel button: discard form, reset to blank
-- [ ] Validation: all fields required, end > start, show field-level errors
-- [ ] Warning banners: under/over standard hours for the day
-- [ ] **Unsaved changes guard**: intercept browser navigation / route change when form is dirty. Show dialog: 'יש לך שינויים שלא נשמרו. לצאת בכל זאת?' (You have unsaved changes. Leave anyway?)
-- [ ] **"Modified by Admin" badge**: if `entry.last_modified_by_role === 'admin'`, show badge on entry card with tooltip showing admin name and timestamp from audit log
+- [x] Create DailyReportPage.jsx — this is the default screen after login
+- [x] Show: date picker (default: today), daily standard (9h), progress indicator showing hours reported vs standard
+- [x] Show existing entries for selected date (ExistingEntriesList.jsx) with edit/delete actions
+- [x] ReportForm.jsx: location dropdown, start time, end time, auto-calculated duration, client→project→task cascading dropdowns, description textarea
+- [x] Auto-select if only one option in dropdown
+- [x] Sort toggle (alphabetical / frequency) persisted per user
+- [x] Save button: call POST, show success toast, reset form for next entry
+- [x] Cancel button: discard form, reset to blank
+- [x] Validation: all fields required, end > start, show field-level errors
+- [x] Warning banners: under/over standard hours for the day
+- [x] **Unsaved changes guard**: intercept browser navigation / route change when form is dirty. Show dialog: 'יש לך שינויים שלא נשמרו. לצאת בכל זאת?' (You have unsaved changes. Leave anyway?)
+- [x] **"Modified by Admin" badge**: if `entry.last_modified_by_role === 'admin'`, show badge on entry card with tooltip showing admin name and timestamp from audit log
 
 ### 3b. Required UI states (v3.2 §14.1)
 
-- [ ] **Loading**: skeleton entry list while fetching
-- [ ] **Empty**: 'No entries for this day — start reporting' message
-- [ ] **No-permission**: 403 state if user somehow hits admin-only endpoints
-- [ ] **Validation error**: inline field errors (required, end>start, overlap)
-- [ ] **Server error**: toast on 500
-- [ ] **Offline indicator**: disable Save with 'No internet connection'
-- [ ] **Save success**: toast 'Entry saved' + form reset
-- [ ] **Conflict (409)**: dialog 'Entry was modified by someone else. Reload to see latest version.'
-- [ ] **Locked month**: all form fields disabled, banner 'החודש נעול — קריאה בלבד'
-- [ ] **Unsaved changes**: dialog before navigate-away
-- [ ] **Quota warning**: yellow banner when reported hours ≥90% of monthly quota
-- [ ] **Disabled control**: edit/delete disabled for submitted entries (tooltip: 'שבוע זה כבר הוגש')
+- [x] **Loading**: skeleton entry list while fetching
+- [x] **Empty**: 'No entries for this day — start reporting' message
+- [x] **No-permission**: 403 state if user somehow hits admin-only endpoints
+- [x] **Validation error**: inline field errors (required, end>start, overlap)
+- [x] **Server error**: toast on 500
+- [x] **Offline indicator**: disable Save with 'No internet connection'
+- [x] **Save success**: toast 'Entry saved' + form reset
+- [x] **Conflict (409)**: dialog 'Entry was modified by someone else. Reload to see latest version.'
+- [x] **Locked month**: all form fields disabled, banner 'החודש נעול — קריאה בלבד'
+- [x] **Unsaved changes**: dialog before navigate-away
+- [x] **Quota warning**: yellow banner when reported hours ≥90% of monthly quota
+- [x] **Disabled control**: edit/delete disabled for submitted entries (tooltip: 'שבוע זה כבר הוגש')
 
 ### 4. Frontend: Cascading dropdowns
 
-- [ ] Client dropdown: populated from assignments. On select → filter projects
-- [ ] Project dropdown: filtered by client. On select → filter tasks
-- [ ] Task dropdown: filtered by project
-- [ ] If only 1 option at any level → auto-select and move to next
-- [ ] Clear downstream selections when parent changes
+- [x] Client dropdown: populated from assignments. On select → filter projects
+- [x] Project dropdown: filtered by client. On select → filter tasks
+- [x] Task dropdown: filtered by project
+- [x] If only 1 option at any level → auto-select and move to next
+- [x] Clear downstream selections when parent changes
 
 ### 5. Tests
 
