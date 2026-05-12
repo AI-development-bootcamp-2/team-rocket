@@ -1639,6 +1639,7 @@ button:disabled {
 
 .month-lock-action-btn {
   height: 32px;
+  min-width: 56px;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
