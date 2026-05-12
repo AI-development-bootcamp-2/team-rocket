@@ -1,3 +1,6 @@
+// Must run before any module loads so Date local-methods return Israel dates.
+process.env.TZ = 'Asia/Jerusalem';
+
 // Must be the first import — compiles to the first require(), so process.env
 // is populated before config or app modules are loaded.
 import 'dotenv/config';

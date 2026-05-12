@@ -106,13 +106,13 @@ time_entries
   user_id UUID FK → users
   date DATE NOT NULL
   start_time TIME NOT NULL
-  end_time TIME NOT NULL
-  duration_minutes INT NOT NULL
-  client_id UUID FK → clients
-  project_id UUID FK → projects
-  task_id UUID FK → tasks
-  location ENUM('משרד', 'לקוח', 'בית') NOT NULL
-  description TEXT NOT NULL
+  end_time TIME                        -- nullable while timer is running
+  duration_minutes INT                 -- nullable while timer is running
+  client_id UUID FK → clients          -- nullable while timer is running
+  project_id UUID FK → projects        -- nullable while timer is running
+  task_id UUID FK → tasks              -- nullable while timer is running
+  location ENUM('משרד', 'לקוח', 'בית') -- nullable while timer is running
+  description TEXT
   status ENUM('draft', 'submitted', 'approved', 'rejected', 'locked') DEFAULT 'draft'
   version INT DEFAULT 1                -- optimistic locking
   created_at TIMESTAMPTZ
@@ -188,11 +188,7 @@ holiday_calendar
   created_by UUID FK → users
   created_at TIMESTAMPTZ
 
-active_timers
-  id UUID PK
-  user_id UUID FK → users UNIQUE    -- only one timer per user
-  start_time TIMESTAMPTZ NOT NULL
-  created_at TIMESTAMPTZ
+-- active_timers table removed: running timers are tracked via time_entries rows where end_time IS NULL.
 ```
 
 ### Seeds

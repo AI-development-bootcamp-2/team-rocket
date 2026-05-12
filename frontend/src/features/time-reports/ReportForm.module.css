@@ -346,6 +346,199 @@
   line-height: 1.5;
 }
 
+.absenceCard {
+  overflow: hidden;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid #eceef5;
+}
+
+.absenceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 0;
+  border-bottom: 1px solid #eef0f5;
+  background: #fff;
+  text-align: right;
+}
+
+.absenceCard > .absenceRow:last-of-type {
+  border-bottom: 0;
+}
+
+.absenceRowMeta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.absenceRowChevron {
+  color: #c8d0de;
+  font-size: 18px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.absenceRowValuePill,
+.absenceRowValueEmpty {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  flex: 0 1 auto;
+}
+
+.absenceRowValuePill {
+  background: #eef4ff;
+  color: #2e67f0;
+}
+
+.absenceRowValueEmpty {
+  background: #f3f4f6;
+  color: #9aa3b2;
+}
+
+.absenceRowLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333741;
+  flex: 0 0 auto;
+}
+
+.hiddenNativeInput {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.absenceDaysSummary {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2e67f0;
+  text-align: right;
+}
+
+.absenceUploadLabel {
+  margin: 18px 0 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #202938;
+  text-align: right;
+}
+
+.uploadDropzone {
+  width: 100%;
+  border: 2px dashed #4b6fff;
+  border-radius: 14px;
+  background: #eff4ff;
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.uploadIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background: #3e61f4;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.uploadPrimary {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2e67f0;
+  text-decoration: underline;
+}
+
+.uploadSecondary {
+  font-size: 11px;
+  color: #5f7ee8;
+}
+
+.uploadedFileCard {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  padding: 10px 12px;
+  border: 1px solid #e6eaf2;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.uploadedFileDelete {
+  border: 0;
+  background: transparent;
+  color: #ef4444;
+  font-size: 16px;
+  padding: 0;
+}
+
+.uploadedFileMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  text-align: right;
+}
+
+.uploadedFileName {
+  font-size: 13px;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.uploadedFileBadge {
+  align-self: flex-end;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #d8f5b4;
+  color: #4f8a22;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.uploadedFileType {
+  align-self: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #cf332c;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.documentRequirementHint {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #2e67f0;
+  text-align: right;
+}
+
 .sheetFooter,
 .pickerFooter {
   border-top: 1px solid #e5e7eb;
@@ -400,6 +593,11 @@
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-top: 14px;
+}
+
+.footerButtonsAbsence,
+.pickerFooter {
+  direction: ltr;
 }
 
 .saveButton,
