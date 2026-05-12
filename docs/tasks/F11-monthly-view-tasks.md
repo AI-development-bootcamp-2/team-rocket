@@ -90,7 +90,7 @@
 ### Implementation for US3 + US4
 
 - [x] T026 [US3] Implement `computeDaysWithoutReport(userId, year, month)` in service — iterate working days (Sun–Thu, non-holiday), count days with no time entries AND no full-day absence
-- [ ] T027 [US4] Implement `computeAbsenceHours(userId, year, month, dailyStandard)` in service — SUM from `absences` table: full-day × dailyStandard, partial × dailyStandard/2; holidays excluded
+- [x] T027 [US4] Implement `computeAbsenceHours(userId, year, month, dailyStandard)` in service — SUM from `absences` table: full-day × dailyStandard, partial × dailyStandard/2; holidays excluded
 - [ ] T028 [US3] [US4] Add `daysWithoutReport` and `absenceHours` to `getMonthlySummary` response
 
 **Checkpoint**: T020–T025 all pass.

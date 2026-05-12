@@ -141,6 +141,29 @@ export async function computeDaysWithoutReport(
   return daysWithoutReport;
 }
 
+// Pure: absence hours for the month — full-day × dailyStandard, partial × dailyStandard/2
+export function buildAbsenceHours(
+  fullDays: number,
+  partialDays: number,
+  dailyStandard: number,
+): number {
+  const hours = fullDays * dailyStandard + partialDays * (dailyStandard / 2);
+  return Math.round(hours * 100) / 100;
+}
+
+// DB-backed: counts absence days then delegates to buildAbsenceHours; holidays are excluded
+export async function computeAbsenceHours(
+  userId: number,
+  year: number,
+  month: number,
+  dailyStandard: number,
+): Promise<number> {
+  const holidays = await fetchHolidaySet(year, month);
+  const { fullDays, partialDays } = await countAbsenceDays(userId, year, month, holidays);
+  const absenceHours = buildAbsenceHours(fullDays, partialDays, dailyStandard);
+  return absenceHours;
+}
+
 // Counts how many working days in the month are covered by user absences
 async function countAbsenceDays(
   userId: number,
