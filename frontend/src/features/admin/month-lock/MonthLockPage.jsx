@@ -28,7 +28,7 @@ function buildMonthGrid(lockRecords) {
         year,
         month,
         is_locked: record?.is_locked ?? false,
-        locked_by: record?.locked_by ?? null,
+        locked_by_name: record?.locked_by_name ?? null,
         locked_at: record?.locked_at ?? null,
         approved_week_count: record?.approved_week_count ?? null,
         unapproved_week_count: record?.unapproved_week_count ?? null,
@@ -182,7 +182,7 @@ export function MonthLockPage() {
                               unapprovedWeekCount={m.unapproved_week_count ?? 0}
                             />
                           </td>
-                          <td className="month-lock-table__actor">{m.locked_by ?? '—'}</td>
+                          <td className="month-lock-table__actor">{m.locked_by_name ?? '—'}</td>
                           <td>{formatDate(m.locked_at)}</td>
                           <td>
                             {m.is_locked ? (
