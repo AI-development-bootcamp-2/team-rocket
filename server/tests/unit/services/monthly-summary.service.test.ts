@@ -7,8 +7,8 @@
  *
  * No DB connection required — all functions under test are pure.
  */
-import { computeDailyStandard } from '../../../src/services/time-entries.service';
 import {
+  computeDailyStandard,
   countWorkingDaysInMonth,
   buildQuotaHours,
 } from '../../../src/services/monthly-summary.service';

@@ -43,12 +43,13 @@ async function fetchHolidaySet(year: number, month: number): Promise<Set<string>
 }
 
 // Counts working days (non-weekend, non-holiday) in the month
-function countWorkingDays(year: number, month: number, holidays: Set<string>): number {
+export function countWorkingDaysInMonth(year: number, month: number, holidays: string[]): number {
+  const holidaySet = new Set(holidays);
   const numDays = totalDaysInMonth(year, month);
   let count = 0;
   for (let d = 1; d <= numDays; d++) {
     const dow = new Date(Date.UTC(year, month - 1, d)).getUTCDay();
-    if (!isWeekend(dow) && !holidays.has(dateStr(year, month, d))) count++;
+    if (!isWeekend(dow) && !holidaySet.has(dateStr(year, month, d))) count++;
   }
   return count;
 }
@@ -95,7 +96,21 @@ async function countAbsenceDays(
   return { fullDays, partialDays };
 }
 
-// Computes quota hours: (workingDays − absences) × dailyStandard
+// Calculates expected monthly work hours from working days minus absences, clamped to 0
+export function buildQuotaHours(
+  workingDays: number,
+  dailyStandard: number,
+  fullDayAbsences: number,
+  partialAbsences: number,
+): number {
+  const quota =
+    workingDays * dailyStandard -
+    fullDayAbsences * dailyStandard -
+    partialAbsences * (dailyStandard / 2);
+  return Math.max(0, Math.round(quota * 100) / 100);
+}
+
+// Fetches holidays and absences from DB, then calculates expected monthly work hours
 export async function computeQuotaHours(
   userId: number,
   year: number,
@@ -103,15 +118,10 @@ export async function computeQuotaHours(
   dailyStandard: number,
 ): Promise<number> {
   const holidays = await fetchHolidaySet(year, month);
-  const workingDays = countWorkingDays(year, month, holidays);
+  const workingDays = countWorkingDaysInMonth(year, month, [...holidays]);
   const { fullDays, partialDays } = await countAbsenceDays(userId, year, month, holidays);
 
-  const quota =
-    workingDays * dailyStandard -
-    fullDays * dailyStandard -
-    partialDays * (dailyStandard / 2);
-
-  return Math.round(quota * 100) / 100;
+  return buildQuotaHours(workingDays, dailyStandard, fullDays, partialDays);
 }
 
 export interface DayStatus {
