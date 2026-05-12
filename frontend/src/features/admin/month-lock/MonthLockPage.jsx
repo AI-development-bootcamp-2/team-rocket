@@ -11,6 +11,33 @@ import { UnlockReasonDialog } from './UnlockReasonDialog.jsx';
 
 const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
 
+function buildMonthGrid(lockRecords) {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const lockMap = new Map(
+    lockRecords.map((r) => [`${r.year}-${r.month ?? r.month_number}`, r])
+  );
+  const rows = [];
+  for (let year = currentYear; year >= currentYear - 1; year--) {
+    const maxMonth = year === currentYear ? currentMonth : 12;
+    for (let month = maxMonth; month >= 1; month--) {
+      const key = `${year}-${month}`;
+      const record = lockMap.get(key);
+      rows.push({
+        year,
+        month,
+        is_locked: record?.is_locked ?? false,
+        locked_by: record?.locked_by ?? null,
+        locked_at: record?.locked_at ?? null,
+        approved_week_count: record?.approved_week_count ?? null,
+        unapproved_week_count: record?.unapproved_week_count ?? null,
+      });
+    }
+  }
+  return rows;
+}
+
 function formatDate(dateString) {
   if (!dateString) return '—';
   return new Date(dateString).toLocaleDateString('he-IL', {
@@ -45,7 +72,8 @@ export function MonthLockPage() {
     setError(null);
     try {
       const response = await listMonths();
-      setMonths(response.data ?? response ?? []);
+      const records = response.data ?? response ?? [];
+      setMonths(buildMonthGrid(records));
     } catch (err) {
       setError(mapErrorMessage(err));
     } finally {
