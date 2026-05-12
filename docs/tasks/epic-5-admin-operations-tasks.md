@@ -20,10 +20,12 @@
 - [ ] **T** BE: `GET /months/:yearMonth/status` — approval status per user (monthly submission)
 - [ ] **T** BE: On lock — all time entries and absences for that month become read-only
 - [ ] **T** BE: On unlock — entries return to pre-lock status, audit logged with reason
-- [ ] **T** FE: Month selector screen (dropdown or calendar picker)
-- [ ] **T** FE: Status table — one row per user, their monthly submission status
-- [ ] **T** FE: Lock button disabled until all users are `approved`; tooltip explains why
-- [ ] **T** FE: Unlock button with mandatory reason input modal
+- [x] **T** FE: `MonthLockPage.jsx` — per-month grid/table; each row shows lock status badge, lock date, locked-by, approved/unapproved week counts
+- [x] **T** FE: `LockConfirmDialog` — before locking, call `GET /admin/months/:year/:month/status`; if `unapproved_week_count > 0` show warning listing unapproved weeks; admin can proceed anyway
+- [x] **T** FE: `UnlockReasonDialog` — free-text textarea for unlock reason (required); inline validation error if empty; calls `POST /admin/months/:year/:month/unlock`
+- [ ] **T** FE: Locked month user-facing banner on `MonthlyViewPage` — "החודש נעול — קריאה בלבד"; disables all edit/delete/submit actions; grays out form fields with tooltip "Month is locked"
+- [x] **T** FE: UI states — loading skeleton for month grid; success toasts ("החודש נעול" / "החודש נפתח"); server error toast on 500
+- [x] **T** FE: Apply design tokens from spec — badge colors (open/locked/partial), button colors, dialog dimensions (`~400px`, `border-radius: 12px`), lock icon `48px`
 
 #### Subtasks
 - [ ] **ST** Integration test: lock blocked — returns list of users with unapproved submissions

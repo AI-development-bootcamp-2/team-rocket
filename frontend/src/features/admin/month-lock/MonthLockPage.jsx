@@ -1,0 +1,219 @@
+import { startTransition, useCallback, useEffect, useState } from 'react';
+import { getMonthStatus, listMonths, lockMonth, unlockMonth } from '../../../api/monthLocks.api.js';
+import { AdminShell } from '../../../components/layout/AdminShell.jsx';
+import { Button } from '../../../components/ui/Button.jsx';
+import { ErrorState } from '../../../components/ui/ErrorState.jsx';
+import { Spinner } from '../../../components/ui/Spinner.jsx';
+import { Toast } from '../../../components/ui/Toast.jsx';
+import { LockConfirmDialog } from './LockConfirmDialog.jsx';
+import { MonthStatusBadge } from './MonthStatusBadge.jsx';
+import { UnlockReasonDialog } from './UnlockReasonDialog.jsx';
+
+const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+
+function formatDate(dateString) {
+  if (!dateString) return '—';
+  return new Date(dateString).toLocaleDateString('he-IL', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
+function mapErrorMessage(error) {
+  const status = error?.response?.status ?? error?.status;
+  if (status === 401) return 'פג תוקף ההתחברות. צריך להיכנס שוב.';
+  if (status === 403) return 'אין לך הרשאה לנהל נעילות חודש.';
+  return 'אירעה שגיאה. נסה שוב.';
+}
+
+function createToast(message, tone = 'info') {
+  return { id: `${Date.now()}-${Math.random()}`, message, tone };
+}
+
+export function MonthLockPage() {
+  const [months, setMonths] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [dialog, setDialog] = useState(null);
+  const [dialogLoading, setDialogLoading] = useState(false);
+  const [lockingMonth, setLockingMonth] = useState(null);
+
+  const loadMonths = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await listMonths();
+      setMonths(response.data ?? response ?? []);
+    } catch (err) {
+      setError(mapErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    startTransition(() => { void loadMonths(); });
+  }, [loadMonths]);
+
+  useEffect(() => {
+    if (!toast) return undefined;
+    const id = window.setTimeout(() => setToast(null), 4000);
+    return () => window.clearTimeout(id);
+  }, [toast]);
+
+  async function handleLockClick(year, month) {
+    setLockingMonth({ year, month });
+    try {
+      const statusResponse = await getMonthStatus(year, month);
+      const status = statusResponse.data ?? statusResponse;
+      setDialog({ mode: 'lock', year, month, unapprovedWeekCount: status.unapproved_week_count ?? 0 });
+    } catch (err) {
+      setToast(createToast(mapErrorMessage(err), 'error'));
+    } finally {
+      setLockingMonth(null);
+    }
+  }
+
+  async function handleLockConfirmed() {
+    setDialogLoading(true);
+    try {
+      await lockMonth(dialog.year, dialog.month);
+      setToast(createToast('החודש נעול', 'success'));
+      setDialog(null);
+      await loadMonths();
+    } catch (err) {
+      setToast(createToast(mapErrorMessage(err), 'error'));
+    } finally {
+      setDialogLoading(false);
+    }
+  }
+
+  async function handleUnlockConfirmed(reason) {
+    setDialogLoading(true);
+    try {
+      await unlockMonth(dialog.year, dialog.month, reason);
+      setToast(createToast('החודש נפתח', 'success'));
+      setDialog(null);
+      await loadMonths();
+    } catch (err) {
+      setToast(createToast(mapErrorMessage(err), 'error'));
+    } finally {
+      setDialogLoading(false);
+    }
+  }
+
+  return (
+    <div className="app-page">
+      <AdminShell
+        title="נעילת חודש"
+        subtitle="נעל חודשי דיווח לאחר אישורם כדי למנוע עריכה נוספת."
+      >
+        <section className="users-page">
+          {toast ? (
+            <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} />
+          ) : null}
+
+          {loading ? (
+            <div className="users-page__loading">
+              <Spinner label="טוען חודשים..." />
+            </div>
+          ) : null}
+
+          {!loading && error ? (
+            <ErrorState title="טעינת החודשים נכשלה" description={error} onAction={loadMonths} />
+          ) : null}
+
+          {!loading && !error ? (
+            <div className="users-page__desktop">
+              <div className="users-table-card">
+                <table className="month-lock-table">
+                  <thead>
+                    <tr>
+                      <th>חודש</th>
+                      <th>סטטוס</th>
+                      <th>נועל / פותח</th>
+                      <th>תאריך נעילה</th>
+                      <th>שבועות מאושרים</th>
+                      <th>שבועות שלא אושרו</th>
+                      <th>פעולות</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {months.map((m) => {
+                      const month = m.month ?? m.month_number;
+                      const { year } = m;
+                      const monthName = HEBREW_MONTHS[month - 1] ?? month;
+                      const isRowLocking = lockingMonth?.year === year && lockingMonth?.month === month;
+
+                      return (
+                        <tr key={`${year}-${month}`}>
+                          <td className="month-lock-table__month-cell">{monthName} {year}</td>
+                          <td>
+                            <MonthStatusBadge
+                              isLocked={m.is_locked}
+                              unapprovedWeekCount={m.unapproved_week_count ?? 0}
+                            />
+                          </td>
+                          <td className="month-lock-table__actor">{m.locked_by ?? '—'}</td>
+                          <td>{formatDate(m.locked_at)}</td>
+                          <td className="month-lock-table__count month-lock-table__count--approved">
+                            {m.approved_week_count ?? '—'}
+                          </td>
+                          <td className="month-lock-table__count month-lock-table__count--unapproved">
+                            {m.unapproved_week_count ?? '—'}
+                          </td>
+                          <td>
+                            {m.is_locked ? (
+                              <Button
+                                className="month-lock-action-btn month-lock-action-btn--unlock"
+                                onClick={() => setDialog({ mode: 'unlock', year, month })}
+                                disabled={dialogLoading}
+                              >
+                                פתח
+                              </Button>
+                            ) : (
+                              <Button
+                                className="month-lock-action-btn month-lock-action-btn--lock"
+                                onClick={() => handleLockClick(year, month)}
+                                disabled={isRowLocking || dialogLoading}
+                              >
+                                {isRowLocking ? '...' : 'נעל'}
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
+        </section>
+      </AdminShell>
+
+      {dialog?.mode === 'lock' ? (
+        <LockConfirmDialog
+          month={dialog.month}
+          year={dialog.year}
+          unapprovedWeekCount={dialog.unapprovedWeekCount}
+          loading={dialogLoading}
+          onClose={() => !dialogLoading && setDialog(null)}
+          onConfirm={handleLockConfirmed}
+        />
+      ) : null}
+
+      {dialog?.mode === 'unlock' ? (
+        <UnlockReasonDialog
+          month={dialog.month}
+          year={dialog.year}
+          loading={dialogLoading}
+          onClose={() => !dialogLoading && setDialog(null)}
+          onConfirm={handleUnlockConfirmed}
+        />
+      ) : null}
+    </div>
+  );
+}
