@@ -1,0 +1,233 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.loadingCard {
+  height: 60px;
+  border-radius: 14px;
+  background: linear-gradient(90deg, #ffffff 20%, #f3f5fa 50%, #ffffff 80%);
+  background-size: 240% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+.daySection {
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+  border: 1px solid rgba(225, 231, 243, 0.72);
+}
+
+.daySectionExpanded {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.dayHeader {
+  width: 100%;
+  min-height: 58px;
+  border: 0;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 14px;
+  text-align: right;
+}
+
+.dayHeaderRight,
+.dayHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dayHeaderRight {
+  min-width: 0;
+}
+
+.dayDate {
+  font-size: 14px;
+  font-weight: 600;
+  color: #3a4255;
+  white-space: nowrap;
+}
+
+.dateIconWrap {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: 1px solid #e6ebf5;
+  background: #f7f9fc;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #8a93a7;
+  flex: 0 0 auto;
+}
+
+.dateIconWrap svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 68px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.statusFilled {
+  background: #dff5c6;
+  color: #427d1f;
+}
+
+.statusPartial {
+  background: #fff2d2;
+  color: #a97207;
+}
+
+.statusMissing {
+  background: #fde4df;
+  color: #d64d42;
+}
+
+.statusWeekend {
+  background: #eef2f8;
+  color: #8a93a7;
+}
+
+.chevronIcon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #7c879c;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.18s ease;
+}
+
+.chevronExpanded {
+  transform: rotate(180deg);
+}
+
+.dayBody {
+  border-top: 1px solid #edf1f7;
+  padding: 0 18px 8px;
+}
+
+.entryBlock {
+  padding: 14px 0;
+  border-bottom: 1px solid #edf1f7;
+}
+
+.entryHead,
+.entryRow,
+.entryRowSecondary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.entryHead {
+  margin-bottom: 8px;
+}
+
+.editButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  color: #2467f2;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0;
+}
+
+.editButton:disabled {
+  color: #9aa4b6;
+}
+
+.editButton svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.entryTime {
+  font-size: 27px;
+  font-weight: 700;
+  color: #1f66e5;
+  font-family: 'Inter', var(--font-base);
+  letter-spacing: -0.03em;
+}
+
+.entryRow {
+  margin-bottom: 6px;
+}
+
+.entryName {
+  font-size: 17px;
+  color: #374151;
+}
+
+.entryHours {
+  font-size: 15px;
+  color: #8a93a7;
+  white-space: nowrap;
+  font-family: 'Inter', var(--font-base);
+}
+
+.entryRowSecondary {
+  justify-content: flex-start;
+  gap: 24px;
+}
+
+.entrySecondaryText {
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.addReportButton {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #2467f2;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 14px 0 6px;
+}
+
+.emptyDayBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 0 10px;
+}
+
+.emptyDayText {
+  font-size: 14px;
+  color: #8a93a7;
+}
