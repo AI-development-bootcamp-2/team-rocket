@@ -73,6 +73,16 @@ async function seedTask(projectId: number): Promise<{ id: number }> {
   return row;
 }
 
+async function seedAssignment(userId: number, taskId: number): Promise<void> {
+  await db('user_task_assignments').insert({
+    user_id: userId,
+    task_id: taskId,
+    is_active: true,
+    created_at: new Date(),
+    updated_at: new Date(),
+  });
+}
+
 async function login(email: string, password: string): Promise<string> {
   const res = await request(app).post('/auth/login').send({ email, password });
   if (res.status !== 200) throw new Error(`Login failed: ${JSON.stringify(res.body)}`);
@@ -238,6 +248,7 @@ describe('POST /timer/stop', () => {
     const client = await seedClient();
     const project = await seedProject(client.id);
     const task = await seedTask(project.id);
+    await seedAssignment(user.id, task.id);
 
     await request(app).post('/timer/start').set('Authorization', `Bearer ${token}`);
 
