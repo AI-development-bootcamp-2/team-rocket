@@ -11,23 +11,6 @@ import { UnlockReasonDialog } from './UnlockReasonDialog.jsx';
 
 const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
 
-function LockIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-function UnlockIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M5 7V5a3 3 0 0 1 6 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  );
-}
 
 function buildMonthGrid(lockRecords) {
   const now = new Date();
@@ -210,31 +193,25 @@ export function MonthLockPage() {
                           <td>{m.locked_by_name ?? '—'}</td>
                           <td>{formatDate(m.locked_at)}</td>
                           <td>
-                            <div className="user-row-actions">
-                              {m.is_locked ? (
-                                <button
-                                  type="button"
-                                  className="user-row-actions__button user-row-actions__button--success"
-                                  onClick={() => setDialog({ mode: 'unlock', year, month })}
-                                  disabled={dialogLoading}
-                                  data-tooltip="פתח חודש"
-                                  aria-label={`פתח את חודש ${monthName} ${year}`}
-                                >
-                                  <UnlockIcon />
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="user-row-actions__button user-row-actions__button--danger"
-                                  onClick={() => handleLockClick(year, month)}
-                                  disabled={isRowLocking || dialogLoading}
-                                  data-tooltip="נעל חודש"
-                                  aria-label={`נעל את חודש ${monthName} ${year}`}
-                                >
-                                  {isRowLocking ? '...' : <LockIcon />}
-                                </button>
-                              )}
-                            </div>
+                            {m.is_locked ? (
+                              <button
+                                type="button"
+                                className="month-lock-action-btn month-lock-action-btn--unlock"
+                                onClick={() => setDialog({ mode: 'unlock', year, month })}
+                                disabled={dialogLoading}
+                              >
+                                פתח
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                className="month-lock-action-btn month-lock-action-btn--lock"
+                                onClick={() => handleLockClick(year, month)}
+                                disabled={isRowLocking || dialogLoading}
+                              >
+                                {isRowLocking ? '...' : 'נעל'}
+                              </button>
+                            )}
                           </td>
                         </tr>
                       );
