@@ -35,16 +35,16 @@
 
 ### ⚠️ Write tests FIRST — confirm they FAIL before Phase 2 implementation
 
-- [ ] T005 [P] [US1] Write failing integration test: `GET /monthly-summary` returns correct `quotaHours` for standard month (no holidays, no absences) — in `server/tests/integration/monthly-summary.test.ts`
-- [ ] T006 [P] [US1] Write failing integration test: `GET /monthly-summary` correctly deducts 1 national holiday and 1 full-day absence from `quotaHours` — in `server/tests/integration/monthly-summary.test.ts`
-- [ ] T007 [P] [US1] Write failing integration test: `quotaHours` scales with `employment_percentage` (50% user = half quota) — in `server/tests/integration/monthly-summary.test.ts`
-- [ ] T008 [P] [US1] Write failing integration test: `reportedHours` equals sum of all non-deleted time entries in the month — in `server/tests/integration/monthly-summary.test.ts`
-- [ ] T009 [P] [US1] Write failing integration test: `completionPercentage = floor(reportedHours / quotaHours × 100)` — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T005 [P] [US1] Write failing integration test: `GET /monthly-summary` returns correct `quotaHours` for standard month (no holidays, no absences) — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T006 [P] [US1] Write failing integration test: `GET /monthly-summary` correctly deducts 1 national holiday and 1 full-day absence from `quotaHours` — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T007 [P] [US1] Write failing integration test: `quotaHours` scales with `employment_percentage` (50% user = half quota) — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T008 [P] [US1] Write failing integration test: `reportedHours` equals sum of all non-deleted time entries in the month — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T009 [P] [US1] Write failing integration test: `completionPercentage = floor(reportedHours / quotaHours × 100)` — in `server/tests/integration/monthly-summary.test.ts`
 
 ### Implementation for US1
 
-- [ ] T010 [US1] Implement `computeDailyStandard(user)` helper in `server/src/services/time-entries.service.ts` — `(daily_hours_override ?? 9) × (employment_percentage / 100)`
-- [ ] T011 [US1] Implement `computeQuotaHours(userId, year, month, dailyStandard)` in service — count working days (Sun–Thu), deduct holidays from `holiday_calendar`, deduct full-day absences × dailyStandard and partial absences × dailyStandard/2
+- [x] T010 [US1] Implement `computeDailyStandard(user)` helper in `server/src/services/time-entries.service.ts` — `(daily_hours_override ?? 9) × (employment_percentage / 100)`
+- [x] T011 [US1] Implement `computeQuotaHours(userId, year, month, dailyStandard)` in service — count working days (Sun–Thu), deduct holidays from `holiday_calendar`, deduct full-day absences × dailyStandard and partial absences × dailyStandard/2
 - [ ] T012 [US1] Implement `reportedHours` query in `getMonthlySummary` — `SUM(duration_minutes)/60` from `time_entries` for the month (non-deleted)
 - [ ] T013 [US1] Wire `quotaHours`, `reportedHours`, `completionPercentage` into `getMonthlySummary` response and connect handler to return 200
 
