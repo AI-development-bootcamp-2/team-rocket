@@ -149,9 +149,9 @@
 
 ### ⚠️ Write tests FIRST — confirm they FAIL before Phase 7 implementation
 
-- [ ] T044 [P] Write failing permission test: regular user requesting another user's summary receives 403 — in `server/tests/integration/monthly-summary.test.ts` (KAN-425)
-- [ ] T045 [P] Write failing permission test: admin can request any user's summary, receives 200 — in `server/tests/integration/monthly-summary.test.ts` (KAN-426)
-- [ ] T046 Write failing permission test: unauthenticated request receives 401 — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T044 [P] Write failing permission test: regular user requesting another user's summary receives 403 — in `server/tests/integration/monthly-summary.test.ts` (KAN-425)
+- [x] T045 [P] Write failing permission test: admin can request any user's summary, receives 200 — in `server/tests/integration/monthly-summary.test.ts` (KAN-426)
+- [x] T046 Write failing permission test: unauthenticated request receives 401 — in `server/tests/integration/monthly-summary.test.ts`
 
 ### Implementation for Permissions
 

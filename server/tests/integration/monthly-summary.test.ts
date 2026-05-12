@@ -574,3 +574,34 @@ describe('GET /monthly-summary — projectBreakdown (T029–T031)', () => {
     expect(item.hours).toBe(1.67);
   });
 });
+
+describe('GET /monthly-summary — permissions (T044–T046)', () => {
+  it('T044 — regular user requesting another user\'s summary receives 403', async () => {
+    const { token } = await scaffold({ email: 'regular@test.com', role: 'user' });
+    const other = await seedUser({ email: 'other@test.com', role: 'user' });
+
+    const res = await request(app)
+      .get(`/monthly-summary?year=2026&month=1&userId=${other.id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('T045 — admin can request any user\'s summary and receives 200', async () => {
+    const { token: adminToken } = await scaffold({ email: 'admin@test.com', role: 'admin' });
+    const other = await seedUser({ email: 'other@test.com', role: 'user' });
+
+    const res = await request(app)
+      .get(`/monthly-summary?year=2026&month=1&userId=${other.id}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+  });
+
+  it('T046 — unauthenticated request (no JWT) receives 401', async () => {
+    const res = await request(app)
+      .get('/monthly-summary?year=2026&month=1');
+
+    expect(res.status).toBe(401);
+  });
+});
