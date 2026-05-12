@@ -30,7 +30,7 @@
 - [x] **T** BE: `GET /admin/months` (Admin) — list all months with their lock status
 
 #### Month Lock Enforcement
-- [ ] **T** BE: Add lock-check middleware/guard to all time entry create/edit/delete mutations — return `423 Locked` if the affected month is locked
+- [x] **T** BE: Add lock-check middleware/guard to all time entry create/edit/delete mutations — return `423 Locked` if the affected month is locked
 - [ ] **T** BE: Add lock-check middleware/guard to all absence create/edit/delete mutations — return `423 Locked` if the affected month is locked
 
 #### Notifications (background, non-blocking)
@@ -57,7 +57,7 @@
 - [x] **ST** Unlock without reason (or empty reason) returns 422
 - [x] **ST** Lock records `locked_by` and `locked_at` in `month_locks`
 - [x] **ST** Unlock stores reason in both `month_locks.unlock_reason` and `audit_logs.reason`
-- [ ] **ST** Time entry create/edit/delete on a locked month returns 423
+- [x] **ST** Time entry create/edit/delete on a locked month returns 423
 - [ ] **ST** Absence create/edit/delete on a locked month returns 423
 - [x] **ST** Lock triggers `LOCKED_MONTH` notification fan-out for all active users
 - [x] **ST** Lock and unlock events each produce a correct audit log record with actor + timestamp
