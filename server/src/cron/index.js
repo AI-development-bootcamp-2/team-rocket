@@ -27,16 +27,6 @@ async function dispatchReminderEmails() {
   console.log('[cron] dispatchReminderEmails fired');
 }
 
-/**
- * F10 — Active timer 12h auto-stop check
- * Every minute: stop any timer running longer than 12 hours and notify the user.
- * Idempotent: only acts on timers that are still active.
- */
-async function checkActiveTimers() {
-  // TODO: implement in F10
-  console.log('[cron] checkActiveTimers fired');
-}
-
 // ── Cron registry ─────────────────────────────────────────────────────────────
 
 function initCron() {
@@ -45,9 +35,6 @@ function initCron() {
 
   // Thursday 09:00 IL — reminder email dispatch (F19)
   cron.schedule('0 9 * * 4', dispatchReminderEmails, { timezone: TZ });
-
-  // Every minute — active timer 12h auto-stop check (F10)
-  cron.schedule('* * * * *', checkActiveTimers, { timezone: TZ });
 
   console.log('[cron] Scheduler initialised (TZ=%s)', TZ);
 }
