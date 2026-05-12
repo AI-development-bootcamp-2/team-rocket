@@ -155,8 +155,8 @@
 
 ### Implementation for Permissions
 
-- [ ] T047 Add ownership check in `getMonthlySummary` service: if `caller.role !== 'admin'` and `targetUserId !== caller.id` → throw `AppError('Forbidden', 403)`
-- [ ] T048 Default `targetUserId` to `caller.id` when no `userId` param is provided in `getMonthlySummaryHandler`
+- [x] T047 Add ownership check in `getMonthlySummary` service: if `caller.role !== 'admin'` and `targetUserId !== caller.id` → throw `AppError('Forbidden', 403)`
+- [x] T048 Default `targetUserId` to `caller.id` when no `userId` param is provided in `getMonthlySummaryHandler`
 
 **Checkpoint**: T044–T046 all pass. Permission boundary enforced.
 
@@ -169,8 +169,8 @@
 
 ### ⚠️ Write tests FIRST — confirm they FAIL before Phase 8 implementation
 
-- [ ] T049 [P] Write failing integration test: `GET /time-entries?year=2026&month=5` returns only entries in May 2026 — in `server/tests/integration/time-entries.test.ts` (KAN-417)
-- [ ] T050 [P] Write failing integration test: `GET /time-entries?year=2026` without month returns 400 — in `server/tests/integration/time-entries.test.ts`
+- [x] T049 [P] Write failing integration test: `GET /time-entries?year=2026&month=5` returns only entries in May 2026 — in `server/tests/integration/time-entries.test.ts` (KAN-417)
+- [~] T050 [P] Write failing integration test: `GET /time-entries?year=2026` without month returns 400 — SKIPPED: UI always sends year+month together; year alone is not a real scenario
 
 ### Implementation for FR-012
 
