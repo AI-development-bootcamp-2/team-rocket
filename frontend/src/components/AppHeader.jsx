@@ -96,60 +96,58 @@ export function AppHeader({ onManualReport, onTimerToggle }) {
         />
       </div>
 
-      {/* Center: Action buttons */}
-      <div className={styles.headerCenter}>
-        {isRunning ? (
-          /* Running state: stop button + live elapsed time */
-          <div className={styles.timerRunning}>
+      {/* Left (RTL end): Action buttons + Logout grouped together */}
+      <div className={styles.headerEnd}>
+        <div className={styles.headerCenter}>
+          {isRunning ? (
+            <div className={styles.timerRunning}>
+              <button
+                className={styles.timerStopBtn}
+                onClick={handleStop}
+                type="button"
+                title="עצירת שעון"
+                aria-label="עצירת שעון"
+              >
+                <span className={styles.timerStopDot} aria-hidden="true" />
+              </button>
+              <span className={styles.timerElapsed}>{formatElapsed(elapsed)}</span>
+            </div>
+          ) : (
             <button
-              className={styles.timerStopBtn}
-              onClick={handleStop}
+              className={styles.timerBtn}
+              onClick={handleStart}
               type="button"
-              title="עצירת שעון"
-              aria-label="עצירת שעון"
+              disabled={loading}
+              title="הפעלת שעון"
             >
-              <span className={styles.timerStopDot} aria-hidden="true" />
+              <span className={styles.timerBtnLabel}>הפעלת שעון</span>
+              <span className={styles.timerBtnIcon} aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 14 16" fill="white">
+                  <path d="M2 1l12 7L2 15V1z" />
+                </svg>
+              </span>
             </button>
-            <span className={styles.timerElapsed}>{formatElapsed(elapsed)}</span>
-          </div>
-        ) : (
-          /* Idle state: start button */
+          )}
+
           <button
-            className={styles.timerBtn}
-            onClick={handleStart}
+            className={styles.manualReportBtn}
+            onClick={onManualReport}
             type="button"
-            disabled={loading}
-            title="הפעלת שעון"
           >
-            <span className={styles.timerBtnLabel}>הפעלת שעון</span>
-            <span className={styles.timerBtnIcon} aria-hidden="true">
-              <svg width="14" height="14" viewBox="0 0 14 16" fill="white">
-                <path d="M2 1l12 7L2 15V1z" />
+            <span className={styles.manualBtnLabel}>דיווח ידני</span>
+            <span className={styles.manualBtnIcon} aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="white">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
               </svg>
             </span>
           </button>
-        )}
+        </div>
 
-        {/* Manual report button (orange gradient) */}
-        <button
-          className={styles.manualReportBtn}
-          onClick={onManualReport}
-          type="button"
-        >
-          <span className={styles.manualBtnLabel}>דיווח ידני</span>
-          <span className={styles.manualBtnIcon} aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="white">
-              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-            </svg>
-          </span>
+        <button className={styles.logoutBtn} onClick={logout} type="button">
+          יציאה
+          <span className={styles.logoutArrow} aria-hidden="true">→</span>
         </button>
       </div>
-
-      {/* Left (RTL end): Logout button */}
-      <button className={styles.logoutBtn} onClick={logout} type="button">
-        יציאה
-        <span className={styles.logoutArrow} aria-hidden="true">→</span>
-      </button>
     </header>
   );
 }

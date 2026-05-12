@@ -32,7 +32,15 @@
   object-fit: contain;
 }
 
-/* Center: Action buttons */
+/* Left (RTL end): Action buttons + logout grouped */
+.headerEnd {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Action buttons */
 .headerCenter {
   display: flex;
   flex-direction: row;

@@ -53,6 +53,25 @@ function CalendarIcon() {
   );
 }
 
+function ArrowForwardIosIcon({ className }) {
+  return (
+    <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" fill="#141E3E" />
+    </svg>
+  );
+}
+
+function DangerCircleIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="32" height="32" rx="8" fill="#FEE2E2" />
+      <path d="M15.9993 24.3337C20.5827 24.3337 24.3327 20.5837 24.3327 16.0003C24.3327 11.417 20.5827 7.66699 15.9993 7.66699C11.416 7.66699 7.66602 11.417 7.66602 16.0003C7.66602 20.5837 11.416 24.3337 15.9993 24.3337Z" stroke="#FF1D21" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 12.667V16.8337" stroke="#FF1D21" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M15.9961 19.333H16.0036" stroke="#FF1D21" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function ChartIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -240,14 +259,7 @@ export function DailyReportPage() {
           </div>
         </div>
 
-        <button
-          type="button"
-          className={styles.monthlySummaryStrip}
-          onClick={() => setSummaryOpen(true)}
-          aria-label="פתח סיכום חודשי"
-        >
-          <span className={styles.monthlySummaryLink}>סיכום חודשי</span>
-
+        <div className={styles.monthlySummaryStrip}>
           <div className={styles.monthlySummaryMetric}>
             <strong className={styles.monthlySummaryValue}>{MONTHLY_SUMMARY_PLACEHOLDER.reportedHours} ש'</strong>
             <span className={styles.monthlySummaryLabel}>דיווחת עד כה</span>
@@ -262,7 +274,16 @@ export function DailyReportPage() {
             <strong className={styles.monthlySummaryValue}>{MONTHLY_SUMMARY_PLACEHOLDER.completionRate}%</strong>
             <span className={styles.monthlySummaryLabel}>הושלמו</span>
           </div>
-        </button>
+
+          <button
+            type="button"
+            className={styles.monthlySummaryLink}
+            onClick={() => setSummaryOpen(true)}
+            aria-label="פתח סיכום חודשי"
+          >
+            סיכום חודשי ›
+          </button>
+        </div>
 
         <section className={styles.entriesSection} aria-label="רשימת דיווחים חודשית">
           <ExistingEntriesList
@@ -301,6 +322,7 @@ export function DailyReportPage() {
         aria-hidden={!summaryOpen}
       >
         <div className={styles.summaryDrawerHeader}>
+          <h2 className={styles.summaryDrawerTitle}>סיכום חודשי</h2>
           <button
             type="button"
             className={styles.summaryDrawerClose}
@@ -309,15 +331,40 @@ export function DailyReportPage() {
           >
             ×
           </button>
-          <h2 className={styles.summaryDrawerTitle}>סיכום חודשי</h2>
         </div>
 
-        <div className={styles.summaryDrawerMonth}>{currentMonthLabel} {currentYearLabel}</div>
+        <div className={styles.summaryDrawerMonthNav}>
+          <button
+            type="button"
+            className={styles.summaryDrawerMonthArrow}
+            aria-label="חודש קודם"
+            onClick={() => {
+              const [year, month] = currentMonth.split('-').map(Number);
+              handleMonthChange(new Date(year, month - 2, 1));
+            }}
+          >
+            <ArrowForwardIosIcon className={styles.arrowIconRight} />
+          </button>
+          <span className={styles.summaryDrawerMonthLabel}>{currentMonthLabel} {currentYearLabel}</span>
+          <button
+            type="button"
+            className={styles.summaryDrawerMonthArrow}
+            aria-label="חודש הבא"
+            onClick={() => {
+              const [year, month] = currentMonth.split('-').map(Number);
+              handleMonthChange(new Date(year, month, 1));
+            }}
+          >
+            <ArrowForwardIosIcon className={styles.arrowIconLeft} />
+          </button>
+        </div>
 
         <section className={styles.summaryDrawerCard}>
           <div className={styles.summaryDrawerCardHeader}>
-            <span className={styles.summaryDrawerMeta}>{MONTHLY_SUMMARY_PLACEHOLDER.completionRate}% הושלמו</span>
-            <h3 className={styles.summaryDrawerCardTitle}>שעות חודשיות</h3>
+            <div className={styles.summaryDrawerCardTitleGroup}>
+              <h3 className={styles.summaryDrawerCardTitle}>שעות חודשיות</h3>
+              <span className={styles.summaryDrawerMeta}>{MONTHLY_SUMMARY_PLACEHOLDER.completionRate}% הושלמו</span>
+            </div>
             <span className={`${styles.summaryDrawerIcon} ${styles.summaryDrawerIconBlue}`}>
               <HoursIcon />
             </span>
@@ -331,11 +378,11 @@ export function DailyReportPage() {
           </div>
 
           <div className={styles.summaryProgressFoot}>
-            <span className={styles.summaryProgressMuted}>מתוך {MONTHLY_SUMMARY_PLACEHOLDER.targetHours} ש' תקן</span>
             <span className={styles.summaryProgressMain}>
               <strong>{MONTHLY_SUMMARY_PLACEHOLDER.reportedHours}</strong>
               ש' דווחו
             </span>
+            <span className={styles.summaryProgressMuted}>מתוך {MONTHLY_SUMMARY_PLACEHOLDER.targetHours} ש' תקן</span>
           </div>
 
           <div className={styles.summaryAlert}>
@@ -347,20 +394,22 @@ export function DailyReportPage() {
         </section>
 
         <div className={styles.summaryMiniGrid}>
-          <section className={`${styles.summaryMiniCard} ${styles.summaryMiniWarn}`}>
-            <span className={styles.summaryMiniIcon}>
-              <CalendarIcon />
-            </span>
-            <strong className={styles.summaryMiniValue}>{MONTHLY_SUMMARY_PLACEHOLDER.absenceHours}</strong>
-            <span className={styles.summaryMiniLabel}>שעות היעדרות</span>
+          <section className={`${styles.summaryMiniCard} ${styles.summaryMiniDanger}`}>
+            <div className={styles.summaryMiniContent}>
+              <strong className={styles.summaryMiniValue}>{MONTHLY_SUMMARY_PLACEHOLDER.missingDays}</strong>
+              <span className={styles.summaryMiniLabel}>ימים ללא דיווח</span>
+            </div>
+            <DangerCircleIcon />
           </section>
 
-          <section className={`${styles.summaryMiniCard} ${styles.summaryMiniDanger}`}>
+          <section className={`${styles.summaryMiniCard} ${styles.summaryMiniWarn}`}>
+            <div className={styles.summaryMiniContent}>
+              <strong className={styles.summaryMiniValue}>{MONTHLY_SUMMARY_PLACEHOLDER.absenceHours}</strong>
+              <span className={styles.summaryMiniLabel}>שעות היעדרות</span>
+            </div>
             <span className={styles.summaryMiniIcon}>
               <CalendarIcon />
             </span>
-            <strong className={styles.summaryMiniValue}>{MONTHLY_SUMMARY_PLACEHOLDER.missingDays}</strong>
-            <span className={styles.summaryMiniLabel}>ימים ללא דיווח</span>
           </section>
         </div>
 
