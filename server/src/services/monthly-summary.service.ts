@@ -63,6 +63,84 @@ export function countWorkingDaysInMonth(year: number, month: number, holidays: s
   return count;
 }
 
+// Returns every working-day date string in the month (non-weekend, non-holiday)
+function listWorkingDays(year: number, month: number, holidays: Set<string>): string[] {
+  const numDays = totalDaysInMonth(year, month);
+  const workingDates: string[] = [];
+  for (let dayNum = 1; dayNum <= numDays; dayNum++) {
+    const date = dateStr(year, month, dayNum);
+    const dayOfWeek = new Date(Date.UTC(year, month - 1, dayNum)).getUTCDay();
+    if (!isWeekend(dayOfWeek) && !holidays.has(date)) workingDates.push(date);
+  }
+  return workingDates;
+}
+
+// Returns the set of dates (YYYY-MM-DD) where the user has at least one non-deleted time entry
+async function fetchDatesWithEntries(userId: number, year: number, month: number): Promise<Set<string>> {
+  const rows = (await db('time_entries')
+    .where('user_id', userId)
+    .whereNull('deleted_at')
+    .whereRaw('EXTRACT(YEAR FROM date) = ? AND EXTRACT(MONTH FROM date) = ?', [year, month])
+    .pluck('date')) as unknown[];
+  return new Set(rows.map(toDateStr));
+}
+
+// Returns the set of working-day dates covered by a full-day absence.
+// Multi-day absences are expanded day by day; weekends and holidays are already excluded
+// from workingDayDates so they never appear in the result.
+async function fetchFullAbsenceDates(
+  userId: number,
+  year: number,
+  month: number,
+  workingDayDates: string[],
+): Promise<Set<string>> {
+  const startOfMonth = dateStr(year, month, 1);
+  const endOfMonth = dateStr(year, month, totalDaysInMonth(year, month));
+  const absences = (await db('absence_entries')
+    .where('user_id', userId)
+    .where('is_partial', false)
+    .where('start_date', '<=', endOfMonth)
+    .where('end_date', '>=', startOfMonth)
+    .select('start_date', 'end_date')) as Array<{ start_date: string; end_date: string }>;
+
+  const fullAbsenceDates = new Set<string>();
+  for (const absence of absences) {
+    const absenceStart = toDateStr(absence.start_date);
+    const absenceEnd = toDateStr(absence.end_date);
+    for (const date of workingDayDates) {
+      if (date >= absenceStart && date <= absenceEnd) fullAbsenceDates.add(date);
+    }
+  }
+  return fullAbsenceDates;
+}
+
+// Pure: counts working days with no entry and no full-day absence.
+// Partial-absence days still count — only a full-day absence (or an entry) clears a day.
+export function buildDaysWithoutReport(
+  workingDayDates: string[],
+  datesWithEntries: Set<string>,
+  fullAbsenceDates: Set<string>,
+): number {
+  const count = workingDayDates.filter(
+    date => !datesWithEntries.has(date) && !fullAbsenceDates.has(date),
+  ).length;
+  return count;
+}
+
+// DB-backed: fetches data via helpers then delegates to buildDaysWithoutReport
+export async function computeDaysWithoutReport(
+  userId: number,
+  year: number,
+  month: number,
+): Promise<number> {
+  const holidays = await fetchHolidaySet(year, month);
+  const workingDayDates = listWorkingDays(year, month, holidays);
+  const datesWithEntries = await fetchDatesWithEntries(userId, year, month);
+  const fullAbsenceDates = await fetchFullAbsenceDates(userId, year, month, workingDayDates);
+  const daysWithoutReport = buildDaysWithoutReport(workingDayDates, datesWithEntries, fullAbsenceDates);
+  return daysWithoutReport;
+}
+
 // Counts how many working days in the month are covered by user absences
 async function countAbsenceDays(
   userId: number,

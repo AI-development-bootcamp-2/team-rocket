@@ -80,16 +80,16 @@
 
 ### ⚠️ Write tests FIRST — confirm they FAIL before Phase 4 implementation
 
-- [ ] T020 [P] [US3] Write failing integration test: `daysWithoutReport` excludes days with time entries — in `server/tests/integration/monthly-summary.test.ts`
-- [ ] T021 [P] [US3] Write failing integration test: `daysWithoutReport` excludes days covered by full-day absence — in `server/tests/integration/monthly-summary.test.ts`
-- [ ] T022 [P] [US3] Write failing integration test: `daysWithoutReport` includes days with partial absence but zero work hours — in `server/tests/integration/monthly-summary.test.ts`
-- [ ] T023 [P] [US3] Write failing integration test: `daysWithoutReport` excludes weekends (Fri/Sat) and holidays — in `server/tests/integration/monthly-summary.test.ts`
-- [ ] T024 [P] [US4] Write failing integration test: `absenceHours` = 9 for 1 full-day absence + 4.5 for 1 partial absence — in `server/tests/integration/monthly-summary.test.ts`
-- [ ] T025 [P] [US4] Write failing integration test: `absenceHours` unchanged when only a national holiday exists (holidays do NOT count) — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T020 [P] [US3] Write failing integration test: `daysWithoutReport` excludes days with time entries — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T021 [P] [US3] Write failing integration test: `daysWithoutReport` excludes days covered by full-day absence — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T022 [P] [US3] Write failing integration test: `daysWithoutReport` includes days with partial absence but zero work hours — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T023 [P] [US3] Write failing integration test: `daysWithoutReport` excludes weekends (Fri/Sat) and holidays — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T024 [P] [US4] Write failing integration test: `absenceHours` = 9 for 1 full-day absence + 4.5 for 1 partial absence — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T025 [P] [US4] Write failing integration test: `absenceHours` unchanged when only a national holiday exists (holidays do NOT count) — in `server/tests/integration/monthly-summary.test.ts`
 
 ### Implementation for US3 + US4
 
-- [ ] T026 [US3] Implement `computeDaysWithoutReport(userId, year, month)` in service — iterate working days (Sun–Thu, non-holiday), count days with no time entries AND no full-day absence
+- [x] T026 [US3] Implement `computeDaysWithoutReport(userId, year, month)` in service — iterate working days (Sun–Thu, non-holiday), count days with no time entries AND no full-day absence
 - [ ] T027 [US4] Implement `computeAbsenceHours(userId, year, month, dailyStandard)` in service — SUM from `absences` table: full-day × dailyStandard, partial × dailyStandard/2; holidays excluded
 - [ ] T028 [US3] [US4] Add `daysWithoutReport` and `absenceHours` to `getMonthlySummary` response
 
