@@ -110,8 +110,8 @@
 
 ### Implementation for US5
 
-- [ ] T032 [US5] Implement `computeProjectBreakdown(userId, year, month)` in service — `GROUP BY project_id`, JOIN `projects` for name, `SUM(duration_minutes)/60`, filter > 0, ORDER BY hours DESC
-- [ ] T033 [US5] Add `projectBreakdown` to `getMonthlySummary` response
+- [x] T032 [US5] Implement `computeProjectBreakdown(userId, year, month)` in service — `GROUP BY project_id`, JOIN `projects` for name, `SUM(duration_minutes)/60`, filter > 0, ORDER BY hours DESC
+- [x] T033 [US5] Add `projectBreakdown` to `getMonthlySummary` response
 
 **Checkpoint**: T029–T031 all pass. Project hours correctly aggregated.
 

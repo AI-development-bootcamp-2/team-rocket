@@ -349,11 +349,8 @@ export async function computeProjectBreakdown(
     .whereNull('time_entries.deleted_at')
     .whereRaw('EXTRACT(YEAR FROM time_entries.date) = ? AND EXTRACT(MONTH FROM time_entries.date) = ?', [year, month])
     .groupBy('time_entries.project_id', 'projects.name')
-    .select(
-      'time_entries.project_id as projectId',
-      'projects.name as projectName',
-      db.raw('SUM(time_entries.duration_minutes) as totalMinutes'),
-    )) as Array<{ projectId: number; projectName: string; totalMinutes: string }>;
+    .select('time_entries.project_id as projectId', 'projects.name as projectName')
+    .sum('time_entries.duration_minutes as totalMinutes')) as Array<{ projectId: number; projectName: string; totalMinutes: string }>;
 
   const breakdown = rows
     .map(row => ({
@@ -426,6 +423,7 @@ export async function getMonthlySummary(params: {
   const missingHoursToDate = await computeMissingHoursToDate(userId, year, month, dailyStandard, reportedHours);
   const daysWithoutReport = await computeDaysWithoutReport(userId, year, month);
   const absenceHours = await computeAbsenceHours(userId, year, month, dailyStandard);
+  const projectBreakdown = await computeProjectBreakdown(userId, year, month);
 
   return {
     year,
@@ -436,7 +434,7 @@ export async function getMonthlySummary(params: {
     missingHoursToDate,
     absenceHours,
     daysWithoutReport,
-    projectBreakdown: [],
+    projectBreakdown,
     dayStatuses: {},
   };
 }
