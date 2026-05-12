@@ -2,6 +2,7 @@ import { startTransition, useCallback, useEffect, useState } from 'react';
 import { getMonthStatus, listMonths, lockMonth, unlockMonth } from '../../../api/monthLocks.api.js';
 import { AdminShell } from '../../../components/layout/AdminShell.jsx';
 import { ErrorState } from '../../../components/ui/ErrorState.jsx';
+import { Select } from '../../../components/ui/Select.jsx';
 import { Spinner } from '../../../components/ui/Spinner.jsx';
 import { Toast } from '../../../components/ui/Toast.jsx';
 import { LockConfirmDialog } from './LockConfirmDialog.jsx';
@@ -81,6 +82,7 @@ export function MonthLockPage() {
   const [dialog, setDialog] = useState(null);
   const [dialogLoading, setDialogLoading] = useState(false);
   const [lockingMonth, setLockingMonth] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const loadMonths = useCallback(async () => {
     setLoading(true);
@@ -170,6 +172,17 @@ export function MonthLockPage() {
 
           {!loading && !error ? (
             <div className="users-page__desktop">
+              <div className="user-filters" style={{ marginBottom: '16px' }}>
+                <Select
+                  label="שנה"
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(Number(e.target.value))}
+                >
+                  {[...new Set(months.map((m) => m.year))].sort((a, b) => b - a).map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </Select>
+              </div>
               <div className="users-table-card">
                 <table className="users-table">
                   <thead>
@@ -182,7 +195,7 @@ export function MonthLockPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {months.map((m) => {
+                    {months.filter((m) => m.year === selectedYear).map((m) => {
                       const month = m.month ?? m.month_number;
                       const { year } = m;
                       const monthName = HEBREW_MONTHS[month - 1] ?? month;
