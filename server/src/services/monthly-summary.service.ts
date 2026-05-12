@@ -85,7 +85,11 @@ export function crossMidnightOverflow(
 }
 
 // Reported hours for the month, with cross-month-boundary entries split at midnight
-export async function computeReportedHours(userId: number, year: number, month: number): Promise<number> {
+export async function computeReportedHours(
+  userId: number,
+  year: number,
+  month: number,
+): Promise<number> {
   const startOfMonth = dateStr(year, month, 1);
   const endOfMonth = dateStr(year, month, totalDaysInMonth(year, month));
 
@@ -100,9 +104,9 @@ export async function computeReportedHours(userId: number, year: number, month: 
   ]);
 
   const totalMinutes =
-    rawDuration
-    - crossMidnightOverflow(lastDayEntries)   // outflow to next month
-    + crossMidnightOverflow(prevLastDayEntries); // inflow from previous month
+    rawDuration -
+    crossMidnightOverflow(lastDayEntries) + // outflow to next month
+    crossMidnightOverflow(prevLastDayEntries); // inflow from previous month
 
   return Math.round((totalMinutes / 60) * 100) / 100;
 }
@@ -110,7 +114,10 @@ export async function computeReportedHours(userId: number, year: number, month: 
 // Fetches national + company holiday dates in the month as a Set<"YYYY-MM-DD">
 async function fetchHolidaySet(year: number, month: number): Promise<Set<string>> {
   const rows = (await db('holiday_calendar')
-    .whereBetween('date', [dateStr(year, month, 1), dateStr(year, month, totalDaysInMonth(year, month))])
+    .whereBetween('date', [
+      dateStr(year, month, 1),
+      dateStr(year, month, totalDaysInMonth(year, month)),
+    ])
     .whereIn('type', ['national', 'company'])
     .pluck('date')) as unknown[];
   return new Set(rows.map(toDateStr));
@@ -141,7 +148,11 @@ function listWorkingDays(year: number, month: number, holidays: Set<string>): st
 }
 
 // Returns the set of dates (YYYY-MM-DD) where the user has at least one non-deleted time entry
-async function fetchDatesWithEntries(userId: number, year: number, month: number): Promise<Set<string>> {
+async function fetchDatesWithEntries(
+  userId: number,
+  year: number,
+  month: number,
+): Promise<Set<string>> {
   const rows = (await db('time_entries')
     .where('user_id', userId)
     .whereNull('deleted_at')
@@ -187,7 +198,7 @@ export function buildDaysWithoutReport(
   fullAbsenceDates: Set<string>,
 ): number {
   const count = workingDayDates.filter(
-    date => !datesWithEntries.has(date) && !fullAbsenceDates.has(date),
+    (date) => !datesWithEntries.has(date) && !fullAbsenceDates.has(date),
   ).length;
   return count;
 }
@@ -202,7 +213,11 @@ export async function computeDaysWithoutReport(
   const workingDayDates = listWorkingDays(year, month, holidays);
   const datesWithEntries = await fetchDatesWithEntries(userId, year, month);
   const fullAbsenceDates = await fetchFullAbsenceDates(userId, year, month, workingDayDates);
-  const daysWithoutReport = buildDaysWithoutReport(workingDayDates, datesWithEntries, fullAbsenceDates);
+  const daysWithoutReport = buildDaysWithoutReport(
+    workingDayDates,
+    datesWithEntries,
+    fullAbsenceDates,
+  );
   return daysWithoutReport;
 }
 
@@ -380,7 +395,13 @@ export async function computeMissingHoursToDate(
   const holidays = await fetchHolidaySet(year, month);
   const rawPassed = countPassedWorkingDays(year, month, cutoffDay, [...holidays]);
 
-  const { fullDays, partialDays } = await countPassedAbsenceDays(userId, year, month, cutoffDay, holidays);
+  const { fullDays, partialDays } = await countPassedAbsenceDays(
+    userId,
+    year,
+    month,
+    cutoffDay,
+    holidays,
+  );
   const adjustedPassed = Math.max(0, rawPassed - fullDays - partialDays * 0.5);
 
   const missingHours = buildMissingHoursToDate(adjustedPassed, dailyStandard, reportedHours);
@@ -412,18 +433,25 @@ export async function computeProjectBreakdown(
     .join('projects', 'time_entries.project_id', 'projects.id')
     .where('time_entries.user_id', userId)
     .whereNull('time_entries.deleted_at')
-    .whereRaw('EXTRACT(YEAR FROM time_entries.date) = ? AND EXTRACT(MONTH FROM time_entries.date) = ?', [year, month])
+    .whereRaw(
+      'EXTRACT(YEAR FROM time_entries.date) = ? AND EXTRACT(MONTH FROM time_entries.date) = ?',
+      [year, month],
+    )
     .groupBy('time_entries.project_id', 'projects.name')
     .select('time_entries.project_id as projectId', 'projects.name as projectName')
-    .sum('time_entries.duration_minutes as totalMinutes')) as Array<{ projectId: number; projectName: string; totalMinutes: string }>;
+    .sum('time_entries.duration_minutes as totalMinutes')) as Array<{
+    projectId: number;
+    projectName: string;
+    totalMinutes: string;
+  }>;
 
   const breakdown = rows
-    .map(row => ({
+    .map((row) => ({
       projectId: row.projectId,
       projectName: row.projectName,
       hours: Math.round((Number(row.totalMinutes) / 60) * 100) / 100,
     }))
-    .filter(item => item.hours > 0)
+    .filter((item) => item.hours > 0)
     .sort((a, b) => b.hours - a.hours);
 
   return breakdown;
@@ -475,9 +503,14 @@ export async function getMonthlySummary(params: {
   const dailyStandard = computeDailyStandard(user);
   const quotaHours = await computeQuotaHours(userId, year, month, dailyStandard);
   const reportedHours = await computeReportedHours(userId, year, month);
-  const completionPercentage =
-    quotaHours > 0 ? Math.floor((reportedHours / quotaHours) * 100) : 0;
-  const missingHoursToDate = await computeMissingHoursToDate(userId, year, month, dailyStandard, reportedHours);
+  const completionPercentage = quotaHours > 0 ? Math.floor((reportedHours / quotaHours) * 100) : 0;
+  const missingHoursToDate = await computeMissingHoursToDate(
+    userId,
+    year,
+    month,
+    dailyStandard,
+    reportedHours,
+  );
   const daysWithoutReport = await computeDaysWithoutReport(userId, year, month);
   const absenceHours = await computeAbsenceHours(userId, year, month, dailyStandard);
   const projectBreakdown = await computeProjectBreakdown(userId, year, month);
@@ -491,7 +524,7 @@ export async function getMonthlySummary(params: {
     missingHoursToDate: round2(missingHoursToDate),
     absenceHours: round2(absenceHours),
     daysWithoutReport,
-    projectBreakdown: projectBreakdown.map(item => ({ ...item, hours: round2(item.hours) })),
+    projectBreakdown: projectBreakdown.map((item) => ({ ...item, hours: round2(item.hours) })),
     dayStatuses: {},
   };
 }

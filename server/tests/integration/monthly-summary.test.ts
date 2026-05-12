@@ -256,9 +256,24 @@ describe('GET /monthly-summary — quota, reported hours & completion', () => {
     const { user, client, project, task, token } = await scaffold();
 
     // Non-deleted: 9h
-    await seedTimeEntry({ userId: user.id, date: '2026-01-04', durationMinutes: 540, clientId: client.id, projectId: project.id, taskId: task.id });
+    await seedTimeEntry({
+      userId: user.id,
+      date: '2026-01-04',
+      durationMinutes: 540,
+      clientId: client.id,
+      projectId: project.id,
+      taskId: task.id,
+    });
     // Soft-deleted: must NOT count
-    await seedTimeEntry({ userId: user.id, date: '2026-01-05', durationMinutes: 540, clientId: client.id, projectId: project.id, taskId: task.id, deletedAt: new Date() });
+    await seedTimeEntry({
+      userId: user.id,
+      date: '2026-01-05',
+      durationMinutes: 540,
+      clientId: client.id,
+      projectId: project.id,
+      taskId: task.id,
+      deletedAt: new Date(),
+    });
 
     const res = await request(app)
       .get('/monthly-summary?year=2026&month=1')
@@ -272,8 +287,22 @@ describe('GET /monthly-summary — quota, reported hours & completion', () => {
     const { user, client, project, task, token } = await scaffold();
 
     // Seed 2 entries × 9h = 18h total
-    await seedTimeEntry({ userId: user.id, date: '2026-01-04', durationMinutes: 540, clientId: client.id, projectId: project.id, taskId: task.id });
-    await seedTimeEntry({ userId: user.id, date: '2026-01-05', durationMinutes: 540, clientId: client.id, projectId: project.id, taskId: task.id });
+    await seedTimeEntry({
+      userId: user.id,
+      date: '2026-01-04',
+      durationMinutes: 540,
+      clientId: client.id,
+      projectId: project.id,
+      taskId: task.id,
+    });
+    await seedTimeEntry({
+      userId: user.id,
+      date: '2026-01-05',
+      durationMinutes: 540,
+      clientId: client.id,
+      projectId: project.id,
+      taskId: task.id,
+    });
 
     const res = await request(app)
       .get('/monthly-summary?year=2026&month=1')
@@ -311,18 +340,38 @@ describe('GET /monthly-summary — missingHoursToDate', () => {
     jest.useFakeTimers({
       now: new Date('2026-01-15T12:00:00.000Z'),
       doNotFake: [
-        'hrtime', 'nextTick', 'performance', 'queueMicrotask',
-        'setImmediate', 'clearImmediate',
-        'setInterval', 'clearInterval',
-        'setTimeout', 'clearTimeout',
+        'hrtime',
+        'nextTick',
+        'performance',
+        'queueMicrotask',
+        'setImmediate',
+        'clearImmediate',
+        'setInterval',
+        'clearInterval',
+        'setTimeout',
+        'clearTimeout',
       ],
     });
 
     const { user, client, project, task, token } = await scaffold();
 
     // 6 × 9h = 54h reported; expected = 99h → gap = 45h
-    for (const date of ['2026-01-04', '2026-01-05', '2026-01-06', '2026-01-07', '2026-01-08', '2026-01-11']) {
-      await seedTimeEntry({ userId: user.id, date, durationMinutes: 540, clientId: client.id, projectId: project.id, taskId: task.id });
+    for (const date of [
+      '2026-01-04',
+      '2026-01-05',
+      '2026-01-06',
+      '2026-01-07',
+      '2026-01-08',
+      '2026-01-11',
+    ]) {
+      await seedTimeEntry({
+        userId: user.id,
+        date,
+        durationMinutes: 540,
+        clientId: client.id,
+        projectId: project.id,
+        taskId: task.id,
+      });
     }
 
     const res = await request(app)
@@ -339,10 +388,16 @@ describe('GET /monthly-summary — missingHoursToDate', () => {
     jest.useFakeTimers({
       now: new Date('2026-01-15T12:00:00.000Z'),
       doNotFake: [
-        'hrtime', 'nextTick', 'performance', 'queueMicrotask',
-        'setImmediate', 'clearImmediate',
-        'setInterval', 'clearInterval',
-        'setTimeout', 'clearTimeout',
+        'hrtime',
+        'nextTick',
+        'performance',
+        'queueMicrotask',
+        'setImmediate',
+        'clearImmediate',
+        'setInterval',
+        'clearInterval',
+        'setTimeout',
+        'clearTimeout',
       ],
     });
 
@@ -351,10 +406,26 @@ describe('GET /monthly-summary — missingHoursToDate', () => {
     // 11 × 10h = 110h — user logged 1h extra each day (standard is 9h)
     // expected = 11 × 9h = 99h; reported = 110h → max(0, 99 − 110) = 0
     for (const date of [
-      '2026-01-01', '2026-01-04', '2026-01-05', '2026-01-06', '2026-01-07', '2026-01-08',
-      '2026-01-11', '2026-01-12', '2026-01-13', '2026-01-14', '2026-01-15',
+      '2026-01-01',
+      '2026-01-04',
+      '2026-01-05',
+      '2026-01-06',
+      '2026-01-07',
+      '2026-01-08',
+      '2026-01-11',
+      '2026-01-12',
+      '2026-01-13',
+      '2026-01-14',
+      '2026-01-15',
     ]) {
-      await seedTimeEntry({ userId: user.id, date, durationMinutes: 600, clientId: client.id, projectId: project.id, taskId: task.id });
+      await seedTimeEntry({
+        userId: user.id,
+        date,
+        durationMinutes: 600,
+        clientId: client.id,
+        projectId: project.id,
+        taskId: task.id,
+      });
     }
 
     const res = await request(app)
@@ -384,10 +455,25 @@ describe('GET /monthly-summary — missingHoursToDate', () => {
     // January 2026 is past; cutoff = Jan 31; quotaHours = 189h (21 × 9h)
     // Seed 10 × 9h = 90h → gap = 189 − 90 = 99h
     for (const date of [
-      '2026-01-04', '2026-01-05', '2026-01-06', '2026-01-07', '2026-01-08',
-      '2026-01-11', '2026-01-12', '2026-01-13', '2026-01-14', '2026-01-15',
+      '2026-01-04',
+      '2026-01-05',
+      '2026-01-06',
+      '2026-01-07',
+      '2026-01-08',
+      '2026-01-11',
+      '2026-01-12',
+      '2026-01-13',
+      '2026-01-14',
+      '2026-01-15',
     ]) {
-      await seedTimeEntry({ userId: user.id, date, durationMinutes: 540, clientId: client.id, projectId: project.id, taskId: task.id });
+      await seedTimeEntry({
+        userId: user.id,
+        date,
+        durationMinutes: 540,
+        clientId: client.id,
+        projectId: project.id,
+        taskId: task.id,
+      });
     }
 
     const res = await request(app)
@@ -408,8 +494,22 @@ describe('GET /monthly-summary — daysWithoutReport (T020–T023)', () => {
     const { user, client, project, task, token } = await scaffold();
 
     // Entries on Jan 4 and Jan 5 only; 19 remaining working days have nothing
-    await seedTimeEntry({ userId: user.id, date: '2026-01-04', durationMinutes: 540, clientId: client.id, projectId: project.id, taskId: task.id });
-    await seedTimeEntry({ userId: user.id, date: '2026-01-05', durationMinutes: 540, clientId: client.id, projectId: project.id, taskId: task.id });
+    await seedTimeEntry({
+      userId: user.id,
+      date: '2026-01-04',
+      durationMinutes: 540,
+      clientId: client.id,
+      projectId: project.id,
+      taskId: task.id,
+    });
+    await seedTimeEntry({
+      userId: user.id,
+      date: '2026-01-05',
+      durationMinutes: 540,
+      clientId: client.id,
+      projectId: project.id,
+      taskId: task.id,
+    });
 
     const res = await request(app)
       .get('/monthly-summary?year=2026&month=1')
@@ -517,15 +617,43 @@ describe('GET /monthly-summary — projectBreakdown (T029–T031)', () => {
     await seedAssignment(user.id, taskC.id);
 
     // projectA: 6 × 9h = 54h
-    for (const date of ['2026-01-04', '2026-01-05', '2026-01-06', '2026-01-07', '2026-01-08', '2026-01-11']) {
-      await seedTimeEntry({ userId: user.id, date, durationMinutes: 540, clientId: client.id, projectId: projectA.id, taskId: taskA.id });
+    for (const date of [
+      '2026-01-04',
+      '2026-01-05',
+      '2026-01-06',
+      '2026-01-07',
+      '2026-01-08',
+      '2026-01-11',
+    ]) {
+      await seedTimeEntry({
+        userId: user.id,
+        date,
+        durationMinutes: 540,
+        clientId: client.id,
+        projectId: projectA.id,
+        taskId: taskA.id,
+      });
     }
     // projectB: 4 × 9h = 36h
     for (const date of ['2026-01-12', '2026-01-13', '2026-01-14', '2026-01-15']) {
-      await seedTimeEntry({ userId: user.id, date, durationMinutes: 540, clientId: client.id, projectId: projectB.id, taskId: taskB.id });
+      await seedTimeEntry({
+        userId: user.id,
+        date,
+        durationMinutes: 540,
+        clientId: client.id,
+        projectId: projectB.id,
+        taskId: taskB.id,
+      });
     }
     // projectC: 1 × 8h = 8h
-    await seedTimeEntry({ userId: user.id, date: '2026-01-18', durationMinutes: 480, clientId: client.id, projectId: projectC.id, taskId: taskC.id });
+    await seedTimeEntry({
+      userId: user.id,
+      date: '2026-01-18',
+      durationMinutes: 480,
+      clientId: client.id,
+      projectId: projectC.id,
+      taskId: taskC.id,
+    });
 
     const res = await request(app)
       .get('/monthly-summary?year=2026&month=1')
@@ -547,7 +675,14 @@ describe('GET /monthly-summary — projectBreakdown (T029–T031)', () => {
     const taskB = await seedTask(projectB.id);
     await seedAssignment(user.id, taskB.id);
 
-    await seedTimeEntry({ userId: user.id, date: '2026-01-04', durationMinutes: 540, clientId: client.id, projectId: projectA.id, taskId: taskA.id });
+    await seedTimeEntry({
+      userId: user.id,
+      date: '2026-01-04',
+      durationMinutes: 540,
+      clientId: client.id,
+      projectId: projectA.id,
+      taskId: taskA.id,
+    });
 
     const res = await request(app)
       .get('/monthly-summary?year=2026&month=1')
@@ -563,14 +698,25 @@ describe('GET /monthly-summary — projectBreakdown (T029–T031)', () => {
     const { user, client, project, task, token } = await scaffold();
 
     // 100 minutes = 100/60 = 1.6666…h → should be rounded to 1.67
-    await seedTimeEntry({ userId: user.id, date: '2026-01-04', durationMinutes: 100, clientId: client.id, projectId: project.id, taskId: task.id });
+    await seedTimeEntry({
+      userId: user.id,
+      date: '2026-01-04',
+      durationMinutes: 100,
+      clientId: client.id,
+      projectId: project.id,
+      taskId: task.id,
+    });
 
     const res = await request(app)
       .get('/monthly-summary?year=2026&month=1')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    const [item] = res.body.projectBreakdown as Array<{ projectId: number; projectName: string; hours: number }>;
+    const [item] = res.body.projectBreakdown as Array<{
+      projectId: number;
+      projectName: string;
+      hours: number;
+    }>;
     expect(item.projectId).toBe(project.id);
     expect(item.projectName).toBe('Test Project');
     expect(item.hours).toBe(1.67);
@@ -607,8 +753,12 @@ describe('GET /monthly-summary — edge cases (Phase 9)', () => {
     });
 
     const [janRes, febRes] = await Promise.all([
-      request(app).get('/monthly-summary?year=2026&month=1').set('Authorization', `Bearer ${token}`),
-      request(app).get('/monthly-summary?year=2026&month=2').set('Authorization', `Bearer ${token}`),
+      request(app)
+        .get('/monthly-summary?year=2026&month=1')
+        .set('Authorization', `Bearer ${token}`),
+      request(app)
+        .get('/monthly-summary?year=2026&month=2')
+        .set('Authorization', `Bearer ${token}`),
     ]);
 
     expect(janRes.status).toBe(200);
@@ -633,7 +783,7 @@ describe('GET /monthly-summary — edge cases (Phase 9)', () => {
 });
 
 describe('GET /monthly-summary — permissions (T044–T046)', () => {
-  it('T044 — regular user requesting another user\'s summary receives 403', async () => {
+  it("T044 — regular user requesting another user's summary receives 403", async () => {
     const { token } = await scaffold({ email: 'regular@test.com', role: 'user' });
     const other = await seedUser({ email: 'other@test.com', role: 'user' });
 
@@ -644,7 +794,7 @@ describe('GET /monthly-summary — permissions (T044–T046)', () => {
     expect(res.status).toBe(403);
   });
 
-  it('T045 — admin can request any user\'s summary and receives 200', async () => {
+  it("T045 — admin can request any user's summary and receives 200", async () => {
     const { token: adminToken } = await scaffold({ email: 'admin@test.com', role: 'admin' });
     const other = await seedUser({ email: 'other@test.com', role: 'user' });
 
@@ -656,8 +806,7 @@ describe('GET /monthly-summary — permissions (T044–T046)', () => {
   });
 
   it('T046 — unauthenticated request (no JWT) receives 401', async () => {
-    const res = await request(app)
-      .get('/monthly-summary?year=2026&month=1');
+    const res = await request(app).get('/monthly-summary?year=2026&month=1');
 
     expect(res.status).toBe(401);
   });

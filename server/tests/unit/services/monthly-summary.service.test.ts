@@ -21,11 +21,15 @@ import {
 
 describe('computeDailyStandard', () => {
   it('returns 9 for 100% employment with no daily override', () => {
-    expect(computeDailyStandard({ daily_hours_override: null, employment_percentage: 100 })).toBe(9);
+    expect(computeDailyStandard({ daily_hours_override: null, employment_percentage: 100 })).toBe(
+      9,
+    );
   });
 
   it('returns 4.5 for 50% employment with no daily override', () => {
-    expect(computeDailyStandard({ daily_hours_override: null, employment_percentage: 50 })).toBe(4.5);
+    expect(computeDailyStandard({ daily_hours_override: null, employment_percentage: 50 })).toBe(
+      4.5,
+    );
   });
 
   it('applies daily_hours_override when set', () => {
@@ -70,10 +74,27 @@ describe('countWorkingDaysInMonth', () => {
   it('returns 0 when every working day is a holiday', () => {
     // Build a list of all 21 working days in Jan 2026
     const workingDays = [
-      '2026-01-01', '2026-01-04', '2026-01-05', '2026-01-06', '2026-01-07', '2026-01-08',
-      '2026-01-11', '2026-01-12', '2026-01-13', '2026-01-14', '2026-01-15',
-      '2026-01-18', '2026-01-19', '2026-01-20', '2026-01-21', '2026-01-22',
-      '2026-01-25', '2026-01-26', '2026-01-27', '2026-01-28', '2026-01-29',
+      '2026-01-01',
+      '2026-01-04',
+      '2026-01-05',
+      '2026-01-06',
+      '2026-01-07',
+      '2026-01-08',
+      '2026-01-11',
+      '2026-01-12',
+      '2026-01-13',
+      '2026-01-14',
+      '2026-01-15',
+      '2026-01-18',
+      '2026-01-19',
+      '2026-01-20',
+      '2026-01-21',
+      '2026-01-22',
+      '2026-01-25',
+      '2026-01-26',
+      '2026-01-27',
+      '2026-01-28',
+      '2026-01-29',
     ];
     expect(countWorkingDaysInMonth(2026, 1, workingDays)).toBe(0);
   });
@@ -254,10 +275,27 @@ describe('buildAbsenceHours', () => {
 describe('buildDaysWithoutReport', () => {
   // Jan 2026 working days (Sun–Thu): all 21 of them
   const allWorkingDays = [
-    '2026-01-01', '2026-01-04', '2026-01-05', '2026-01-06', '2026-01-07', '2026-01-08',
-    '2026-01-11', '2026-01-12', '2026-01-13', '2026-01-14', '2026-01-15',
-    '2026-01-18', '2026-01-19', '2026-01-20', '2026-01-21', '2026-01-22',
-    '2026-01-25', '2026-01-26', '2026-01-27', '2026-01-28', '2026-01-29',
+    '2026-01-01',
+    '2026-01-04',
+    '2026-01-05',
+    '2026-01-06',
+    '2026-01-07',
+    '2026-01-08',
+    '2026-01-11',
+    '2026-01-12',
+    '2026-01-13',
+    '2026-01-14',
+    '2026-01-15',
+    '2026-01-18',
+    '2026-01-19',
+    '2026-01-20',
+    '2026-01-21',
+    '2026-01-22',
+    '2026-01-25',
+    '2026-01-26',
+    '2026-01-27',
+    '2026-01-28',
+    '2026-01-29',
   ];
 
   it('counts all working days when there are no entries and no absences', () => {
