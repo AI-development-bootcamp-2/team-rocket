@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createAbsence, uploadAbsenceDocument } from '../../api/absences.api';
 import { createTimeEntry, updateTimeEntry } from '../../api/timeEntries.api';
 import styles from './ReportForm.module.css';
 
@@ -18,6 +19,30 @@ const EMPTY_FORM = {
   description: '',
 };
 
+const ABSENCE_DURATION_OPTIONS = [
+  { value: 'single', label: 'יום אחד' },
+  { value: 'range', label: 'מספר ימים' },
+];
+
+const ABSENCE_TYPE_OPTIONS = [
+  { value: 'sick', label: 'מחלה', requiresDocument: true, isPartial: false },
+  { value: 'vacation_full', label: 'חופשה ללא תשלום', requiresDocument: false, isPartial: false },
+  { value: 'vacation_half', label: 'חצי יום חופש', requiresDocument: false, isPartial: true },
+  { value: 'reserve', label: 'מילואים', requiresDocument: true, isPartial: false },
+];
+
+const ALLOWED_ABSENCE_FILE_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'];
+const MAX_ABSENCE_FILE_SIZE = 10 * 1024 * 1024;
+
+const EMPTY_ABSENCE_FORM = {
+  duration: 'single',
+  start_date: '',
+  end_date: '',
+  type: '',
+  notes: '',
+  file: null,
+};
+
 function formatDateHebrew(dateStr) {
   if (!dateStr) return '';
   const parts = dateStr.split('-').map(Number);
@@ -30,6 +55,78 @@ function formatDateHebrew(dateStr) {
   const mm = String(month).padStart(2, '0');
   const yy = String(year).slice(2);
   return `יום ${dayName} ${dd}/${mm}/${yy}`;
+}
+
+function formatDatePill(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-').map(Number);
+  if (parts.length !== 3) return dateStr;
+  const [year, month, day] = parts;
+  return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${String(year).slice(2)}`;
+}
+
+function toLocalDateParts(dateStr) {
+  const [year, month, day] = String(dateStr).split('-').map(Number);
+  return { year, month, day };
+}
+
+function isFridayOrSaturday(dateStr) {
+  const { year, month, day } = toLocalDateParts(dateStr);
+  const date = new Date(year, month - 1, day);
+  const dayIndex = date.getDay();
+  return dayIndex === 5 || dayIndex === 6;
+}
+
+function countAbsenceWorkingDays(startDate, endDate) {
+  if (!startDate || !endDate || startDate > endDate) return 0;
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  let total = 0;
+
+  for (const cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
+    const dateStr = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`;
+    if (!isFridayOrSaturday(dateStr)) {
+      total += 1;
+    }
+  }
+
+  return total;
+}
+
+function buildInitialAbsenceForm(date) {
+  return {
+    ...EMPTY_ABSENCE_FORM,
+    start_date: date,
+    end_date: date,
+  };
+}
+
+function getPickerTitle(picker) {
+  switch (picker?.type) {
+    case 'project':
+      return 'בחירת פרויקט';
+    case 'task':
+      return 'בחירת משימה';
+    case 'location':
+      return 'בחירת מיקום';
+    case 'absence-duration':
+      return 'בחירת משך';
+    case 'absence-type':
+      return 'בחירת סוג דיווח';
+    default:
+      return '';
+  }
+}
+
+function getPickerPrimaryLabel(picker) {
+  switch (picker?.type) {
+    case 'project':
+      return 'המשך ודיווח משימות';
+    case 'task':
+      return 'המשך ודיווח מיקום';
+    default:
+      return 'המשך';
+  }
 }
 
 function timeToMinutes(timeValue) {
@@ -214,22 +311,29 @@ export function ReportForm({
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const [reportTab, setReportTab] = useState('work');
   const [picker, setPicker] = useState(null);
+  const [absenceForm, setAbsenceForm] = useState(() => buildInitialAbsenceForm(date));
   const successTimerRef = useRef(null);
   const initialFormRef = useRef(buildInitialForm(entry, dropdownData));
+  const absenceDateInputRef = useRef(null);
+  const absenceEndDateInputRef = useRef(null);
+  const absenceFileInputRef = useRef(null);
 
   useEffect(() => {
     const initial = buildInitialForm(entry, dropdownData);
     initialFormRef.current = initial;
     setForm(initial);
+    setAbsenceForm(buildInitialAbsenceForm(date));
     setErrors({});
     setPicker(null);
     setConflictError(false);
     setServerError(null);
     setIsLocked(false);
     setSuccessMsg(null);
-  }, [dropdownData, entry]);
+  }, [date, dropdownData, entry]);
 
-  const isDirty = JSON.stringify(form) !== JSON.stringify(initialFormRef.current);
+  const isWorkDirty = JSON.stringify(form) !== JSON.stringify(initialFormRef.current);
+  const isAbsenceDirty = JSON.stringify(absenceForm) !== JSON.stringify(buildInitialAbsenceForm(date));
+  const isDirty = reportTab === 'absence' ? isAbsenceDirty : isWorkDirty;
 
   useEffect(() => {
     onDirtyChange?.(isDirty);
@@ -282,6 +386,14 @@ export function ReportForm({
   const missingHours = Math.max(0, Math.round(((standardMinutes - (durationMinutes ?? 0)) / 60) * 10) / 10);
   const progressPct = durationMinutes ? Math.min((durationMinutes / standardMinutes) * 100, 100) : 0;
   const allFieldsDisabled = isLocked || (!isEdit && noAssignments);
+  const submitDisabled = saving || !isOnline || (reportTab === 'work' ? allFieldsDisabled : isLocked);
+  const selectedAbsenceType = ABSENCE_TYPE_OPTIONS.find((option) => option.value === absenceForm.type) ?? null;
+  const selectedAbsenceDuration = ABSENCE_DURATION_OPTIONS.find((option) => option.value === absenceForm.duration) ?? ABSENCE_DURATION_OPTIONS[0];
+  const absenceWorkingDays = countAbsenceWorkingDays(
+    absenceForm.start_date,
+    absenceForm.duration === 'range' ? absenceForm.end_date : absenceForm.start_date,
+  );
+  const absenceRequiresDocument = selectedAbsenceType?.requiresDocument ?? false;
 
   const filteredProjectGroups = useMemo(() => {
     const query = picker?.type === 'project' ? picker.search.trim().toLowerCase() : '';
@@ -297,19 +409,6 @@ export function ReportForm({
       .filter((group) => group.projects.length > 0);
   }, [clients, picker]);
 
-  const pickerTitle = picker?.type === 'project'
-    ? 'בחירת פרויקט'
-    : picker?.type === 'task'
-      ? 'בחירת משימה'
-      : picker?.type === 'location'
-        ? 'בחירת מיקום'
-        : '';
-
-  const pickerPrimaryLabel = picker?.type === 'project'
-    ? 'המשך ודווח משימות'
-    : picker?.type === 'task'
-      ? 'המשך ודווח מיקום'
-      : 'המשך';
 
   function handleClose() {
     if (isDirty) {
@@ -331,6 +430,18 @@ export function ReportForm({
     setForm((current) => resolveSelection({ ...current, ...nextPartial }, clients));
   }
 
+  function patchAbsence(nextPartial) {
+    setErrors((current) => ({
+      ...current,
+      absence_start_date: undefined,
+      absence_end_date: undefined,
+      absence_type: undefined,
+      absence_file: undefined,
+    }));
+    setServerError(null);
+    setAbsenceForm((current) => ({ ...current, ...nextPartial }));
+  }
+
   function handleTimeChange(field, value) {
     setErrors((current) => ({ ...current, [field]: undefined }));
     setServerError(null);
@@ -343,6 +454,16 @@ export function ReportForm({
   }
 
   function openPicker(type) {
+    if (type === 'absence-duration') {
+      setPicker({ type, value: absenceForm.duration, search: '' });
+      return;
+    }
+
+    if (type === 'absence-type') {
+      setPicker({ type, value: absenceForm.type, search: '' });
+      return;
+    }
+
     if (type === 'task' && !selectedProjectOption) {
       setPicker({ type: 'project', value: form.project_id, search: '' });
       return;
@@ -357,6 +478,28 @@ export function ReportForm({
 
   function handlePickerContinue() {
     if (!picker?.value) return;
+
+    if (picker.type === 'absence-duration') {
+      patchAbsence({
+        duration: picker.value,
+        end_date: picker.value === 'single'
+          ? (absenceForm.start_date || date)
+          : (absenceForm.end_date || absenceForm.start_date || date),
+      });
+      setPicker(null);
+      return;
+    }
+
+    if (picker.type === 'absence-type') {
+      const selectedOption = ABSENCE_TYPE_OPTIONS.find((option) => option.value === picker.value);
+      patchAbsence({
+        type: picker.value,
+        duration: selectedOption?.isPartial ? 'single' : absenceForm.duration,
+        end_date: selectedOption?.isPartial ? (absenceForm.start_date || date) : absenceForm.end_date,
+      });
+      setPicker(null);
+      return;
+    }
 
     if (picker.type === 'project') {
       const projectChoice = projectOptions.find((item) => item.projectId === String(picker.value));
@@ -399,8 +542,74 @@ export function ReportForm({
     });
   }
 
+  function openDateInput(ref) {
+    ref?.current?.showPicker?.();
+    ref?.current?.click?.();
+  }
+
+  function handleAbsenceDateChange(field, value) {
+    if (!value) return;
+
+    setErrors((current) => ({
+      ...current,
+      absence_start_date: undefined,
+      absence_end_date: undefined,
+    }));
+    setServerError(null);
+
+    setAbsenceForm((current) => {
+      const next = { ...current, [field]: value };
+
+      if (field === 'start_date') {
+        if (current.duration === 'single' || !current.end_date || current.end_date < value) {
+          next.end_date = value;
+        }
+      }
+
+      if (field === 'end_date' && value < current.start_date) {
+        next.start_date = value;
+      }
+
+      return next;
+    });
+  }
+
+  function handleAbsenceFileChange(event) {
+    const file = event.target.files?.[0] ?? null;
+    if (!file) return;
+
+    const extension = `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`;
+    if (!ALLOWED_ABSENCE_FILE_EXTENSIONS.includes(extension)) {
+      setErrors((current) => ({ ...current, absence_file: 'ניתן להעלות רק PDF, JPG, JPEG, PNG, DOC או DOCX' }));
+      return;
+    }
+
+    if (file.size > MAX_ABSENCE_FILE_SIZE) {
+      setErrors((current) => ({ ...current, absence_file: 'גודל הקובץ המקסימלי הוא 10MB' }));
+      return;
+    }
+
+    patchAbsence({ file });
+  }
+
+  function clearAbsenceFile() {
+    patchAbsence({ file: null });
+    if (absenceFileInputRef.current) {
+      absenceFileInputRef.current.value = '';
+    }
+  }
+
   function validate() {
     const nextErrors = {};
+    if (reportTab === 'absence') {
+      if (!absenceForm.start_date) nextErrors.absence_start_date = 'יש לבחור תאריך';
+      if (absenceForm.duration === 'range' && !absenceForm.end_date) nextErrors.absence_end_date = 'יש לבחור טווח תאריכים';
+      if (absenceForm.start_date && absenceForm.end_date && absenceForm.start_date > absenceForm.end_date) {
+        nextErrors.absence_end_date = 'תאריך הסיום חייב להיות אחרי תאריך ההתחלה';
+      }
+      if (!absenceForm.type) nextErrors.absence_type = 'יש לבחור סוג דיווח';
+      return nextErrors;
+    }
 
     if (!form.start_time) nextErrors.start_time = 'שדה חובה';
     if (!form.end_time) nextErrors.end_time = 'שדה חובה';
@@ -432,6 +641,38 @@ export function ReportForm({
     setSaving(true);
 
     try {
+      if (reportTab === 'absence') {
+        const response = await createAbsence({
+          type: absenceForm.type,
+          start_date: absenceForm.start_date,
+          end_date: absenceForm.duration === 'range' ? absenceForm.end_date : absenceForm.start_date,
+          is_partial: selectedAbsenceType?.isPartial ?? false,
+          notes: absenceForm.notes || null,
+        });
+
+        const savedAbsence = response?.data ?? response;
+
+        if (absenceForm.file && savedAbsence?.id) {
+          try {
+            await uploadAbsenceDocument(savedAbsence.id, absenceForm.file);
+          } catch {
+            setSuccessMsg('ההיעדרות נשמרה, אך העלאת הקובץ נכשלה.');
+            return;
+          }
+        }
+
+        setAbsenceForm(buildInitialAbsenceForm(date));
+        setErrors({});
+        setPicker(null);
+        setSuccessMsg(
+          response?.warning
+            ? `דיווח ההיעדרות נשמר. ${response.warning}`
+            : 'דיווח ההיעדרות נשמר בהצלחה!',
+        );
+        onEntryCreated?.();
+        return;
+      }
+
       const payload = {
         date,
         start_time: form.start_time,
@@ -552,6 +793,52 @@ export function ReportForm({
       );
     }
 
+    if (picker.type === 'absence-duration') {
+      return (
+        <div className={styles.pickerScroll}>
+          <div className={styles.optionCard}>
+            {ABSENCE_DURATION_OPTIONS.map((option) => {
+              const isSelected = option.value === picker.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={styles.optionRow}
+                  onClick={() => setPicker((current) => ({ ...current, value: option.value }))}
+                >
+                  <span className={isSelected ? styles.optionIndicatorActive : styles.optionIndicator} />
+                  <span className={styles.optionText}>{option.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    if (picker.type === 'absence-type') {
+      return (
+        <div className={styles.pickerScroll}>
+          <div className={styles.optionCard}>
+            {ABSENCE_TYPE_OPTIONS.map((option) => {
+              const isSelected = option.value === picker.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={styles.optionRow}
+                  onClick={() => setPicker((current) => ({ ...current, value: option.value }))}
+                >
+                  <span className={isSelected ? styles.optionIndicatorActive : styles.optionIndicator} />
+                  <span className={styles.optionText}>{option.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className={styles.pickerScroll}>
         <div className={styles.optionCard}>
@@ -591,7 +878,7 @@ export function ReportForm({
                 ×
               </button>
               <div className={styles.pickerTitleWrap}>
-                <h2 className={styles.pickerTitle}>{pickerTitle}</h2>
+                <h2 className={styles.pickerTitle}>{getPickerTitle(picker)}</h2>
                 <button type="button" className={styles.backButton} onClick={() => setPicker(null)} aria-label="חזרה">
                   ‹
                 </button>
@@ -607,7 +894,7 @@ export function ReportForm({
                 onClick={handlePickerContinue}
                 disabled={!picker.value}
               >
-                {pickerPrimaryLabel}
+                {getPickerPrimaryLabel(picker)}
               </button>
               <button type="button" className={styles.pickerSecondaryButton} onClick={() => setPicker(null)}>
                 ביטול
@@ -796,14 +1083,120 @@ export function ReportForm({
               ) : (
                 <section className={styles.sectionBlock}>
                   <div className={styles.sectionTitle}>דיווח העדרות</div>
-                  <div className={styles.placeholderCard}>
-                    מסך העדרות יותאם בשלב הבא. כרגע שכפלתי את זרימת דיווח העבודה לפי המודל שביקשת.
+                  <div className={styles.absenceCard}>
+                    <button type="button" className={styles.absenceRow} onClick={() => openPicker('absence-duration')}>
+                      <span className={styles.absenceRowLabel}>משך</span>
+                      <span className={styles.absenceRowMeta}>
+                        <span className={styles.absenceRowValuePill}>{selectedAbsenceDuration.label}</span>
+                        <span className={styles.absenceRowChevron}>‹</span>
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={styles.absenceRow}
+                      onClick={() => openDateInput(absenceDateInputRef)}
+                    >
+                      <span className={styles.absenceRowLabel}>
+                        {absenceForm.duration === 'range' ? 'תאריך התחלה' : 'תאריך'}
+                      </span>
+                      <span className={styles.absenceRowMeta}>
+                        <span className={styles.absenceRowValuePill}>{formatDatePill(absenceForm.start_date)}</span>
+                        <span className={styles.absenceRowChevron}>‹</span>
+                      </span>
+                    </button>
+
+                    {absenceForm.duration === 'range' && (
+                      <button
+                        type="button"
+                        className={styles.absenceRow}
+                        onClick={() => openDateInput(absenceEndDateInputRef)}
+                      >
+                        <span className={styles.absenceRowLabel}>טווח תאריכים</span>
+                        <span className={styles.absenceRowMeta}>
+                          <span className={styles.absenceRowValuePill}>{formatDatePill(absenceForm.end_date)}</span>
+                          <span className={styles.absenceRowChevron}>‹</span>
+                        </span>
+                      </button>
+                    )}
+
+                    <button type="button" className={styles.absenceRow} onClick={() => openPicker('absence-type')}>
+                      <span className={styles.absenceRowLabel}>סוג דיווח</span>
+                      <span className={styles.absenceRowMeta}>
+                        <span className={selectedAbsenceType ? styles.absenceRowValuePill : styles.absenceRowValueEmpty}>
+                          {selectedAbsenceType?.label ?? 'בחירת סוג דיווח'}
+                        </span>
+                        <span className={styles.absenceRowChevron}>‹</span>
+                      </span>
+                    </button>
                   </div>
+                  <input
+                    ref={absenceDateInputRef}
+                    type="date"
+                    className={styles.hiddenNativeInput}
+                    value={absenceForm.start_date}
+                    onChange={(event) => handleAbsenceDateChange('start_date', event.target.value)}
+                  />
+                  <input
+                    ref={absenceEndDateInputRef}
+                    type="date"
+                    className={styles.hiddenNativeInput}
+                    value={absenceForm.end_date}
+                    onChange={(event) => handleAbsenceDateChange('end_date', event.target.value)}
+                  />
+                  <input
+                    ref={absenceFileInputRef}
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    className={styles.hiddenNativeInput}
+                    onChange={handleAbsenceFileChange}
+                  />
+
+                  <FieldError error={errors.absence_start_date || errors.absence_end_date || errors.absence_type} />
+
+                  {absenceForm.duration === 'range' && absenceWorkingDays > 0 && (
+                    <div className={styles.absenceDaysSummary}>
+                      סה"כ ימי דיווח: <strong>{absenceWorkingDays} ימים</strong>
+                    </div>
+                  )}
+
+                  <div className={styles.absenceUploadLabel}>צריך קבצים רלוונטיים</div>
+
+                  {absenceForm.file ? (
+                    <div className={styles.uploadedFileCard}>
+                      <button type="button" className={styles.uploadedFileDelete} onClick={clearAbsenceFile} aria-label="מחיקת קובץ">
+                        ×
+                      </button>
+                      <div className={styles.uploadedFileMeta}>
+                        <span className={styles.uploadedFileName}>{absenceForm.file.name}</span>
+                        {absenceRequiresDocument && <span className={styles.uploadedFileBadge}>הועלה בהצלחה</span>}
+                      </div>
+                      <span className={styles.uploadedFileType}>{absenceForm.file.name.split('.').pop()?.toUpperCase() ?? 'FILE'}</span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className={styles.uploadDropzone}
+                      onClick={() => absenceFileInputRef.current?.click()}
+                    >
+                      <span className={styles.uploadIcon}>↑</span>
+                      <span className={styles.uploadPrimary}>לחץ כאן להעלאת הקובץ</span>
+                      <span className={styles.uploadSecondary}>JPG / PNG / PDF / DOC / DOCX</span>
+                    </button>
+                  )}
+
+                  {absenceRequiresDocument && !absenceForm.file && (
+                    <div className={styles.documentRequirementHint}>חובה לצרף מסמך עד להגשה</div>
+                  )}
+
+                  <FieldError error={errors.absence_file} />
                 </section>
               )}
             </div>
 
             <footer className={styles.sheetFooter}>
+              {reportTab === 'work' && (
+                <>
               <div className={styles.footerSummary}>
                 <span className={styles.footerLabel}>{reportedHours} מתוך {standardHoursValue} שעות</span>
                 <span className={styles.footerHint}>חסרות {missingHours} שעות לדיווח</span>
@@ -814,8 +1207,10 @@ export function ReportForm({
                   <span className={styles.progressThumb} style={{ insetInlineStart: `${progressPct}%` }} />
                 )}
               </div>
-              <div className={styles.footerButtons}>
-                <button type="submit" className={styles.saveButton} disabled={saving || allFieldsDisabled || !isOnline}>
+                </>
+              )}
+              <div className={`${styles.footerButtons} ${reportTab === 'absence' ? styles.footerButtonsAbsence : ''}`}>
+                <button type="submit" className={styles.saveButton} disabled={submitDisabled}>
                   {saving ? 'שומר...' : 'שמירה'}
                 </button>
                 <button type="button" className={styles.cancelButton} onClick={handleClose} disabled={saving}>
