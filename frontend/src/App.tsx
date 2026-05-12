@@ -11,6 +11,9 @@ import { ClientListPage } from './features/admin/clients/ClientListPage.jsx';
 import { ProjectListPage } from './features/admin/projects/ProjectListPage.jsx';
 import { TaskListPage } from './features/admin/tasks/TaskListPage.jsx';
 import { AssignmentPage } from './features/admin/assignments/AssignmentPage.jsx';
+import { AdminDashboard } from './features/admin/dashboard/AdminDashboard.jsx';
+import { AdminReportsPage as AdminMonthlyReportsPage } from './features/admin/dashboard/AdminReportsPage.jsx';
+import { MonthLockPage } from './features/admin/month-lock/MonthLockPage.jsx';
 import { DailyReportPage } from './features/time-reports/DailyReportPage.jsx';
 import { useAuth } from './contexts/AuthContext';
 
@@ -93,9 +96,15 @@ function ChangePasswordPage() {
 function HomePage() {
   const { user } = useAuth();
 
-  if (user?.role === 'admin') return <Navigate to="/admin/users" replace />;
+  if (user?.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
 
   return <DailyReportPage />;
+}
+
+function AdminDashboardPage() {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <AccessDeniedPage />;
+  return <AdminDashboard />;
 }
 
 function AccessDeniedPage() {
@@ -143,6 +152,18 @@ function AdminAssignmentsPage() {
   return <AssignmentPage />;
 }
 
+function AdminMonthLockPage() {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <AccessDeniedPage />;
+  return <MonthLockPage />;
+}
+
+function AdminReportsPage() {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <AccessDeniedPage />;
+  return <AdminMonthlyReportsPage />;
+}
+
 function App() {
   const [toast, setToast] = useState<string | null>(null);
 
@@ -163,6 +184,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <HomePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute>
+                <AdminDashboardPage />
               </ProtectedRoute>
             }
           />
@@ -203,6 +232,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminAssignmentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/reports"
+            element={
+              <ProtectedRoute>
+                <AdminReportsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/month-lock"
+            element={
+              <ProtectedRoute>
+                <AdminMonthLockPage />
               </ProtectedRoute>
             }
           />

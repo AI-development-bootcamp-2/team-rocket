@@ -62,6 +62,9 @@ jest.mock('./components/ui/ErrorState.jsx', () => ({
 jest.mock('./features/admin/users/UserListPage.jsx', () => ({
   UserListPage: () => <div>user-list-page</div>,
 }));
+jest.mock('./features/admin/dashboard/AdminDashboard.jsx', () => ({
+  AdminDashboard: () => <div>admin-dashboard-page</div>,
+}));
 jest.mock('./contexts/AuthContext', () => ({
   useAuth: () => mockAuthState,
 }));
@@ -153,13 +156,22 @@ describe('App routing and shell', () => {
     expect(logout).toHaveBeenCalled();
   });
 
-  it('redirects admins from home to the admin users page', () => {
+  it('redirects admins from home to the admin dashboard page', () => {
     renderAppAt('/', {
       isAuthenticated: true,
       user: { fullName: 'Ada Admin', role: 'admin', mustChangePassword: false },
     });
 
-    expect(screen.getByText('navigate:/admin/users')).toBeInTheDocument();
+    expect(screen.getByText('navigate:/admin/dashboard')).toBeInTheDocument();
+  });
+
+  it('renders the admin dashboard page for admins', () => {
+    renderAppAt('/admin/dashboard', {
+      isAuthenticated: true,
+      user: { fullName: 'Ada Admin', role: 'admin', mustChangePassword: false },
+    });
+
+    expect(screen.getByText('admin-dashboard-page')).toBeInTheDocument();
   });
 
   it('renders the admin users page for admins', () => {
