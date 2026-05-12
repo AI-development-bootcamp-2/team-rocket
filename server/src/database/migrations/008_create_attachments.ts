@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 008_create_attachments
  * - Linked to absence_entries
@@ -19,3 +20,4 @@ exports.up = async function (knex) {
 exports.down = async function (knex) {
   await knex.schema.dropTableIfExists('attachments');
 };
+

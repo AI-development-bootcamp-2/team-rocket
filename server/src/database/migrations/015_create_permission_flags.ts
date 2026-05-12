@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 015_create_permission_flags
  * - flag_name VARCHAR(50) — currently only 'canAssignProjectTasks'
@@ -17,3 +18,4 @@ exports.up = async function (knex) {
 exports.down = async function (knex) {
   await knex.schema.dropTableIfExists('permission_flags');
 };
+

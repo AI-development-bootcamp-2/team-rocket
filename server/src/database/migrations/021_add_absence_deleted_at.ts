@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 021_add_absence_deleted_at
  * Adds soft-delete support to absence_entries so DELETE /absences can
@@ -14,3 +15,4 @@ exports.down = async function (knex) {
     table.dropColumn('deleted_at');
   });
 };
+

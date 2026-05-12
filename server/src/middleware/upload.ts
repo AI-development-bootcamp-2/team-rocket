@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use strict';
 /* eslint-disable @typescript-eslint/no-require-imports */
 
@@ -129,3 +130,4 @@ const upload = {
 };
 
 module.exports = { upload, detectMime, UPLOADS_DIR };
+

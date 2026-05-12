@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 021_timer_on_time_entries
  *
@@ -51,3 +52,4 @@ exports.down = async function (knex) {
     table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
   });
 };
+

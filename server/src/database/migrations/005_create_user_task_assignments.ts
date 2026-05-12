@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 005_create_user_task_assignments
  * - UNIQUE constraint on active user+task combination
@@ -23,3 +24,4 @@ exports.up = async function (knex) {
 exports.down = async function (knex) {
   await knex.schema.dropTableIfExists('user_task_assignments');
 };
+

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 020_notifications_quota_unique
  * Adds a partial unique index on notifications so that only one
@@ -15,3 +16,4 @@ exports.up = async function (knex) {
 exports.down = async function (knex) {
   await knex.raw(`DROP INDEX IF EXISTS uq_notifications_quota_warning`);
 };
+

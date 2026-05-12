@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 001_create_users
  * Creates the users table with all required columns per F02 spec.
@@ -40,3 +41,4 @@ exports.down = async function (knex) {
   await knex.raw(`DROP TYPE IF EXISTS employment_type`);
   await knex.raw(`DROP TYPE IF EXISTS user_role`);
 };
+

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* eslint-disable @typescript-eslint/no-require-imports */
 const bcrypt = require('bcryptjs');
 
@@ -87,3 +88,4 @@ exports.seed = async function (knex) {
 
   console.log('Test data seeded successfully.');
 };
+

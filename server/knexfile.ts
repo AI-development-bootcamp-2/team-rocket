@@ -1,12 +1,38 @@
+// @ts-nocheck
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+
+const migrationsDirectory = path.join(__dirname, 'src/database/migrations');
+const seedsDirectory = path.join(__dirname, 'src/database/seeds');
+
+const migrationSource = {
+  getMigrations() {
+    return fs
+      .readdirSync(migrationsDirectory)
+      .filter((name) => name.endsWith('.ts'))
+      .sort()
+      .map((name) => ({
+        name,
+        filepath: path.join(migrationsDirectory, name),
+      }));
+  },
+  getMigrationName(migration) {
+    return migration.name.replace(/\.ts$/, '.js');
+  },
+  getMigration(migration) {
+    return require(migration.filepath);
+  },
+};
 
 const migrations = {
-  directory: require('path').join(__dirname, 'src/database/migrations'),
   tableName: 'knex_migrations',
+  migrationSource,
 };
 
 const seeds = {
-  directory: require('path').join(__dirname, 'src/database/seeds'),
+  directory: seedsDirectory,
+  loadExtensions: ['.ts'],
 };
 
 /**
@@ -51,3 +77,4 @@ module.exports = {
     seeds,
   },
 };
+

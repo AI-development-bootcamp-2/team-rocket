@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 002_create_clients
  * - client_number is optional, UNIQUE when provided (GAP-20)
@@ -16,3 +17,4 @@ exports.up = async function (knex) {
 exports.down = async function (knex) {
   await knex.schema.dropTableIfExists('clients');
 };
+

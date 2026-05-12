@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 014_create_active_timers
  * - user_id is UNIQUE — one active timer per user at a time
@@ -17,3 +18,4 @@ exports.up = async function (knex) {
 exports.down = async function (knex) {
   await knex.schema.dropTableIfExists('active_timers');
 };
+

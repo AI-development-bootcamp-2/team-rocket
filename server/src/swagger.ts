@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use strict';
 /* eslint-disable @typescript-eslint/no-require-imports */
 
@@ -24,9 +25,11 @@ const options = {
     security: [{ bearerAuth: [] }],
   },
   // Scan all route files for JSDoc @swagger annotations
-  apis: ['./src/routes/**/*.ts', './src/routes/**/*.js', './src/app.ts', './src/app.js'],
+  apis: ['./src/routes/**/*.ts', './src/routes/**/*', './src/app.ts', './src/app'],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
 
 module.exports = swaggerSpec;
+
+

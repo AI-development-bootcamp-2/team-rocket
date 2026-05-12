@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 019_add_secondary_indexes
  * Additional performance indexes beyond the 5 spec-required ones.
@@ -107,3 +108,4 @@ exports.down = async function (knex) {
   await knex.raw(`DROP INDEX IF EXISTS idx_weekly_submissions_user_status`);
   await knex.raw(`DROP INDEX IF EXISTS idx_time_entries_user_status_date`);
 };
+

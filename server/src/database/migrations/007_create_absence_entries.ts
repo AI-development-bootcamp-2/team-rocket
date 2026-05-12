@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 007_create_absence_entries
  * - type ENUM: 'sick', 'vacation_full', 'vacation_half', 'reserve' (GAP-36)
@@ -28,3 +29,4 @@ exports.down = async function (knex) {
   await knex.raw(`DROP TYPE IF EXISTS absence_status`);
   await knex.raw(`DROP TYPE IF EXISTS absence_type`);
 };
+

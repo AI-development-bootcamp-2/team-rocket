@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 004_create_tasks
  * - status ENUM: 'open', 'closed'
@@ -22,3 +23,4 @@ exports.down = async function (knex) {
   await knex.schema.dropTableIfExists('tasks');
   await knex.raw(`DROP TYPE IF EXISTS task_status`);
 };
+

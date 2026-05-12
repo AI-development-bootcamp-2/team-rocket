@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 013_create_holiday_calendar
  * - type ENUM: 'national', 'company', 'partial_day' (GAP-38)
@@ -22,3 +23,4 @@ exports.down = async function (knex) {
   await knex.schema.dropTableIfExists('holiday_calendar');
   await knex.raw(`DROP TYPE IF EXISTS holiday_type`);
 };
+

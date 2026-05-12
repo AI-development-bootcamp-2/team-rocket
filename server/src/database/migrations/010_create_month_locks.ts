@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 010_create_month_locks
  * - UNIQUE constraint on (year, month) prevents race-condition double-lock (GAP-49)
@@ -23,3 +24,4 @@ exports.up = async function (knex) {
 exports.down = async function (knex) {
   await knex.schema.dropTableIfExists('month_locks');
 };
+

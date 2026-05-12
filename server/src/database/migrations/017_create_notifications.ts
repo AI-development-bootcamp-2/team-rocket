@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 017_create_notifications
  * - TIMER_AUTO_STOPPED is a distinct type from TIMER_LONG_RUNNING (GAP-52)
@@ -33,3 +34,4 @@ exports.down = async function (knex) {
   await knex.schema.dropTableIfExists('notifications');
   await knex.raw(`DROP TYPE IF EXISTS notification_type`);
 };
+

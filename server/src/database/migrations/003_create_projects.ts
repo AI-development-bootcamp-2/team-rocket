@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 003_create_projects
  * - manager_user_id references users(id), nullable (GAP-27)
@@ -20,3 +21,4 @@ exports.up = async function (knex) {
 exports.down = async function (knex) {
   await knex.schema.dropTableIfExists('projects');
 };
+

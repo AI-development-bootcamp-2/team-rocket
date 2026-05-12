@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use strict';
 /* eslint-disable @typescript-eslint/no-require-imports */
 
@@ -53,3 +54,4 @@ async function checkQuotaWarning(userId) {
 }
 
 module.exports = { initCron, checkQuotaWarning };
+

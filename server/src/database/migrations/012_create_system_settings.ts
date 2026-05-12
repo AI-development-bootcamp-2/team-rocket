@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 012_create_system_settings
  * - key is unique — one value per setting key
@@ -16,3 +17,4 @@ exports.up = async function (knex) {
 exports.down = async function (knex) {
   await knex.schema.dropTableIfExists('system_settings');
 };
+

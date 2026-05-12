@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 011_create_audit_logs
  * - target_entity_type ENUM: 12 entity types
@@ -41,3 +42,4 @@ exports.down = async function (knex) {
   await knex.raw(`DROP TYPE IF EXISTS audit_action`);
   await knex.raw(`DROP TYPE IF EXISTS audit_entity_type`);
 };
+

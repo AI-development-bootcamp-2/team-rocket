@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 018_create_indexes
  * Performance indexes per F02 spec.
@@ -43,3 +44,4 @@ exports.down = async function (knex) {
   await knex.raw(`DROP INDEX IF EXISTS idx_time_entries_overlap`);
   await knex.raw(`DROP INDEX IF EXISTS idx_time_entries_user_date`);
 };
+

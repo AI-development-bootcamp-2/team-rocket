@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 009_create_weekly_submissions
  * - status ENUM: 'draft', 'submitted', 'approved', 'rejected', 'missing'
@@ -25,3 +26,4 @@ exports.down = async function (knex) {
   await knex.schema.dropTableIfExists('weekly_submissions');
   await knex.raw(`DROP TYPE IF EXISTS weekly_submission_status`);
 };
+

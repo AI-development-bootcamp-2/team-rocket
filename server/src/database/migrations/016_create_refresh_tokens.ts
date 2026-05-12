@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 016_create_refresh_tokens
  * - Mandatory for JWT rotation and session invalidation (GAP-48)
@@ -20,3 +21,4 @@ exports.up = async function (knex) {
 exports.down = async function (knex) {
   await knex.schema.dropTableIfExists('refresh_tokens');
 };
+

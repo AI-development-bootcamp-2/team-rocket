@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Migration: 006_create_time_entries
  * - location ENUM: 'office', 'home', 'client'
@@ -40,3 +41,4 @@ exports.down = async function (knex) {
   await knex.raw(`DROP TYPE IF EXISTS time_entry_status`);
   await knex.raw(`DROP TYPE IF EXISTS time_entry_location`);
 };
+
