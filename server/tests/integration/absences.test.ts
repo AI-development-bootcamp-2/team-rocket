@@ -310,6 +310,20 @@ describe('POST /absences', () => {
     expect(res.body.error).toMatch(/Partial absence requires at least 4\.5 work hours/i);
     expect(res.body.missing_minutes).toBe(30);
   });
+
+  it('423: cannot create absence when the month is locked', async () => {
+    const { user, admin } = await scaffoldUserWithWork();
+    await seedMonthLock(2026, 5);
+    const token = await login(user.email, user.plainPassword);
+    void admin;
+
+    const res = await request(app)
+      .post('/absences')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ type: 'vacation_full', start_date: '2026-05-10', end_date: '2026-05-10', is_partial: false });
+
+    expect(res.status).toBe(423);
+  });
 });
 
 describe('PUT /absences/:id', () => {
@@ -347,6 +361,21 @@ describe('PUT /absences/:id', () => {
     expect(res.status).toBe(422);
     expect(res.body.error).toMatch(/Week has already been submitted/i);
   });
+
+  it('423: cannot update absence when the month is locked', async () => {
+    const { user, admin } = await scaffoldUserWithWork();
+    const absence = await seedAbsence({ userId: user.id, startDate: '2026-05-12' });
+    await seedMonthLock(2026, 5);
+    const token = await login(user.email, user.plainPassword);
+    void admin;
+
+    const res = await request(app)
+      .put(`/absences/${absence.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ version: absence.version, notes: 'Blocked update' });
+
+    expect(res.status).toBe(423);
+  });
 });
 
 describe('DELETE /absences/:id', () => {
@@ -370,6 +399,20 @@ describe('DELETE /absences/:id', () => {
 
     expect(listRes.status).toBe(200);
     expect(listRes.body).toHaveLength(0);
+  });
+
+  it('423: cannot delete absence when the month is locked', async () => {
+    const { user, admin } = await scaffoldUserWithWork();
+    const absence = await seedAbsence({ userId: user.id, startDate: '2026-05-15' });
+    await seedMonthLock(2026, 5);
+    const token = await login(user.email, user.plainPassword);
+    void admin;
+
+    const res = await request(app)
+      .delete(`/absences/${absence.id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(423);
   });
 });
 
