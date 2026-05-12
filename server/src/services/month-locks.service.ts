@@ -144,7 +144,7 @@ export async function listMonths(): Promise<(MonthLockRow & { locked_by_name: st
     .leftJoin('users', 'month_locks.locked_by', 'users.id')
     .select(
       'month_locks.*',
-      db.raw('users.full_name as locked_by_name'),
+      db.raw("CONCAT(users.first_name, ' ', users.last_name) as locked_by_name"),
     )
     .orderBy('month_locks.year', 'desc')
     .orderBy('month_locks.month', 'desc');
