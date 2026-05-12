@@ -186,7 +186,7 @@
 - [x] T053 [P] Handle edge case: future month → `reportedHours = 0`, `missingHoursToDate = 0`, no crash — verify with a targeted test
 - [x] T054 [P] Handle edge case: cross-midnight entries (e.g., 22:00–02:00) correctly counted on start date — verify `reportedHours` includes their duration
 - [x] T055 Ensure all numeric fields in response are rounded to max 2 decimal places (no floating-point noise)
-- [ ] T056 [P] Add `401` test: missing JWT → `authenticate` middleware rejects before handler runs
+- [x] T056 [P] Add `401` test: missing JWT → `authenticate` middleware rejects before handler runs
 
 ---
 

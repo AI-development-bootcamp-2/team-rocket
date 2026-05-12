@@ -661,4 +661,12 @@ describe('GET /monthly-summary — permissions (T044–T046)', () => {
 
     expect(res.status).toBe(401);
   });
+
+  it('T056 — malformed JWT is rejected by authenticate middleware with 401', async () => {
+    const res = await request(app)
+      .get('/monthly-summary?year=2026&month=1')
+      .set('Authorization', 'Bearer not.a.valid.token');
+
+    expect(res.status).toBe(401);
+  });
 });
