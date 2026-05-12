@@ -66,8 +66,8 @@
 
 ### Implementation for US2
 
-- [ ] T018 [US2] Implement `computeMissingHoursToDate(year, month, dailyStandard, absences, holidays, reportedHours)` in `server/src/services/time-entries.service.ts` — cutoffDate = min(today, last day of month), count elapsed working days, subtract elapsed absences/holidays, return max(0, expected − reported)
-- [ ] T019 [US2] Add `missingHoursToDate` to `getMonthlySummary` response
+- [x] T018 [US2] Implement `computeMissingHoursToDate(year, month, dailyStandard, absences, holidays, reportedHours)` in `server/src/services/time-entries.service.ts` — cutoffDate = min(today, last day of month), count elapsed working days, subtract elapsed absences/holidays, return max(0, expected − reported)
+- [x] T019 [US2] Add `missingHoursToDate` to `getMonthlySummary` response
 
 **Checkpoint**: T014–T017 all pass. Mid-month gap correctly reflected.
 

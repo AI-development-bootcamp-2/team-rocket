@@ -11,7 +11,7 @@ import {
   computeDailyStandard,
   countWorkingDaysInMonth,
   buildQuotaHours,
-  countElapsedWorkingDays,
+  countPassedWorkingDays,
   buildMissingHoursToDate,
 } from '../../../src/services/monthly-summary.service';
 
@@ -129,46 +129,46 @@ describe('buildQuotaHours', () => {
   });
 });
 
-// ── countElapsedWorkingDays ───────────────────────────────────────────────────
+// ── countPassedWorkingDays ───────────────────────────────────────────────────
 //
 // January 2026 reference (Sun–Thu working week):
 //   Jan 1=Thu, 4=Sun, 5=Mon, 6=Tue, 7=Wed, 8=Thu,
 //   11=Sun, 12=Mon, 13=Tue, 14=Wed, 15=Thu  →  11 working days by day 15
 
-describe('countElapsedWorkingDays', () => {
+describe('countPassedWorkingDays', () => {
   it('counts 11 working days up to Jan 15', () => {
-    expect(countElapsedWorkingDays(2026, 1, 15, [])).toBe(11);
+    expect(countPassedWorkingDays(2026, 1, 15, [])).toBe(11);
   });
 
   it('counts all 21 working days when cutoff is the last day of the month', () => {
-    expect(countElapsedWorkingDays(2026, 1, 31, [])).toBe(21);
+    expect(countPassedWorkingDays(2026, 1, 31, [])).toBe(21);
   });
 
   it('counts 1 when cutoff is Jan 1 (a working day)', () => {
-    expect(countElapsedWorkingDays(2026, 1, 1, [])).toBe(1);
+    expect(countPassedWorkingDays(2026, 1, 1, [])).toBe(1);
   });
 
   it('counts 1 when cutoff is Jan 2 (Friday = weekend, but Jan 1 already counted)', () => {
-    expect(countElapsedWorkingDays(2026, 1, 2, [])).toBe(1);
+    expect(countPassedWorkingDays(2026, 1, 2, [])).toBe(1);
   });
 
   it('returns 0 when cutoff is before the month starts', () => {
-    expect(countElapsedWorkingDays(2026, 1, 0, [])).toBe(0);
+    expect(countPassedWorkingDays(2026, 1, 0, [])).toBe(0);
   });
 
   it('deducts a holiday that falls within the elapsed period', () => {
     // Jan 4 (Sun) is a working day — one holiday → 10 instead of 11
-    expect(countElapsedWorkingDays(2026, 1, 15, ['2026-01-04'])).toBe(10);
+    expect(countPassedWorkingDays(2026, 1, 15, ['2026-01-04'])).toBe(10);
   });
 
   it('ignores a holiday that falls after the cutoff', () => {
     // Jan 20 is after cutoff Jan 15 → no change
-    expect(countElapsedWorkingDays(2026, 1, 15, ['2026-01-20'])).toBe(11);
+    expect(countPassedWorkingDays(2026, 1, 15, ['2026-01-20'])).toBe(11);
   });
 
   it('ignores a holiday on a weekend (already off)', () => {
     // Jan 2 (Fri) is already a weekend — adding it as holiday changes nothing
-    expect(countElapsedWorkingDays(2026, 1, 15, ['2026-01-02'])).toBe(11);
+    expect(countPassedWorkingDays(2026, 1, 15, ['2026-01-02'])).toBe(11);
   });
 });
 

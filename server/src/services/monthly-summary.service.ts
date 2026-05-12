@@ -96,6 +96,34 @@ async function countAbsenceDays(
   return { fullDays, partialDays };
 }
 
+// Counts working days (non-weekend, non-holiday) from day 1 up to cutoffDay inclusive
+export function countPassedWorkingDays(
+  year: number,
+  month: number,
+  cutoffDay: number,
+  holidays: string[],
+): number {
+  if (cutoffDay <= 0) return 0;
+  const holidaySet = new Set(holidays);
+  const lastDay = Math.min(cutoffDay, totalDaysInMonth(year, month));
+  let count = 0;
+  for (let d = 1; d <= lastDay; d++) {
+    const dow = new Date(Date.UTC(year, month - 1, d)).getUTCDay();
+    if (!isWeekend(dow) && !holidaySet.has(dateStr(year, month, d))) count++;
+  }
+  return count;
+}
+
+// How many hours the user should have reported by now vs. how many they actually did
+export function buildMissingHoursToDate(
+  passedWorkingDays: number,
+  dailyStandard: number,
+  reportedHours: number,
+): number {
+  const expected = passedWorkingDays * dailyStandard;
+  return Math.max(0, Math.round((expected - reportedHours) * 100) / 100);
+}
+
 // Calculates expected monthly work hours from working days minus absences, clamped to 0
 export function buildQuotaHours(
   workingDays: number,
@@ -108,6 +136,80 @@ export function buildQuotaHours(
     fullDayAbsences * dailyStandard -
     partialAbsences * (dailyStandard / 2);
   return Math.max(0, Math.round(quota * 100) / 100);
+}
+
+// Counts full-day and partial absence days that fall within days 1..cutoffDay of the month
+async function countPassedAbsenceDays(
+  userId: number,
+  year: number,
+  month: number,
+  cutoffDay: number,
+  holidays: Set<string>,
+): Promise<{ fullDays: number; partialDays: number }> {
+  const startDate = dateStr(year, month, 1);
+  const endDate = dateStr(year, month, cutoffDay);
+
+  const absences = (await db('absence_entries')
+    .where('user_id', userId)
+    .where('start_date', '<=', endDate)
+    .where('end_date', '>=', startDate)
+    .select('start_date', 'end_date', 'is_partial')) as Array<{
+    start_date: string;
+    end_date: string;
+    is_partial: boolean;
+  }>;
+
+  let fullDays = 0;
+  let partialDays = 0;
+
+  for (const absence of absences) {
+    const absStart = String(absence.start_date).slice(0, 10);
+    const absEnd = String(absence.end_date).slice(0, 10);
+
+    for (let d = 1; d <= cutoffDay; d++) {
+      const ds = dateStr(year, month, d);
+      if (ds < absStart || ds > absEnd) continue;
+      const dow = new Date(Date.UTC(year, month - 1, d)).getUTCDay();
+      if (isWeekend(dow) || holidays.has(ds)) continue;
+      if (absence.is_partial) partialDays++;
+      else fullDays++;
+    }
+  }
+
+  return { fullDays, partialDays };
+}
+
+// Fetches holidays and absences, determines how many working days have passed, and delegates to buildMissingHoursToDate
+export async function computeMissingHoursToDate(
+  userId: number,
+  year: number,
+  month: number,
+  dailyStandard: number,
+  reportedHours: number,
+): Promise<number> {
+  const now = new Date();
+  const todayYear = now.getUTCFullYear();
+  const todayMonth = now.getUTCMonth() + 1;
+  const todayDay = now.getUTCDate();
+  const lastDay = totalDaysInMonth(year, month);
+
+  let cutoffDay: number;
+  if (todayYear < year || (todayYear === year && todayMonth < month)) {
+    return 0; // future month — no days have passed yet
+  } else if (todayYear > year || (todayYear === year && todayMonth > month)) {
+    cutoffDay = lastDay; // past month — every day has passed
+  } else {
+    cutoffDay = todayDay;
+  }
+
+  const holidays = await fetchHolidaySet(year, month);
+  const rawPassed = countPassedWorkingDays(year, month, cutoffDay, [...holidays]);
+
+  const { fullDays, partialDays } = await countPassedAbsenceDays(userId, year, month, cutoffDay, holidays);
+  const adjustedPassed = Math.max(0, rawPassed - fullDays - partialDays * 0.5);
+
+  const missingHours = buildMissingHoursToDate(adjustedPassed, dailyStandard, reportedHours);
+  return missingHours;
 }
 
 // Fetches holidays and absences from DB, then calculates expected monthly work hours
@@ -180,6 +282,7 @@ export async function getMonthlySummary(params: {
   const reportedHours = Math.round((Number(total ?? 0) / 60) * 100) / 100;
   const completionPercentage =
     quotaHours > 0 ? Math.floor((reportedHours / quotaHours) * 100) : 0;
+  const missingHoursToDate = await computeMissingHoursToDate(userId, year, month, dailyStandard, reportedHours);
 
   return {
     year,
@@ -187,7 +290,7 @@ export async function getMonthlySummary(params: {
     quotaHours,
     reportedHours,
     completionPercentage,
-    missingHoursToDate: 0,
+    missingHoursToDate,
     absenceHours: 0,
     daysWithoutReport: 0,
     projectBreakdown: [],
