@@ -14,12 +14,9 @@ import projectsRouter from './routes/projects.routes';
 import tasksRouter from './routes/tasks.routes';
 import usersRouter from './routes/users.routes';
 import timeEntriesRouter from './routes/time-entries.routes';
-<<<<<<< HEAD
 import monthlySummaryRouter from './routes/monthly-summary.routes';
-=======
 import timerRouter from './routes/timer.routes';
 import monthLocksRouter from './routes/month-locks.routes';
->>>>>>> development
 
 const app = express();
 
@@ -44,11 +41,8 @@ app.use('/auth', authRouter);
 app.use('/clients', clientsRouter);
 app.use('/projects', projectsRouter);
 app.use('/tasks', tasksRouter);
-<<<<<<< HEAD
 app.use('/monthly-summary', monthlySummaryRouter);
-=======
 app.use('/admin/months', monthLocksRouter);
->>>>>>> development
 app.use('/time-entries', timeEntriesRouter);
 app.use('/timer', timerRouter);
 app.use('/users', usersRouter);
