@@ -277,6 +277,24 @@ function getImpactedMonths(startDate: string, endDate: string): string[] {
   return months;
 }
 
+async function assertMonthsNotLocked(startDate: string | Date, endDate: string | Date): Promise<void> {
+  const pairs = getImpactedMonths(formatDateOnly(startDate), formatDateOnly(endDate))
+    .map((m) => m.split('-').map(Number) as [number, number]);
+
+  const lock = await db('month_locks')
+    .where('is_locked', true)
+    .where(function () {
+      for (const [year, month] of pairs) {
+        this.orWhere({ year, month });
+      }
+    })
+    .first() as { id: number } | undefined;
+
+  if (lock) {
+    throw new AppError('Month is locked', 423);
+  }
+}
+
 async function assertMonthlyQuotaWithinBounds(
   userId: number,
   startDate: string | Date,
@@ -386,6 +404,7 @@ export async function createAbsence(
 
   const normalized = normalizeAbsenceType(input.type, input.isPartial);
 
+  await assertMonthsNotLocked(input.startDate, input.endDate);
   await assertPartialCoverage(caller.id, input.startDate, input.endDate, normalized.isPartial);
   await assertMonthlyQuotaWithinBounds(caller.id, input.startDate, input.endDate, normalized.isPartial);
 
@@ -430,6 +449,7 @@ export async function updateAbsence(
     throw new AppError('Absence not found', 404);
   }
 
+  await assertMonthsNotLocked(existing.start_date, existing.end_date);
   await assertWeeksEditable(existing);
 
   if (existing.version !== version) {
@@ -446,6 +466,7 @@ export async function updateAbsence(
     throw new AppError('start_date must be before or equal to end_date', 400);
   }
 
+  await assertMonthsNotLocked(nextStartDate, nextEndDate);
   await assertPartialCoverage(caller.id, nextStartDate, nextEndDate, normalized.isPartial);
   await assertMonthlyQuotaWithinBounds(caller.id, nextStartDate, nextEndDate, normalized.isPartial, absenceId);
 
@@ -506,6 +527,7 @@ export async function deleteAbsence(
     throw new AppError('Absence not found', 404);
   }
 
+  await assertMonthsNotLocked(existing.start_date, existing.end_date);
   await assertWeeksEditable(existing);
 
   await db<AbsenceRow>('absence_entries')

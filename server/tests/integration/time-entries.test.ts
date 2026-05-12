@@ -791,6 +791,27 @@ describe('POST /time-entries', () => {
     const res = await request(app).post('/time-entries').send({});
     expect(res.status).toBe(401);
   });
+
+  it('423: cannot create when month is locked', async () => {
+    const { user, client, project, task } = await scaffoldUserWithTask();
+    await seedMonthLock(2026, 5);
+    const token = await login(user.email, user.plainPassword);
+
+    const res = await request(app)
+      .post('/time-entries')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        date: '2026-05-01',
+        start_time: '09:00',
+        end_time: '17:00',
+        client_id: client.id,
+        project_id: project.id,
+        task_id: task.id,
+        location: 'office',
+      });
+
+    expect(res.status).toBe(423);
+  });
 });
 
 // ── PUT /time-entries/:id ─────────────────────────────────────────────────────
