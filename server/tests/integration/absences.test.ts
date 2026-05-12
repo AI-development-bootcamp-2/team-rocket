@@ -11,11 +11,21 @@ const db = require('../../src/database/connection') as Knex;
 
 const UPLOADS_DIR = path.resolve(__dirname, '../../uploads');
 
+async function clearUploadsDirectory(): Promise<void> {
+  await fs.mkdir(UPLOADS_DIR, { recursive: true });
+  const entries = await fs.readdir(UPLOADS_DIR);
+  await Promise.all(
+    entries.map((entry) =>
+      fs.rm(path.join(UPLOADS_DIR, entry), { recursive: true, force: true }),
+    ),
+  );
+}
+
 async function clearTables(): Promise<void> {
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       await db.raw('TRUNCATE users, audit_logs, clients RESTART IDENTITY CASCADE');
-      await fs.rm(UPLOADS_DIR, { recursive: true, force: true });
+      await clearUploadsDirectory();
       return;
     } catch (err: unknown) {
       const isDeadlock =
@@ -157,7 +167,7 @@ async function seedAbsence(params: {
   startDate: string;
   endDate?: string;
   isPartial?: boolean;
-  status?: 'draft' | 'submitted' | 'approved';
+  status?: 'draft' | 'submitted';
   notes?: string | null;
   version?: number;
 }): Promise<{ id: number; version: number }> {

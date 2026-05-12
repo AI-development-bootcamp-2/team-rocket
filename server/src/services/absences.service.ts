@@ -14,7 +14,7 @@ export interface AbsenceRow {
   end_date: string | Date;
   is_partial: boolean;
   notes: string | null;
-  status: 'draft' | 'submitted' | 'approved';
+  status: 'draft' | 'submitted';
   version: number;
   deleted_at: Date | null;
   created_at: Date;
