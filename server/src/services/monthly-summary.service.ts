@@ -37,6 +37,11 @@ function toDateStr(d: unknown): string {
   return String(d).slice(0, 10);
 }
 
+// Rounds a number to at most 2 decimal places
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 // Returns true for Israel weekends: Fri(5) and Sat(6)
 function isWeekend(dow: number): boolean {
   return dow === 5 || dow === 6;
@@ -480,13 +485,13 @@ export async function getMonthlySummary(params: {
   return {
     year,
     month,
-    quotaHours,
-    reportedHours,
+    quotaHours: round2(quotaHours),
+    reportedHours: round2(reportedHours),
     completionPercentage,
-    missingHoursToDate,
-    absenceHours,
+    missingHoursToDate: round2(missingHoursToDate),
+    absenceHours: round2(absenceHours),
     daysWithoutReport,
-    projectBreakdown,
+    projectBreakdown: projectBreakdown.map(item => ({ ...item, hours: round2(item.hours) })),
     dayStatuses: {},
   };
 }
