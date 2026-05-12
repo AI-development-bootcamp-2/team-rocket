@@ -10,11 +10,11 @@ export interface AbsenceRow {
   id: number;
   user_id: number;
   type: 'sick' | 'vacation_full' | 'vacation_half' | 'reserve';
-  start_date: string;
-  end_date: string;
+  start_date: string | Date;
+  end_date: string | Date;
   is_partial: boolean;
   notes: string | null;
-  status: 'draft' | 'submitted' | 'approved';
+  status: 'draft' | 'submitted';
   version: number;
   deleted_at: Date | null;
   created_at: Date;
@@ -57,19 +57,37 @@ function pad2(value: number): string {
   return String(value).padStart(2, '0');
 }
 
-function parseDateOnly(value: string): Date {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) {
-    throw new AppError('date must be in YYYY-MM-DD format', 400);
+function getLocalDateParts(value: string | Date): { year: number; month: number; day: number } {
+  if (typeof value === 'string') {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!match) {
+      throw new AppError('date must be in YYYY-MM-DD format', 400);
+    }
+    return {
+      year: Number(match[1]),
+      month: Number(match[2]),
+      day: Number(match[3]),
+    };
   }
-  return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+
+  return {
+    year: value.getFullYear(),
+    month: value.getMonth() + 1,
+    day: value.getDate(),
+  };
 }
 
-function formatDateOnly(date: Date): string {
-  return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(date.getUTCDate())}`;
+function parseDateOnly(value: string | Date): Date {
+  const { year, month, day } = getLocalDateParts(value);
+  return new Date(Date.UTC(year, month - 1, day));
 }
 
-function enumerateDatesInclusive(startDate: string, endDate: string): string[] {
+function formatDateOnly(value: string | Date): string {
+  const { year, month, day } = getLocalDateParts(value);
+  return `${year}-${pad2(month)}-${pad2(day)}`;
+}
+
+function enumerateDatesInclusive(startDate: string | Date, endDate: string | Date): string[] {
   const start = parseDateOnly(startDate);
   const end = parseDateOnly(endDate);
   const dates: string[] = [];
@@ -81,12 +99,12 @@ function enumerateDatesInclusive(startDate: string, endDate: string): string[] {
   return dates;
 }
 
-function isFridayOrSaturday(date: string): boolean {
+function isFridayOrSaturday(date: string | Date): boolean {
   const day = parseDateOnly(date).getUTCDay();
   return day === 5 || day === 6;
 }
 
-function countWorkingDays(startDate: string, endDate: string): number {
+function countWorkingDays(startDate: string | Date, endDate: string | Date): number {
   return enumerateDatesInclusive(startDate, endDate).filter((date) => !isFridayOrSaturday(date)).length;
 }
 
@@ -103,18 +121,20 @@ function getMonthBounds(month: string): { start: string; end: string } {
 }
 
 function getOverlappingWorkingDays(
-  startDate: string,
-  endDate: string,
+  startDate: string | Date,
+  endDate: string | Date,
   rangeStart: string,
   rangeEnd: string,
 ): number {
-  const start = startDate > rangeStart ? startDate : rangeStart;
-  const end = endDate < rangeEnd ? endDate : rangeEnd;
+  const normalizedStartDate = formatDateOnly(startDate);
+  const normalizedEndDate = formatDateOnly(endDate);
+  const start = normalizedStartDate > rangeStart ? normalizedStartDate : rangeStart;
+  const end = normalizedEndDate < rangeEnd ? normalizedEndDate : rangeEnd;
   if (start > end) return 0;
   return countWorkingDays(start, end);
 }
 
-function getWeekStartDate(value: string): string {
+function getWeekStartDate(value: string | Date): string {
   const date = parseDateOnly(value);
   const dayOfWeek = date.getUTCDay();
   const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
@@ -133,7 +153,7 @@ function getWarningMessage(type: AbsenceRow['type'], attachmentCount: number): s
   return undefined;
 }
 
-function calculateQuotaImpactMinutes(startDate: string, endDate: string, isPartial: boolean): number {
+function calculateQuotaImpactMinutes(startDate: string | Date, endDate: string | Date, isPartial: boolean): number {
   const workingDays = countWorkingDays(startDate, endDate);
   return workingDays * (isPartial ? 270 : 540);
 }
@@ -212,22 +232,25 @@ async function assertWeeksEditable(absence: Pick<AbsenceRow, 'user_id' | 'start_
 
 async function assertPartialCoverage(
   userId: number,
-  startDate: string,
-  endDate: string,
+  startDate: string | Date,
+  endDate: string | Date,
   isPartial: boolean,
 ): Promise<void> {
   if (!isPartial) return;
-  if (startDate !== endDate) {
+  const normalizedStartDate = formatDateOnly(startDate);
+  const normalizedEndDate = formatDateOnly(endDate);
+
+  if (normalizedStartDate !== normalizedEndDate) {
     throw new AppError('Partial absence must be a single day', 422);
   }
 
   const today = formatDateOnly(new Date());
-  if (startDate > today) {
+  if (normalizedStartDate > today) {
     return;
   }
 
   const [{ total }] = await db('time_entries')
-    .where({ user_id: userId, date: startDate })
+    .where({ user_id: userId, date: normalizedStartDate })
     .whereNull('deleted_at')
     .sum('duration_minutes as total') as Array<{ total: string | null }>;
 
@@ -256,17 +279,19 @@ function getImpactedMonths(startDate: string, endDate: string): string[] {
 
 async function assertMonthlyQuotaWithinBounds(
   userId: number,
-  startDate: string,
-  endDate: string,
+  startDate: string | Date,
+  endDate: string | Date,
   isPartial: boolean,
   excludeAbsenceId?: number,
 ): Promise<void> {
-  const impactedMonths = getImpactedMonths(startDate, endDate);
+  const normalizedStartDate = formatDateOnly(startDate);
+  const normalizedEndDate = formatDateOnly(endDate);
+  const impactedMonths = getImpactedMonths(normalizedStartDate, normalizedEndDate);
 
   for (const month of impactedMonths) {
     const { start, end } = getMonthBounds(month);
     const monthCapacityMinutes = countWorkingDays(start, end) * 540;
-    const nextImpact = getOverlappingWorkingDays(startDate, endDate, start, end) * (isPartial ? 270 : 540);
+    const nextImpact = getOverlappingWorkingDays(normalizedStartDate, normalizedEndDate, start, end) * (isPartial ? 270 : 540);
 
     const query = db<AbsenceRow>('absence_entries')
       .where('user_id', userId)
@@ -295,8 +320,8 @@ export function serializeAbsence(absence: AbsenceWithAttachments) {
     id: absence.id,
     user_id: absence.user_id,
     type: absence.type,
-    start_date: absence.start_date,
-    end_date: absence.end_date,
+    start_date: formatDateOnly(absence.start_date),
+    end_date: formatDateOnly(absence.end_date),
     is_partial: absence.is_partial,
     notes: absence.notes,
     status: absence.status,

@@ -28,6 +28,22 @@ Report absences: vacation, sick, reserve duty, other. Date range with auto Frida
 - [ ] Validate: partial absence requires work entries for remaining hours
 - [ ] Future absences allowed
 
+#### Backend Completion Status
+
+Verified on `2026-05-12` in `f12-absence-reporting`.
+
+- [x] `GET /absences` scopes regular users to themselves and supports admin filtering by `user_id`, `month`, `type`, `date_from`, and `date_to`
+- [x] `POST /absences` creates `draft` absences, excludes Friday/Saturday from impact, validates monthly quota, and allows future absences
+- [x] `POST /absences` and `PUT /absences/:id` return `{ data, warning: 'חובה לצרף מסמך עד להגשה' }` for `sick` and `reserve` absences without documents
+- [x] Absence lifecycle for F12 is constrained to `draft | submitted`
+- [x] `PUT /absences/:id` enforces optimistic locking with `version` and blocks edits for submitted weeks
+- [x] `DELETE /absences/:id` soft-deletes absences and blocks deletes for submitted weeks
+- [x] `POST /absences/:id/documents` validates PDF/JPG/JPEG/PNG/DOC/DOCX uploads with max `10MB` and server-side MIME detection
+- [x] Document upload and delete actions are audit logged and remain allowed after month lock
+- [x] Partial absences require the remaining 4.5 work hours to be covered by work entries
+- [x] Quota impact is calculated as `-9h` full day and `-4.5h` partial day
+- [x] Backend regression coverage passes for warning behavior, quota impact, Fri/Sat exclusion, optimistic locking, soft delete, and document upload validation
+
 ### 2. Frontend: Absence report page
 
 - [ ] AbsenceReportPage.jsx — form + list of existing absences
