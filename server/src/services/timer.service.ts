@@ -83,6 +83,53 @@ export async function startTimer(userId: number): Promise<{ timeEntryId: number;
   return { timeEntryId: row.id, startTime: rowToStartDate(row) };
 }
 
+export async function quickStop(userId: number): Promise<{
+  timeEntryId: number;
+  startTime: Date;
+  stopTime: Date;
+  durationMinutes: number;
+  version: number;
+}> {
+  const row = await db<TimerRow>('time_entries')
+    .where({ user_id: userId, date: today() })
+    .whereNull('end_time')
+    .whereNull('deleted_at')
+    .first();
+  if (!row) throw new AppError('No active timer', 404);
+
+  const dateStr = rowDateStr(row);
+  const [yearStr, monthStr] = dateStr.split('-');
+  const lock = await db('month_locks')
+    .where({ year: Number(yearStr), month: Number(monthStr), is_locked: true })
+    .first();
+  if (lock) throw new AppError('Month is locked', 423);
+
+  const stopTime = new Date();
+  const endTimeStr = stopTime.toTimeString().slice(0, 8);
+  const durationMinutes =
+    timeToMinutes(row.start_time) === timeToMinutes(endTimeStr)
+      ? 0
+      : calculateDurationMinutes(row.start_time, endTimeStr);
+
+  await db('time_entries').where({ id: row.id }).update({
+    end_time: endTimeStr,
+    duration_minutes: durationMinutes,
+  });
+
+  const updated = await db<{ version: number }>('time_entries')
+    .where({ id: row.id })
+    .select('version')
+    .first();
+
+  return {
+    timeEntryId: row.id,
+    startTime: rowToStartDate(row),
+    stopTime,
+    durationMinutes,
+    version: updated?.version ?? 0,
+  };
+}
+
 export async function stopTimer(
   userId: number,
   details: {

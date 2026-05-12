@@ -177,7 +177,10 @@ export function DailyReportPage() {
             setFormEntry(null);
             setFormOpen(true);
           }}
-          onTimerToggle={() => {}}
+          onTimerToggle={(timerData) => {
+            setFormEntry(timerData ?? null);
+            setFormOpen(true);
+          }}
         />
         <main className={styles.main}>
           <div className={styles.forbiddenState} role="alert">
@@ -197,7 +200,10 @@ export function DailyReportPage() {
           setFormEntry(null);
           setFormOpen(true);
         }}
-        onTimerToggle={() => {}}
+        onTimerToggle={(timerData) => {
+          setFormEntry(timerData ?? null);
+          setFormOpen(true);
+        }}
       />
 
       <main className={styles.main}>
