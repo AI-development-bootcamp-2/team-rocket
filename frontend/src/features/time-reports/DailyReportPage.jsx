@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getDailySummary, getDropdownData, listTimeEntries } from '../../api/timeEntries.api';
+import { getDailySummary, getDropdownData, getMonthlySummary, listTimeEntries } from '../../api/timeEntries.api';
 import { AppHeader } from '../../components/AppHeader';
 import { ExistingEntriesList } from './ExistingEntriesList';
 import { ReportForm } from './ReportForm';
@@ -17,21 +17,6 @@ const HE_MONTHS = [
   'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
 ];
 
-const MONTHLY_SUMMARY_PLACEHOLDER = {
-  reportedHours: 141,
-  targetHours: 181,
-  completionRate: 78,
-  missingHours: 36,
-  absenceHours: 32,
-  missingDays: 4,
-  projectBreakdown: [
-    { name: 'El Al Cargo', hours: '55 ש\'' },
-    { name: 'פרויקט ב\'', hours: '35.2 ש\'' },
-    { name: 'פרויקט ג\'', hours: '26.8 ש\'' },
-    { name: 'פרויקט ד\'', hours: '15.5 ש\'' },
-    { name: 'פרויקט ה\'', hours: '8.5 ש\'' },
-  ],
-};
 
 function HoursIcon() {
   return (
@@ -93,6 +78,7 @@ export function DailyReportPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [formDirty, setFormDirty] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [monthlySummary, setMonthlySummary] = useState(null);
 
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
@@ -168,13 +154,20 @@ export function DailyReportPage() {
     }
   }, []);
 
+  const fetchMonthlySummary = useCallback(async (month) => {
+    const [year, monthNum] = month.split('-').map(Number);
+    const data = await getMonthlySummary({ year, month: monthNum });
+    setMonthlySummary(data);
+  }, []);
+
   useEffect(() => {
     fetchSummary(selectedDate);
   }, [selectedDate, fetchSummary]);
 
   useEffect(() => {
     fetchEntries(currentMonth);
-  }, [currentMonth, fetchEntries]);
+    fetchMonthlySummary(currentMonth);
+  }, [currentMonth, fetchEntries, fetchMonthlySummary]);
 
   useEffect(() => {
     fetchDropdownData();
@@ -227,32 +220,6 @@ export function DailyReportPage() {
 
       <main className={styles.main}>
         <div className={styles.topSectionHeader}>
-          <div className={styles.monthNavSection}>
-            <button
-              className={styles.monthNavArrow}
-              type="button"
-              aria-label="חודש קודם"
-              onClick={() => {
-                const [year, month] = currentMonth.split('-').map(Number);
-                handleMonthChange(new Date(year, month - 2, 1));
-              }}
-            >
-              ‹
-            </button>
-            <span className={styles.currentMonthLabel}>{currentMonthLabel}</span>
-            <button
-              className={styles.monthNavArrow}
-              type="button"
-              aria-label="חודש הבא"
-              onClick={() => {
-                const [year, month] = currentMonth.split('-').map(Number);
-                handleMonthChange(new Date(year, month, 1));
-              }}
-            >
-              ›
-            </button>
-          </div>
-
           <div className={styles.titleSection}>
             <h1 className={styles.pageTitle}>דיווח שעות</h1>
             <p className={styles.pageSubtitle}>רשימת הדיווחים היומיים - לחודש {currentMonthLabel} {currentYearLabel}</p>
@@ -261,17 +228,17 @@ export function DailyReportPage() {
 
         <div className={styles.monthlySummaryStrip}>
           <div className={styles.monthlySummaryMetric}>
-            <strong className={styles.monthlySummaryValue}>{MONTHLY_SUMMARY_PLACEHOLDER.reportedHours} ש'</strong>
+            <strong className={styles.monthlySummaryValue}>{monthlySummary?.reportedHours ?? '—'} ש'</strong>
             <span className={styles.monthlySummaryLabel}>דיווחת עד כה</span>
           </div>
 
           <div className={styles.monthlySummaryMetric}>
-            <strong className={styles.monthlySummaryValue}>{MONTHLY_SUMMARY_PLACEHOLDER.targetHours} ש'</strong>
+            <strong className={styles.monthlySummaryValue}>{monthlySummary?.quotaHours ?? '—'} ש'</strong>
             <span className={styles.monthlySummaryLabel}>היעד החודשי</span>
           </div>
 
           <div className={styles.monthlySummaryMetric}>
-            <strong className={styles.monthlySummaryValue}>{MONTHLY_SUMMARY_PLACEHOLDER.completionRate}%</strong>
+            <strong className={styles.monthlySummaryValue}>{monthlySummary?.completionPercentage ?? '—'}%</strong>
             <span className={styles.monthlySummaryLabel}>הושלמו</span>
           </div>
 
@@ -363,7 +330,7 @@ export function DailyReportPage() {
           <div className={styles.summaryDrawerCardHeader}>
             <div className={styles.summaryDrawerCardTitleGroup}>
               <h3 className={styles.summaryDrawerCardTitle}>שעות חודשיות</h3>
-              <span className={styles.summaryDrawerMeta}>{MONTHLY_SUMMARY_PLACEHOLDER.completionRate}% הושלמו</span>
+              <span className={styles.summaryDrawerMeta}>{monthlySummary?.completionPercentage ?? '—'}% הושלמו</span>
             </div>
             <span className={`${styles.summaryDrawerIcon} ${styles.summaryDrawerIconBlue}`}>
               <HoursIcon />
@@ -373,22 +340,22 @@ export function DailyReportPage() {
           <div className={styles.summaryProgressTrack}>
             <div
               className={styles.summaryProgressFill}
-              style={{ width: `${MONTHLY_SUMMARY_PLACEHOLDER.completionRate}%` }}
+              style={{ width: `${monthlySummary?.completionPercentage ?? 0}%` }}
             />
           </div>
 
           <div className={styles.summaryProgressFoot}>
             <span className={styles.summaryProgressMain}>
-              <strong>{MONTHLY_SUMMARY_PLACEHOLDER.reportedHours}</strong>
+              <strong>{monthlySummary?.reportedHours ?? '—'}</strong>
               ש' דווחו
             </span>
-            <span className={styles.summaryProgressMuted}>מתוך {MONTHLY_SUMMARY_PLACEHOLDER.targetHours} ש' תקן</span>
+            <span className={styles.summaryProgressMuted}>מתוך {monthlySummary?.quotaHours ?? '—'} ש' תקן</span>
           </div>
 
           <div className={styles.summaryAlert}>
             <span className={styles.summaryAlertIcon}>!</span>
             <span>
-              חסרות לך <b>{MONTHLY_SUMMARY_PLACEHOLDER.missingHours} שעות</b> לפי התקן עד היום
+              חסרות לך <b>{monthlySummary?.missingHoursToDate ?? '—'} שעות</b> לפי התקן עד היום
             </span>
           </div>
         </section>
@@ -396,7 +363,7 @@ export function DailyReportPage() {
         <div className={styles.summaryMiniGrid}>
           <section className={`${styles.summaryMiniCard} ${styles.summaryMiniDanger}`}>
             <div className={styles.summaryMiniContent}>
-              <strong className={styles.summaryMiniValue}>{MONTHLY_SUMMARY_PLACEHOLDER.missingDays}</strong>
+              <strong className={styles.summaryMiniValue}>{monthlySummary?.daysWithoutReport ?? '—'}</strong>
               <span className={styles.summaryMiniLabel}>ימים ללא דיווח</span>
             </div>
             <DangerCircleIcon />
@@ -404,7 +371,7 @@ export function DailyReportPage() {
 
           <section className={`${styles.summaryMiniCard} ${styles.summaryMiniWarn}`}>
             <div className={styles.summaryMiniContent}>
-              <strong className={styles.summaryMiniValue}>{MONTHLY_SUMMARY_PLACEHOLDER.absenceHours}</strong>
+              <strong className={styles.summaryMiniValue}>{monthlySummary?.absenceHours ?? '—'}</strong>
               <span className={styles.summaryMiniLabel}>שעות היעדרות</span>
             </div>
             <span className={styles.summaryMiniIcon}>
@@ -422,10 +389,10 @@ export function DailyReportPage() {
           </div>
 
           <div className={styles.summaryBreakdown}>
-            {MONTHLY_SUMMARY_PLACEHOLDER.projectBreakdown.map((project) => (
-              <div key={project.name} className={styles.summaryBreakdownRow}>
-                <span className={styles.summaryBreakdownName}>{project.name}</span>
-                <span className={styles.summaryBreakdownHours}>{project.hours}</span>
+            {(monthlySummary?.projectBreakdown ?? []).map((project) => (
+              <div key={project.projectId} className={styles.summaryBreakdownRow}>
+                <span className={styles.summaryBreakdownName}>{project.projectName}</span>
+                <span className={styles.summaryBreakdownHours}>{project.hours} ש'</span>
               </div>
             ))}
           </div>
