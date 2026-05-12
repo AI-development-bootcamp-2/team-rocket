@@ -73,15 +73,6 @@ async function seedTask(projectId: number): Promise<{ id: number }> {
   return row;
 }
 
-async function seedAssignment(userId: number, taskId: number): Promise<void> {
-  await db('user_task_assignments').insert({
-    user_id: userId,
-    task_id: taskId,
-    is_active: true,
-    created_at: new Date(),
-    updated_at: new Date(),
-  });
-}
 
 async function login(email: string, password: string): Promise<string> {
   const res = await request(app).post('/auth/login').send({ email, password });
@@ -242,41 +233,30 @@ describe('POST /timer/start', () => {
 // ── POST /timer/stop ──────────────────────────────────────────────────────────
 
 describe('POST /timer/stop', () => {
-  it('completes the open time_entries row and returns all fields', async () => {
+  it('records end_time and returns timeEntryId, startTime, stopTime, durationMinutes, version', async () => {
     const user = await seedUser();
     const token = await login(user.email, user.plainPassword);
-    const client = await seedClient();
-    const project = await seedProject(client.id);
-    const task = await seedTask(project.id);
-    await seedAssignment(user.id, task.id);
 
     await request(app).post('/timer/start').set('Authorization', `Bearer ${token}`);
 
     const res = await request(app)
       .post('/timer/stop')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        clientId: client.id,
-        projectId: project.id,
-        taskId: task.id,
-        location: 'office',
-        description: 'Timer test work',
-      });
+      .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(typeof res.body.timeEntryId).toBe('number');
     expect(typeof res.body.startTime).toBe('string');
     expect(typeof res.body.stopTime).toBe('string');
     expect(res.body.durationMinutes).toBeGreaterThanOrEqual(0);
+    expect(typeof res.body.version).toBe('number');
 
     const row = await db('time_entries').where({ id: res.body.timeEntryId }).first();
     expect(row.end_time).not.toBeNull();
     expect(row.duration_minutes).not.toBeNull();
-    expect(row.client_id).toBe(client.id);
-    expect(row.project_id).toBe(project.id);
-    expect(row.task_id).toBe(task.id);
-    expect(row.location).toBe('office');
-    expect(row.description).toBe('Timer test work');
+    // client/project/task/location filled in later via updateTimeEntry
+    expect(row.client_id).toBeNull();
+    expect(row.project_id).toBeNull();
+    expect(row.task_id).toBeNull();
   });
 
   it('returns 404 when no active timer exists', async () => {
@@ -300,7 +280,7 @@ describe('POST /timer/stop', () => {
     expect(res.status).toBe(404);
   });
 
-  it('returns 400 when required fields are missing from body', async () => {
+  it('stops the timer without a request body', async () => {
     const user = await seedUser();
     const token = await login(user.email, user.plainPassword);
 
@@ -308,10 +288,15 @@ describe('POST /timer/stop', () => {
 
     const res = await request(app)
       .post('/timer/stop')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ clientId: 1 }); // missing projectId, taskId, location, description
+      .set('Authorization', `Bearer ${token}`);
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(200);
+    expect(typeof res.body.timeEntryId).toBe('number');
+
+    const status = await request(app)
+      .get('/timer/status')
+      .set('Authorization', `Bearer ${token}`);
+    expect(status.body.running).toBe(false);
   });
 
   it('returns 404 when the only open row is from yesterday (not treated as running)', async () => {

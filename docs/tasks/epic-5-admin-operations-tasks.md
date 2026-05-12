@@ -13,24 +13,55 @@
 **Priority**: HIGH  
 **Story Points**: 5
 
-### Tasks
-- [ ] **T** BE: `GET /months` — list months with lock status
-- [ ] **T** BE: `POST /months/:yearMonth/lock` — lock month (blocked if any user's monthly submission not approved)
-- [ ] **T** BE: `POST /months/:yearMonth/unlock` — unlock month (requires mandatory reason)
-- [ ] **T** BE: `GET /months/:yearMonth/status` — approval status per user (monthly submission)
-- [ ] **T** BE: On lock — all time entries and absences for that month become read-only
-- [ ] **T** BE: On unlock — entries return to pre-lock status, audit logged with reason
-- [ ] **T** FE: Month selector screen (dropdown or calendar picker)
-- [ ] **T** FE: Status table — one row per user, their monthly submission status
-- [ ] **T** FE: Lock button disabled until all users are `approved`; tooltip explains why
-- [ ] **T** FE: Unlock button with mandatory reason input modal
+### Backend Tasks
 
-#### Subtasks
-- [ ] **ST** Integration test: lock blocked — returns list of users with unapproved submissions
-- [ ] **ST** Integration test: lock succeeds — all edits rejected for all users for that month
-- [ ] **ST** Integration test: unlock — requires reason, entries return to pre-lock status
-- [ ] **ST** Integration test: payroll export auto-locks month
-- [ ] **ST** Audit log: lock and unlock events logged with actor + reason
+#### DB / Schema
+- [x] **T** BE: Create `month_locks` table with columns: `year`, `month`, `is_locked`, `locked_by`, `locked_at`, `unlocked_by`, `unlocked_at`, `unlock_reason`
+
+#### Shared Service (`server/src/modules/month-locks/monthLocksService`)
+- [x] **T** BE: Implement `monthLocksService.lock(year, month, adminId)` — sets `is_locked=true`, records `locked_by` + `locked_at`, writes audit log, triggers notification fan-out
+- [x] **T** BE: Implement `monthLocksService.unlock(year, month, adminId, reason)` — validates reason is non-empty (throws 422 if missing), sets `is_locked=false`, records `unlocked_by` + `unlocked_at`, stores reason in `month_locks.unlock_reason` AND `audit_logs.reason`, writes audit log
+- [x] **T** BE: Both methods are the single source of lock logic — F18 payroll export calls `lock()` from this same service, no duplication
+
+#### Endpoints
+- [x] **T** BE: `POST /admin/months/:year/:month/lock` (Admin only) — calls `monthLocksService.lock()`; lock always succeeds regardless of unapproved weeks; does NOT return 422 for unapproved weeks
+- [x] **T** BE: `POST /admin/months/:year/:month/unlock` (Admin only) — calls `monthLocksService.unlock()`; returns 422 if reason is absent or empty
+- [x] **T** BE: `GET /admin/months/:year/:month/status` (User/Admin) — returns `is_locked`, `locked_by`, `locked_at`, `unapproved_week_count` (used by frontend before showing lock confirmation dialog)
+- [x] **T** BE: `GET /admin/months` (Admin) — list all months with their lock status
+
+#### Month Lock Enforcement
+- [x] **T** BE: Add lock-check middleware/guard to all time entry create/edit/delete mutations — return `423 Locked` if the affected month is locked
+- [x] **T** BE: Add lock-check middleware/guard to all absence create/edit/delete mutations — return `423 Locked` if the affected month is locked
+
+#### Notifications (background, non-blocking)
+- [x] **T** BE: On lock, fan out `LOCKED_MONTH` notification to all active users: `SELECT id FROM users WHERE is_active=true` → one `notificationsService.create(...)` call per user, awaited after response is sent (background)
+
+#### Audit Log
+- [x] **T** BE: Lock action: write audit log entry with actor (admin ID), action `LOCK_MONTH`, month/year, timestamp
+- [x] **T** BE: Unlock action: write audit log entry with actor, action `UNLOCK_MONTH`, month/year, timestamp, and reason
+
+### Frontend Tasks
+- [x] **T** FE: `MonthLockPage.jsx` — admin screen with month selector grid/dropdown
+- [x] **T** FE: Per-month row: status badge (open/locked), lock date, locked-by, approved week count, unapproved week count
+- [x] **T** FE: Before locking — call `GET /admin/months/:year/:month/status`; if `unapproved_week_count > 0` show `LockConfirmDialog` warning; admin can proceed anyway
+- [x] **T** FE: `LockConfirmDialog` — confirmation modal; lock button always enabled (warning shown but not blocking)
+- [x] **T** FE: `UnlockReasonDialog` — mandatory reason textarea; inline validation error if empty
+- [x] **T** FE: All required UI states: loading skeleton, validation error, success toast ('החודש נעול' / 'החודש נפתח'), server error toast
+- [x] **T** FE: User-facing locked month banner on `MonthlyViewPage` — disable all edit/delete/submit actions; grey out fields with tooltip 'Month is locked'
+
+### Tests
+
+#### Integration Tests
+- [x] **ST** Lock succeeds even when unapproved weeks exist (no 422, no block)
+- [x] **ST** `GET /admin/months/:year/:month/status` returns correct `unapproved_week_count`
+- [x] **ST** Unlock without reason (or empty reason) returns 422
+- [x] **ST** Lock records `locked_by` and `locked_at` in `month_locks`
+- [x] **ST** Unlock stores reason in both `month_locks.unlock_reason` and `audit_logs.reason`
+- [x] **ST** Time entry create/edit/delete on a locked month returns 423
+- [x] **ST** Absence create/edit/delete on a locked month returns 423
+- [x] **ST** Lock triggers `LOCKED_MONTH` notification fan-out for all active users
+- [x] **ST** Lock and unlock events each produce a correct audit log record with actor + timestamp
+- [x] **ST** `monthLocksService.lock()` is callable independently (reusable by F18 payroll export)
 
 ---
 

@@ -64,6 +64,14 @@ export function AdminShell({ title, subtitle, actions, children }) {
           >
             שיוך עובדים
           </NavLink>
+          <NavLink
+            to="/admin/month-lock"
+            className={({ isActive }) =>
+              `admin-nav__item ${isActive ? 'admin-nav__item--active' : ''}`.trim()
+            }
+          >
+            נעילת חודש
+          </NavLink>
         </nav>
 
         <div className="admin-sidebar__footer">
