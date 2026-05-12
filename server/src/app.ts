@@ -17,6 +17,7 @@ import timeEntriesRouter from './routes/time-entries.routes';
 import monthlySummaryRouter from './routes/monthly-summary.routes';
 import timerRouter from './routes/timer.routes';
 import monthLocksRouter from './routes/month-locks.routes';
+import auditLogsRouter from './routes/audit-logs.routes';
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use('/admin/months', monthLocksRouter);
 app.use('/time-entries', timeEntriesRouter);
 app.use('/timer', timerRouter);
 app.use('/users', usersRouter);
+app.use('/audit-logs', auditLogsRouter);
 
 // Serve uploaded files — auth required; path is validated against uploads/ root
 // to prevent directory traversal (CWE-22).
