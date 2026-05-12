@@ -5,16 +5,16 @@ import { LoginCard } from './components/LoginCard';
 import ChangePasswordCard from './components/ChangePasswordCard';
 import ProtectedRoute from './components/ProtectedRoute';
 import InactivityWarningModal from './components/InactivityWarningModal';
-import { ErrorState } from './components/ui/ErrorState.jsx';
-import { UserListPage } from './features/admin/users/UserListPage.jsx';
-import { ClientListPage } from './features/admin/clients/ClientListPage.jsx';
-import { ProjectListPage } from './features/admin/projects/ProjectListPage.jsx';
-import { TaskListPage } from './features/admin/tasks/TaskListPage.jsx';
-import { AssignmentPage } from './features/admin/assignments/AssignmentPage.jsx';
-import { AdminDashboard } from './features/admin/dashboard/AdminDashboard.jsx';
-import { AdminReportsPage as AdminMonthlyReportsPage } from './features/admin/dashboard/AdminReportsPage.jsx';
-import { MonthLockPage } from './features/admin/month-lock/MonthLockPage.jsx';
-import { DailyReportPage } from './features/time-reports/DailyReportPage.jsx';
+import { ErrorState } from './components/ui/ErrorState';
+import { UserListPage } from './features/admin/users/UserListPage';
+import { ClientListPage } from './features/admin/clients/ClientListPage';
+import { ProjectListPage } from './features/admin/projects/ProjectListPage';
+import { TaskListPage } from './features/admin/tasks/TaskListPage';
+import { AssignmentPage } from './features/admin/assignments/AssignmentPage';
+import { AdminDashboard } from './features/admin/dashboard/AdminDashboard';
+import { AdminReportsPage as AdminMonthlyReportsPage } from './features/admin/dashboard/AdminReportsPage';
+import { MonthLockPage } from './features/admin/month-lock/MonthLockPage';
+import { DailyReportPage } from './features/time-reports/DailyReportPage';
 import { useAuth } from './contexts/AuthContext';
 
 const authBgStyle: CSSProperties = {
@@ -262,3 +262,4 @@ function App() {
 }
 
 export default App;
+
