@@ -26,7 +26,24 @@ const db = require('../../src/database/connection') as Knex;
 // ── DB helpers ────────────────────────────────────────────────────────────────
 
 async function clearTables(): Promise<void> {
-  await db.raw('TRUNCATE users, audit_logs, clients RESTART IDENTITY CASCADE');
+  // Retry on deadlock: some controller failure paths fire-and-forget an audit
+  // INSERT. The concurrent INSERT + TRUNCATE can deadlock; PostgreSQL will abort
+  // one of them. We retry up to 3 times with a short back-off.
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await db.raw('TRUNCATE users, audit_logs, clients RESTART IDENTITY CASCADE');
+      return;
+    } catch (err: unknown) {
+      const isDeadlock =
+        err instanceof Error &&
+        (err.message.includes('deadlock') || (err as { code?: string }).code === '40P01');
+      if (isDeadlock && attempt < 3) {
+        await new Promise((r) => setTimeout(r, 30 * attempt));
+        continue;
+      }
+      throw err;
+    }
+  }
 }
 
 interface UserSeed {
@@ -791,6 +808,27 @@ describe('POST /time-entries', () => {
   it('401: unauthenticated request is rejected', async () => {
     const res = await request(app).post('/time-entries').send({});
     expect(res.status).toBe(401);
+  });
+
+  it('423: cannot create when month is locked', async () => {
+    const { user, client, project, task } = await scaffoldUserWithTask();
+    await seedMonthLock(2026, 5);
+    const token = await login(user.email, user.plainPassword);
+
+    const res = await request(app)
+      .post('/time-entries')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        date: '2026-05-01',
+        start_time: '09:00',
+        end_time: '17:00',
+        client_id: client.id,
+        project_id: project.id,
+        task_id: task.id,
+        location: 'office',
+      });
+
+    expect(res.status).toBe(423);
   });
 });
 

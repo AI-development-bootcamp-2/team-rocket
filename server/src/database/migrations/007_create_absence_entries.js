@@ -2,12 +2,12 @@
  * Migration: 007_create_absence_entries
  * - type ENUM: 'sick', 'vacation_full', 'vacation_half', 'reserve' (GAP-36)
  *   vacation_half = half-day vacation (partial absence + work hours allowed that day)
- * - status ENUM: 'draft', 'submitted', 'approved'
+ * - status ENUM: 'draft', 'submitted'
  * - version defaults to 0, increments on each update
  */
 exports.up = async function (knex) {
   await knex.raw(`CREATE TYPE absence_type AS ENUM ('sick', 'vacation_full', 'vacation_half', 'reserve')`);
-  await knex.raw(`CREATE TYPE absence_status AS ENUM ('draft', 'submitted', 'approved')`);
+  await knex.raw(`CREATE TYPE absence_status AS ENUM ('draft', 'submitted')`);
 
   await knex.schema.createTable('absence_entries', (table) => {
     table.increments('id').primary();

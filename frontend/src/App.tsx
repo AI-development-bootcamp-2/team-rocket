@@ -11,6 +11,7 @@ import { ClientListPage } from './features/admin/clients/ClientListPage.jsx';
 import { ProjectListPage } from './features/admin/projects/ProjectListPage.jsx';
 import { TaskListPage } from './features/admin/tasks/TaskListPage.jsx';
 import { AssignmentPage } from './features/admin/assignments/AssignmentPage.jsx';
+import { DailyReportPage } from './features/time-reports/DailyReportPage.jsx';
 import { useAuth } from './contexts/AuthContext';
 
 const authBgStyle: CSSProperties = {
@@ -90,17 +91,11 @@ function ChangePasswordPage() {
 }
 
 function HomePage() {
-  const { logout, user } = useAuth();
+  const { user } = useAuth();
 
   if (user?.role === 'admin') return <Navigate to="/admin/users" replace />;
 
-  return (
-    <div className={styles.dashboard} dir="rtl">
-      <p>{`שלום, ${user?.fullName ?? ''}`}</p>
-      <p>החשבון שלך מחובר ומוכן לעבודה.</p>
-      <button onClick={logout}>התנתקות</button>
-    </div>
-  );
+  return <DailyReportPage />;
 }
 
 function AccessDeniedPage() {
