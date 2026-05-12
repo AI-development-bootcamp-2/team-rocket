@@ -398,3 +398,104 @@ describe('GET /monthly-summary — missingHoursToDate', () => {
     expect(res.body.missingHoursToDate).toBe(99); // 189 − 90
   });
 });
+
+// Jan 2026 working days (Sun–Thu): 1,4,5,6,7,8,11,12,13,14,15,18,19,20,21,22,25,26,27,28,29 = 21 days
+
+describe('GET /monthly-summary — daysWithoutReport (T020–T023)', () => {
+  it('T020 — days with time entries are NOT counted in daysWithoutReport', async () => {
+    const { user, client, project, task, token } = await scaffold();
+
+    // Entries on Jan 4 and Jan 5 only; 19 remaining working days have nothing
+    await seedTimeEntry({ userId: user.id, date: '2026-01-04', durationMinutes: 540, clientId: client.id, projectId: project.id, taskId: task.id });
+    await seedTimeEntry({ userId: user.id, date: '2026-01-05', durationMinutes: 540, clientId: client.id, projectId: project.id, taskId: task.id });
+
+    const res = await request(app)
+      .get('/monthly-summary?year=2026&month=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    // 21 working days − 2 with entries = 19 without report
+    expect(res.body.daysWithoutReport).toBe(19);
+  });
+
+  it('T021 — days covered by a full-day absence are NOT counted in daysWithoutReport', async () => {
+    const { user, token } = await scaffold();
+
+    // Full-day absence on Jan 4 (Sunday, a working day) — no entries anywhere
+    await seedAbsence({ userId: user.id, startDate: '2026-01-04', isPartial: false });
+
+    const res = await request(app)
+      .get('/monthly-summary?year=2026&month=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    // 21 working days − 1 full-day absence = 20 without report
+    expect(res.body.daysWithoutReport).toBe(20);
+  });
+
+  it('T022 — partial absence with no work hours DOES count toward daysWithoutReport', async () => {
+    const { user, token } = await scaffold();
+
+    // Partial absence on Jan 4, no entries anywhere — Jan 4 still counts as without report
+    await seedAbsence({ userId: user.id, startDate: '2026-01-04', isPartial: true });
+
+    const res = await request(app)
+      .get('/monthly-summary?year=2026&month=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    // All 21 working days count — partial absence on Jan 4 does NOT exclude it
+    expect(res.body.daysWithoutReport).toBe(21);
+  });
+
+  it('T023 — weekends (Fri/Sat) and holidays are never included in daysWithoutReport', async () => {
+    const { token } = await scaffold();
+
+    // Holiday on Jan 4 (Sunday → a working day) → removes it from working-day pool
+    await seedHoliday('2026-01-04', 'national');
+
+    const res = await request(app)
+      .get('/monthly-summary?year=2026&month=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    // Without any entries: all 20 remaining working days (21 − 1 holiday) are "without report"
+    // Jan 2 (Fri) and Jan 3 (Sat) are weekends and must never appear in this count
+    expect(res.body.daysWithoutReport).toBe(20);
+  });
+});
+
+describe('GET /monthly-summary — absenceHours (T024–T025)', () => {
+  it('T024 — absenceHours = 9 for 1 full-day absence and 4.5 for 1 partial (total 13.5)', async () => {
+    const { user, token } = await scaffold();
+
+    // Full-day absence on Jan 4 (dailyStandard = 9h → +9)
+    await seedAbsence({ userId: user.id, startDate: '2026-01-04', isPartial: false });
+    // Partial absence on Jan 5 → +4.5
+    await seedAbsence({ userId: user.id, startDate: '2026-01-05', isPartial: true });
+
+    const res = await request(app)
+      .get('/monthly-summary?year=2026&month=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.absenceHours).toBe(13.5);
+  });
+
+  it('T025 — national holiday does NOT contribute to absenceHours; only user absences do', async () => {
+    const { user, token } = await scaffold();
+
+    // Full-day user absence on Jan 4 → +9h to absenceHours
+    await seedAbsence({ userId: user.id, startDate: '2026-01-04', isPartial: false });
+    // National holiday on Jan 5 — must NOT add hours to absenceHours
+    await seedHoliday('2026-01-05', 'national');
+
+    const res = await request(app)
+      .get('/monthly-summary?year=2026&month=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    // Only the user absence counts; holiday must not be added
+    expect(res.body.absenceHours).toBe(9);
+  });
+});

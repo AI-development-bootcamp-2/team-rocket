@@ -13,6 +13,8 @@ import {
   buildQuotaHours,
   countPassedWorkingDays,
   buildMissingHoursToDate,
+  buildAbsenceHours,
+  buildDaysWithoutReport,
 } from '../../../src/services/monthly-summary.service';
 
 // ── computeDailyStandard ──────────────────────────────────────────────────────
@@ -200,5 +202,96 @@ describe('buildMissingHoursToDate', () => {
   it('handles fractional daily standards (50% employment)', () => {
     // dailyStandard = 4.5; 11 × 4.5 = 49.5 expected; 27h reported → 22.5 missing
     expect(buildMissingHoursToDate(11, 4.5, 27)).toBe(22.5);
+  });
+});
+
+// ── buildAbsenceHours ─────────────────────────────────────────────────────────
+//
+// absenceHours = fullDays × dailyStandard + partialDays × (dailyStandard / 2)
+// Holidays are NOT included — they reduce quota but are not user absences.
+
+describe('buildAbsenceHours', () => {
+  it('returns 0 when there are no absences', () => {
+    expect(buildAbsenceHours(0, 0, 9)).toBe(0);
+  });
+
+  it('returns dailyStandard × fullDays for full-day absences only', () => {
+    // 1 full-day × 9h = 9
+    expect(buildAbsenceHours(1, 0, 9)).toBe(9);
+  });
+
+  it('returns dailyStandard / 2 × partialDays for partial absences only', () => {
+    // 1 partial × 4.5 = 4.5
+    expect(buildAbsenceHours(0, 1, 9)).toBe(4.5);
+  });
+
+  it('combines full-day and partial absence hours (T024 scenario)', () => {
+    // 1 full × 9 + 1 partial × 4.5 = 13.5
+    expect(buildAbsenceHours(1, 1, 9)).toBe(13.5);
+  });
+
+  it('handles multiple full-day and partial absences', () => {
+    // 2 full × 9 + 3 partial × 4.5 = 18 + 13.5 = 31.5
+    expect(buildAbsenceHours(2, 3, 9)).toBe(31.5);
+  });
+
+  it('scales with employment_percentage via dailyStandard (50%)', () => {
+    // dailyStandard = 4.5; 1 full = 4.5, 1 partial = 2.25 → total = 6.75
+    expect(buildAbsenceHours(1, 1, 4.5)).toBe(6.75);
+  });
+
+  it('returns 0 when dailyStandard is 0 (employment_percentage = 0)', () => {
+    expect(buildAbsenceHours(5, 3, 0)).toBe(0);
+  });
+});
+
+// ── buildDaysWithoutReport ────────────────────────────────────────────────────
+//
+// A working day counts as "without report" when it has NO time entries
+// AND is NOT covered by a full-day absence.
+// Partial-absence days with 0 work hours still count as without report.
+
+describe('buildDaysWithoutReport', () => {
+  // Jan 2026 working days (Sun–Thu): all 21 of them
+  const allWorkingDays = [
+    '2026-01-01', '2026-01-04', '2026-01-05', '2026-01-06', '2026-01-07', '2026-01-08',
+    '2026-01-11', '2026-01-12', '2026-01-13', '2026-01-14', '2026-01-15',
+    '2026-01-18', '2026-01-19', '2026-01-20', '2026-01-21', '2026-01-22',
+    '2026-01-25', '2026-01-26', '2026-01-27', '2026-01-28', '2026-01-29',
+  ];
+
+  it('counts all working days when there are no entries and no absences', () => {
+    expect(buildDaysWithoutReport(allWorkingDays, new Set(), new Set())).toBe(21);
+  });
+
+  it('excludes days that have time entries', () => {
+    const withEntries = new Set(['2026-01-04', '2026-01-05']);
+    expect(buildDaysWithoutReport(allWorkingDays, withEntries, new Set())).toBe(19);
+  });
+
+  it('excludes days covered by a full-day absence', () => {
+    const fullAbsences = new Set(['2026-01-04']);
+    expect(buildDaysWithoutReport(allWorkingDays, new Set(), fullAbsences)).toBe(20);
+  });
+
+  it('excludes a day that has both an entry and a full-day absence (counts only once)', () => {
+    const withEntries = new Set(['2026-01-04']);
+    const fullAbsences = new Set(['2026-01-04']);
+    // Jan 4 excluded by entry (and also by absence) — result is 20, not 19
+    expect(buildDaysWithoutReport(allWorkingDays, withEntries, fullAbsences)).toBe(20);
+  });
+
+  it('returns 0 when all working days have entries', () => {
+    const withEntries = new Set(allWorkingDays);
+    expect(buildDaysWithoutReport(allWorkingDays, withEntries, new Set())).toBe(0);
+  });
+
+  it('returns 0 when all working days have full-day absences', () => {
+    const fullAbsences = new Set(allWorkingDays);
+    expect(buildDaysWithoutReport(allWorkingDays, new Set(), fullAbsences)).toBe(0);
+  });
+
+  it('returns 0 for an empty working-day list (e.g. all holidays)', () => {
+    expect(buildDaysWithoutReport([], new Set(), new Set())).toBe(0);
   });
 });
