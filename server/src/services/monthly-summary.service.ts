@@ -42,6 +42,66 @@ function isWeekend(dow: number): boolean {
   return dow === 5 || dow === 6;
 }
 
+function timeToMinutes(time: string): number {
+  const [h, m] = time.split(':').map(Number);
+  return h * 60 + (m ?? 0);
+}
+
+// Total duration_minutes for non-deleted entries between two dates (inclusive)
+async function sumDurationInRange(userId: number, from: string, to: string): Promise<number> {
+  const [{ total }] = (await db('time_entries')
+    .where('user_id', userId)
+    .whereNull('deleted_at')
+    .whereBetween('date', [from, to])
+    .sum('duration_minutes as total')) as [{ total: string | null }];
+  return Number(total ?? 0);
+}
+
+// start_time + end_time for every non-deleted entry on a given date
+async function fetchEntryTimesOnDate(
+  userId: number,
+  date: string,
+): Promise<Array<{ start_time: string; end_time: string }>> {
+  return db('time_entries')
+    .where('user_id', userId)
+    .whereNull('deleted_at')
+    .where('date', date)
+    .select('start_time', 'end_time') as Promise<Array<{ start_time: string; end_time: string }>>;
+}
+
+// Sum of post-midnight minutes for entries where end_time < start_time
+export function crossMidnightOverflow(
+  entries: Array<{ start_time: string; end_time: string }>,
+): number {
+  return entries.reduce((sum, e) => {
+    const endMin = timeToMinutes(e.end_time);
+    return endMin < timeToMinutes(e.start_time) ? sum + endMin : sum;
+  }, 0);
+}
+
+// Reported hours for the month, with cross-month-boundary entries split at midnight
+export async function computeReportedHours(userId: number, year: number, month: number): Promise<number> {
+  const startOfMonth = dateStr(year, month, 1);
+  const endOfMonth = dateStr(year, month, totalDaysInMonth(year, month));
+
+  const prevMonth = month === 1 ? 12 : month - 1;
+  const prevYear = month === 1 ? year - 1 : year;
+  const prevMonthLastDay = dateStr(prevYear, prevMonth, totalDaysInMonth(prevYear, prevMonth));
+
+  const [rawDuration, lastDayEntries, prevLastDayEntries] = await Promise.all([
+    sumDurationInRange(userId, startOfMonth, endOfMonth),
+    fetchEntryTimesOnDate(userId, endOfMonth),
+    fetchEntryTimesOnDate(userId, prevMonthLastDay),
+  ]);
+
+  const totalMinutes =
+    rawDuration
+    - crossMidnightOverflow(lastDayEntries)   // outflow to next month
+    + crossMidnightOverflow(prevLastDayEntries); // inflow from previous month
+
+  return Math.round((totalMinutes / 60) * 100) / 100;
+}
+
 // Fetches national + company holiday dates in the month as a Set<"YYYY-MM-DD">
 async function fetchHolidaySet(year: number, month: number): Promise<Set<string>> {
   const rows = (await db('holiday_calendar')
@@ -409,15 +469,7 @@ export async function getMonthlySummary(params: {
 
   const dailyStandard = computeDailyStandard(user);
   const quotaHours = await computeQuotaHours(userId, year, month, dailyStandard);
-
-  // Sum logged hours for the month, excluding soft-deleted entries
-  const [{ total }] = (await db('time_entries')
-    .where('user_id', userId)
-    .whereNull('deleted_at')
-    .whereRaw('EXTRACT(YEAR FROM date) = ? AND EXTRACT(MONTH FROM date) = ?', [year, month])
-    .sum('duration_minutes as total')) as [{ total: string | null }];
-
-  const reportedHours = Math.round((Number(total ?? 0) / 60) * 100) / 100;
+  const reportedHours = await computeReportedHours(userId, year, month);
   const completionPercentage =
     quotaHours > 0 ? Math.floor((reportedHours / quotaHours) * 100) : 0;
   const missingHoursToDate = await computeMissingHoursToDate(userId, year, month, dailyStandard, reportedHours);

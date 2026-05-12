@@ -105,6 +105,8 @@ interface TimeEntrySeed {
   userId: number;
   date: string;
   durationMinutes?: number;
+  startTime?: string;
+  endTime?: string;
   clientId: number;
   projectId: number;
   taskId: number;
@@ -116,8 +118,8 @@ async function seedTimeEntry(seed: TimeEntrySeed): Promise<{ id: number }> {
     .insert({
       user_id: seed.userId,
       date: seed.date,
-      start_time: '09:00',
-      end_time: '18:00',
+      start_time: seed.startTime ?? '09:00',
+      end_time: seed.endTime ?? '18:00',
       duration_minutes: seed.durationMinutes ?? 540,
       client_id: seed.clientId,
       project_id: seed.projectId,
@@ -572,6 +574,61 @@ describe('GET /monthly-summary — projectBreakdown (T029–T031)', () => {
     expect(item.projectId).toBe(project.id);
     expect(item.projectName).toBe('Test Project');
     expect(item.hours).toBe(1.67);
+  });
+});
+
+describe('GET /monthly-summary — edge cases (Phase 9)', () => {
+  it('T052 — employment_percentage = 0 → quotaHours = 0, missingHoursToDate = 0, completionPercentage = 0', async () => {
+    const { token } = await scaffold({ employmentPercentage: 0 });
+
+    const res = await request(app)
+      .get('/monthly-summary?year=2026&month=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.quotaHours).toBe(0);
+    expect(res.body.missingHoursToDate).toBe(0);
+    expect(res.body.completionPercentage).toBe(0);
+  });
+
+  it('T054 — cross-midnight entry (22:00–02:00) splits 2h into January and 2h into February', async () => {
+    const { user, client, project, task, token } = await scaffold();
+
+    // Jan 31, 22:00–02:00 → 120 min belong to Jan, 120 min overflow into Feb
+    await seedTimeEntry({
+      userId: user.id,
+      date: '2026-01-31',
+      startTime: '22:00',
+      endTime: '02:00',
+      durationMinutes: 240,
+      clientId: client.id,
+      projectId: project.id,
+      taskId: task.id,
+    });
+
+    const [janRes, febRes] = await Promise.all([
+      request(app).get('/monthly-summary?year=2026&month=1').set('Authorization', `Bearer ${token}`),
+      request(app).get('/monthly-summary?year=2026&month=2').set('Authorization', `Bearer ${token}`),
+    ]);
+
+    expect(janRes.status).toBe(200);
+    expect(janRes.body.reportedHours).toBe(2); // 22:00–00:00 = 120 min
+
+    expect(febRes.status).toBe(200);
+    expect(febRes.body.reportedHours).toBe(2); // 00:00–02:00 = 120 min overflow
+  });
+
+  it('T053 — future month returns 200 with reportedHours = 0 and missingHoursToDate = 0, no crash', async () => {
+    const { token } = await scaffold();
+
+    // 2027-06 is entirely in the future from today (2026-05-12)
+    const res = await request(app)
+      .get('/monthly-summary?year=2027&month=6')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.reportedHours).toBe(0);
+    expect(res.body.missingHoursToDate).toBe(0);
   });
 });
 
