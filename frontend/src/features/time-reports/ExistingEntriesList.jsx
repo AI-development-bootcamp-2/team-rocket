@@ -125,6 +125,7 @@ export function ExistingEntriesList({
   standardHours = 9,
   currentMonth,
   selectedDate,
+  isLocked = false,
 }) {
   const [expandedDate, setExpandedDate] = useState(selectedDate ?? null);
 
@@ -203,7 +204,8 @@ export function ExistingEntriesList({
                               type="button"
                               className={styles.editButton}
                               onClick={() => onEdit(entry)}
-                              disabled={!editable}
+                              disabled={!editable || isLocked}
+                              title={isLocked ? 'החודש נעול' : undefined}
                             >
                               <EditPencil />
                               עריכה
@@ -226,7 +228,13 @@ export function ExistingEntriesList({
                       );
                     })}
 
-                    <button type="button" className={styles.addReportButton} onClick={() => onAddEntry(date)}>
+                    <button
+                      type="button"
+                      className={styles.addReportButton}
+                      onClick={() => onAddEntry(date)}
+                      disabled={isLocked}
+                      title={isLocked ? 'החודש נעול' : undefined}
+                    >
                       הוספת דיווח
                     </button>
                   </>
@@ -234,7 +242,13 @@ export function ExistingEntriesList({
                   <div className={styles.emptyDayBody}>
                     <span className={styles.emptyDayText}>אין דיווחים ליום זה</span>
                     {meta.key !== 'weekend' && (
-                      <button type="button" className={styles.addReportButton} onClick={() => onAddEntry(date)}>
+                      <button
+                        type="button"
+                        className={styles.addReportButton}
+                        onClick={() => onAddEntry(date)}
+                        disabled={isLocked}
+                        title={isLocked ? 'החודש נעול' : undefined}
+                      >
                         הוספת דיווח
                       </button>
                     )}

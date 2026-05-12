@@ -47,7 +47,7 @@
 - [x] **T** FE: `LockConfirmDialog` — confirmation modal; lock button always enabled (warning shown but not blocking)
 - [x] **T** FE: `UnlockReasonDialog` — mandatory reason textarea; inline validation error if empty
 - [x] **T** FE: All required UI states: loading skeleton, validation error, success toast ('החודש נעול' / 'החודש נפתח'), server error toast
-- [ ] **T** FE: User-facing locked month banner on `MonthlyViewPage` — disable all edit/delete/submit actions; grey out fields with tooltip 'Month is locked'
+- [x] **T** FE: User-facing locked month banner on `MonthlyViewPage` — disable all edit/delete/submit actions; grey out fields with tooltip 'Month is locked'
 
 ### Tests
 
