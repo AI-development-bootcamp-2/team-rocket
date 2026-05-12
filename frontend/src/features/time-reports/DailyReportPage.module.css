@@ -23,6 +23,20 @@
   gap: 18px;
 }
 
+/* ── Locked Month Banner ── */
+.lockedBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 /* ── Top Section Header (Month nav + Title) ── */
 .topSectionHeader {
   display: flex;

@@ -41,13 +41,13 @@
 - [x] **T** BE: Unlock action: write audit log entry with actor, action `UNLOCK_MONTH`, month/year, timestamp, and reason
 
 ### Frontend Tasks
-- [ ] **T** FE: `MonthLockPage.jsx` — admin screen with month selector grid/dropdown
-- [ ] **T** FE: Per-month row: status badge (open/locked), lock date, locked-by, approved week count, unapproved week count
-- [ ] **T** FE: Before locking — call `GET /admin/months/:year/:month/status`; if `unapproved_week_count > 0` show `LockConfirmDialog` warning; admin can proceed anyway
-- [ ] **T** FE: `LockConfirmDialog` — confirmation modal; lock button always enabled (warning shown but not blocking)
-- [ ] **T** FE: `UnlockReasonDialog` — mandatory reason textarea; inline validation error if empty
-- [ ] **T** FE: All required UI states: loading skeleton, validation error, success toast ('החודש נעול' / 'החודש נפתח'), server error toast
-- [ ] **T** FE: User-facing locked month banner on `MonthlyViewPage` — disable all edit/delete/submit actions; grey out fields with tooltip 'Month is locked'
+- [x] **T** FE: `MonthLockPage.jsx` — admin screen with month selector grid/dropdown
+- [x] **T** FE: Per-month row: status badge (open/locked), lock date, locked-by, approved week count, unapproved week count
+- [x] **T** FE: Before locking — call `GET /admin/months/:year/:month/status`; if `unapproved_week_count > 0` show `LockConfirmDialog` warning; admin can proceed anyway
+- [x] **T** FE: `LockConfirmDialog` — confirmation modal; lock button always enabled (warning shown but not blocking)
+- [x] **T** FE: `UnlockReasonDialog` — mandatory reason textarea; inline validation error if empty
+- [x] **T** FE: All required UI states: loading skeleton, validation error, success toast ('החודש נעול' / 'החודש נפתח'), server error toast
+- [x] **T** FE: User-facing locked month banner on `MonthlyViewPage` — disable all edit/delete/submit actions; grey out fields with tooltip 'Month is locked'
 
 ### Tests
 

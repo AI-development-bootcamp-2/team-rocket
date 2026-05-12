@@ -11,6 +11,7 @@ import { ClientListPage } from './features/admin/clients/ClientListPage.jsx';
 import { ProjectListPage } from './features/admin/projects/ProjectListPage.jsx';
 import { TaskListPage } from './features/admin/tasks/TaskListPage.jsx';
 import { AssignmentPage } from './features/admin/assignments/AssignmentPage.jsx';
+import { MonthLockPage } from './features/admin/month-lock/MonthLockPage.jsx';
 import { DailyReportPage } from './features/time-reports/DailyReportPage.jsx';
 import { useAuth } from './contexts/AuthContext';
 
@@ -143,6 +144,12 @@ function AdminAssignmentsPage() {
   return <AssignmentPage />;
 }
 
+function AdminMonthLockPage() {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <AccessDeniedPage />;
+  return <MonthLockPage />;
+}
+
 function App() {
   const [toast, setToast] = useState<string | null>(null);
 
@@ -203,6 +210,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminAssignmentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/month-lock"
+            element={
+              <ProtectedRoute>
+                <AdminMonthLockPage />
               </ProtectedRoute>
             }
           />
