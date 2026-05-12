@@ -336,6 +336,37 @@ export async function computeQuotaHours(
   return buildQuotaHours(workingDays, dailyStandard, fullDays, partialDays);
 }
 
+// Aggregates time entries by project for the month, excluding projects with 0 hours,
+// sorted by hours descending. Hours are rounded to 2 decimal places.
+export async function computeProjectBreakdown(
+  userId: number,
+  year: number,
+  month: number,
+): Promise<ProjectBreakdownItem[]> {
+  const rows = (await db('time_entries')
+    .join('projects', 'time_entries.project_id', 'projects.id')
+    .where('time_entries.user_id', userId)
+    .whereNull('time_entries.deleted_at')
+    .whereRaw('EXTRACT(YEAR FROM time_entries.date) = ? AND EXTRACT(MONTH FROM time_entries.date) = ?', [year, month])
+    .groupBy('time_entries.project_id', 'projects.name')
+    .select(
+      'time_entries.project_id as projectId',
+      'projects.name as projectName',
+      db.raw('SUM(time_entries.duration_minutes) as totalMinutes'),
+    )) as Array<{ projectId: number; projectName: string; totalMinutes: string }>;
+
+  const breakdown = rows
+    .map(row => ({
+      projectId: row.projectId,
+      projectName: row.projectName,
+      hours: Math.round((Number(row.totalMinutes) / 60) * 100) / 100,
+    }))
+    .filter(item => item.hours > 0)
+    .sort((a, b) => b.hours - a.hours);
+
+  return breakdown;
+}
+
 export interface DayStatus {
   status: 'full' | 'missing' | 'day_off' | 'half_day_off';
   reportedHours: number;

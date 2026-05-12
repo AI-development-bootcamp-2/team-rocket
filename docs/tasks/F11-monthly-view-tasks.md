@@ -104,9 +104,9 @@
 
 ### ⚠️ Write tests FIRST — confirm they FAIL before Phase 5 implementation
 
-- [ ] T029 [US5] Write failing integration test: `projectBreakdown` sorted by hours descending — in `server/tests/integration/monthly-summary.test.ts`
-- [ ] T030 [US5] Write failing integration test: `projectBreakdown` excludes projects with 0 hours this month — in `server/tests/integration/monthly-summary.test.ts`
-- [ ] T031 [US5] Write failing integration test: `projectBreakdown` includes `projectId`, `projectName`, `hours` (rounded to 2 decimal places) — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T029 [US5] Write failing integration test: `projectBreakdown` sorted by hours descending — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T030 [US5] Write failing integration test: `projectBreakdown` excludes projects with 0 hours this month — in `server/tests/integration/monthly-summary.test.ts`
+- [x] T031 [US5] Write failing integration test: `projectBreakdown` includes `projectId`, `projectName`, `hours` (rounded to 2 decimal places) — in `server/tests/integration/monthly-summary.test.ts`
 
 ### Implementation for US5
 

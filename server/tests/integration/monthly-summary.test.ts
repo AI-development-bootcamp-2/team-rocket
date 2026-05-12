@@ -499,3 +499,78 @@ describe('GET /monthly-summary — absenceHours (T024–T025)', () => {
     expect(res.body.absenceHours).toBe(9);
   });
 });
+
+describe('GET /monthly-summary — projectBreakdown (T029–T031)', () => {
+  it('T029 — projectBreakdown is sorted by hours descending', async () => {
+    const { user, client, project: projectA, task: taskA, token } = await scaffold();
+
+    // Second project: 36h (4 × 9h)
+    const projectB = await seedProject(client.id, 'Project B');
+    const taskB = await seedTask(projectB.id);
+    await seedAssignment(user.id, taskB.id);
+
+    // Third project: 8h (1 entry of 480 min)
+    const projectC = await seedProject(client.id, 'Project C');
+    const taskC = await seedTask(projectC.id);
+    await seedAssignment(user.id, taskC.id);
+
+    // projectA: 6 × 9h = 54h
+    for (const date of ['2026-01-04', '2026-01-05', '2026-01-06', '2026-01-07', '2026-01-08', '2026-01-11']) {
+      await seedTimeEntry({ userId: user.id, date, durationMinutes: 540, clientId: client.id, projectId: projectA.id, taskId: taskA.id });
+    }
+    // projectB: 4 × 9h = 36h
+    for (const date of ['2026-01-12', '2026-01-13', '2026-01-14', '2026-01-15']) {
+      await seedTimeEntry({ userId: user.id, date, durationMinutes: 540, clientId: client.id, projectId: projectB.id, taskId: taskB.id });
+    }
+    // projectC: 1 × 8h = 8h
+    await seedTimeEntry({ userId: user.id, date: '2026-01-18', durationMinutes: 480, clientId: client.id, projectId: projectC.id, taskId: taskC.id });
+
+    const res = await request(app)
+      .get('/monthly-summary?year=2026&month=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    const breakdown = res.body.projectBreakdown as Array<{ hours: number }>;
+    expect(breakdown).toHaveLength(3);
+    expect(breakdown[0].hours).toBe(54);
+    expect(breakdown[1].hours).toBe(36);
+    expect(breakdown[2].hours).toBe(8);
+  });
+
+  it('T030 — projectBreakdown excludes projects with 0 hours this month', async () => {
+    const { user, client, project: projectA, task: taskA, token } = await scaffold();
+
+    // projectB has no entries this month — must be absent from breakdown
+    const projectB = await seedProject(client.id, 'Project B');
+    const taskB = await seedTask(projectB.id);
+    await seedAssignment(user.id, taskB.id);
+
+    await seedTimeEntry({ userId: user.id, date: '2026-01-04', durationMinutes: 540, clientId: client.id, projectId: projectA.id, taskId: taskA.id });
+
+    const res = await request(app)
+      .get('/monthly-summary?year=2026&month=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    const breakdown = res.body.projectBreakdown as Array<{ projectId: number }>;
+    expect(breakdown).toHaveLength(1);
+    expect(breakdown[0].projectId).toBe(projectA.id);
+  });
+
+  it('T031 — projectBreakdown items include projectId, projectName, and hours rounded to 2 decimal places', async () => {
+    const { user, client, project, task, token } = await scaffold();
+
+    // 100 minutes = 100/60 = 1.6666…h → should be rounded to 1.67
+    await seedTimeEntry({ userId: user.id, date: '2026-01-04', durationMinutes: 100, clientId: client.id, projectId: project.id, taskId: task.id });
+
+    const res = await request(app)
+      .get('/monthly-summary?year=2026&month=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    const [item] = res.body.projectBreakdown as Array<{ projectId: number; projectName: string; hours: number }>;
+    expect(item.projectId).toBe(project.id);
+    expect(item.projectName).toBe('Test Project');
+    expect(item.hours).toBe(1.67);
+  });
+});
