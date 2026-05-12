@@ -17,6 +17,14 @@ export function AdminShell({ title, subtitle, actions, children }) {
 
         <nav className="admin-nav" aria-label="ניווט ראשי">
           <NavLink
+            to="/admin/dashboard"
+            className={({ isActive }) =>
+              `admin-nav__item ${isActive ? 'admin-nav__item--active' : ''}`.trim()
+            }
+          >
+            לוח בקרה
+          </NavLink>
+          <NavLink
             to="/admin/users"
             className={({ isActive }) =>
               `admin-nav__item ${isActive ? 'admin-nav__item--active' : ''}`.trim()
