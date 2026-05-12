@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getDailySummary, getDropdownData, getMonthlySummary, listTimeEntries } from '../../api/timeEntries.api';
+import { getMonthStatus } from '../../api/monthLocks.api.js';
 import { AppHeader } from '../../components/AppHeader';
 import { ExistingEntriesList } from './ExistingEntriesList';
 import { ReportForm } from './ReportForm';
@@ -79,6 +80,7 @@ export function DailyReportPage() {
   const [formDirty, setFormDirty] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [monthlySummary, setMonthlySummary] = useState(null);
+  const [isMonthLocked, setIsMonthLocked] = useState(false);
 
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
