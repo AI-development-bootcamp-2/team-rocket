@@ -7,6 +7,7 @@ import config from './config';
 import { errorMiddleware } from './middleware/error.middleware';
 import { authenticate } from './middleware/auth.middleware';
 import authRouter from './routes/auth.routes';
+import absencesRouter from './routes/absences.routes';
 import clientsRouter from './routes/clients.routes';
 import assignmentsRouter from './routes/assignments.routes';
 import projectsRouter from './routes/projects.routes';
@@ -31,6 +32,7 @@ app.get('/healthz', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.use('/absences', absencesRouter);
 app.use('/assignments', assignmentsRouter);
 app.use('/auth', authRouter);
 app.use('/clients', clientsRouter);

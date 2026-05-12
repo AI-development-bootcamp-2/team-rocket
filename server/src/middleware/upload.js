@@ -82,7 +82,19 @@ const _upload = multer({
  */
 const upload = {
   single: (fieldName) => [
-    _upload.single(fieldName),
+    (req, res, next) => {
+      _upload.single(fieldName)(req, res, (err) => {
+        if (!err) {
+          next();
+          return;
+        }
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          res.status(413).json({ error: 'File too large.' });
+          return;
+        }
+        next(err);
+      });
+    },
     (req, res, next) => {
       if (!req.file) return next();
 
