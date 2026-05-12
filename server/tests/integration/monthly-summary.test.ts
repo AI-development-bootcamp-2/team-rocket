@@ -160,7 +160,7 @@ async function seedAbsence(seed: AbsenceSeed): Promise<{ id: number }> {
       start_date: seed.startDate,
       end_date: seed.endDate ?? seed.startDate,
       is_partial: seed.isPartial ?? false,
-      status: 'approved',
+      status: 'submitted',
       version: 0,
       created_at: new Date(),
       updated_at: new Date(),
