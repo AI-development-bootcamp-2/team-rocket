@@ -28,6 +28,15 @@ function dateStr(year: number, month: number, day: number): string {
   return `${year}-${pad2(month)}-${pad2(day)}`;
 }
 
+// Normalises a value from the DB to "YYYY-MM-DD".
+// pg returns `date` columns as Date objects (local midnight), not strings.
+function toDateStr(d: unknown): string {
+  if (d instanceof Date) {
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+  return String(d).slice(0, 10);
+}
+
 // Returns true for Israel weekends: Fri(5) and Sat(6)
 function isWeekend(dow: number): boolean {
   return dow === 5 || dow === 6;
@@ -39,7 +48,7 @@ async function fetchHolidaySet(year: number, month: number): Promise<Set<string>
     .whereBetween('date', [dateStr(year, month, 1), dateStr(year, month, totalDaysInMonth(year, month))])
     .whereIn('type', ['national', 'company'])
     .pluck('date')) as unknown[];
-  return new Set(rows.map((d) => String(d).slice(0, 10)));
+  return new Set(rows.map(toDateStr));
 }
 
 // Counts working days (non-weekend, non-holiday) in the month
@@ -79,8 +88,8 @@ async function countAbsenceDays(
   let partialDays = 0;
 
   for (const absence of absences) {
-    const absStart = String(absence.start_date).slice(0, 10);
-    const absEnd = String(absence.end_date).slice(0, 10);
+    const absStart = toDateStr(absence.start_date);
+    const absEnd = toDateStr(absence.end_date);
 
     for (let d = 1; d <= numDays; d++) {
       const ds = dateStr(year, month, d);
@@ -163,8 +172,8 @@ async function countPassedAbsenceDays(
   let partialDays = 0;
 
   for (const absence of absences) {
-    const absStart = String(absence.start_date).slice(0, 10);
-    const absEnd = String(absence.end_date).slice(0, 10);
+    const absStart = toDateStr(absence.start_date);
+    const absEnd = toDateStr(absence.end_date);
 
     for (let d = 1; d <= cutoffDay; d++) {
       const ds = dateStr(year, month, d);
