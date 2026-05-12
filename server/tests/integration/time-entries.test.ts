@@ -376,6 +376,24 @@ describe('GET /time-entries', () => {
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(403);
   });
+
+  it('T049 — GET /time-entries?year=2026&month=5 returns only entries in May 2026', async () => {
+    const { user, client, project, task } = await scaffoldUserWithTask();
+
+    await seedTimeEntry({ userId: user.id, date: '2026-05-01', clientId: client.id, projectId: project.id, taskId: task.id });
+    await seedTimeEntry({ userId: user.id, date: '2026-05-15', clientId: client.id, projectId: project.id, taskId: task.id, startTime: '10:00', endTime: '15:00' });
+    // Entry outside the requested month — must NOT appear
+    await seedTimeEntry({ userId: user.id, date: '2026-06-01', clientId: client.id, projectId: project.id, taskId: task.id });
+
+    const token = await login(user.email, user.plainPassword);
+    const res = await request(app)
+      .get('/time-entries?year=2026&month=5')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(2);
+    expect(res.body.every((e: { date: string }) => e.date.startsWith('2026-05'))).toBe(true);
+  });
 });
 
 // ── GET /time-entries/:id ─────────────────────────────────────────────────────
