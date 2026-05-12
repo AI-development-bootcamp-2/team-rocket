@@ -841,7 +841,7 @@ export async function checkQuotaWarning(userId: number, date: string): Promise<b
   }
 }
 
-// ── Daily summary ──────────────────────────────────────────────────────────────
+// ── Daily standard helpers ─────────────────────────────────────────────────────
 
 const DAILY_STANDARD_MINUTES = 9 * 60; // 9 hours default
 
