@@ -56,6 +56,14 @@ export function AdminShell({ title, subtitle, actions, children }) {
           >
             שיוך עובדים
           </NavLink>
+          <NavLink
+            to="/admin/audit"
+            className={({ isActive }) =>
+              `admin-nav__item ${isActive ? 'admin-nav__item--active' : ''}`.trim()
+            }
+          >
+            יומן ביקורת
+          </NavLink>
         </nav>
 
         <div className="admin-sidebar__footer">
