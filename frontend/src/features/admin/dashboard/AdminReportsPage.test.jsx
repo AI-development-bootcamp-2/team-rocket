@@ -25,7 +25,7 @@ jest.mock('../../../api/absences.api.js', () => ({
   listAbsences: (...args) => mockListAbsences(...args),
 }));
 
-jest.mock('../../../components/layout/AdminShell.jsx', () => ({
+jest.mock('../../../components/layout/AdminShell', () => ({
   AdminShell: ({ title, subtitle, actions, children }) => (
     <div>
       <h1>{title}</h1>
@@ -49,7 +49,7 @@ jest.mock('../../../components/ui/ErrorState.jsx', () => ({
   ),
 }));
 
-jest.mock('../../../components/ui/EmptyState.jsx', () => ({
+jest.mock('../../../components/ui/EmptyState', () => ({
   EmptyState: ({ title, description }) => (
     <div>
       <h2>{title}</h2>

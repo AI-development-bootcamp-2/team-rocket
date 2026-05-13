@@ -1,6 +1,13 @@
 import { Button } from './Button.jsx';
 
-export function EmptyState({ title, description, actionLabel, onAction }) {
+interface EmptyStateProps {
+  title: string;
+  description: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}
+
+export function EmptyState({ title, description, actionLabel, onAction }: EmptyStateProps) {
   return (
     <div className="ui-state-card" role="status">
       <div className="ui-state-card__icon" aria-hidden="true">

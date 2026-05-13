@@ -1,6 +1,6 @@
 import { startTransition, useCallback, useEffect, useState } from 'react';
 import { getMonthStatus, listMonths, lockMonth, unlockMonth } from '../../../api/monthLocks.api.js';
-import { AdminShell } from '../../../components/layout/AdminShell.jsx';
+import { AdminShell } from '../../../components/layout/AdminShell';
 import { ErrorState } from '../../../components/ui/ErrorState.jsx';
 import { Select } from '../../../components/ui/Select.jsx';
 import { Spinner } from '../../../components/ui/Spinner.jsx';

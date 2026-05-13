@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { listAuditLogs, type AuditLogEntry, type AuditLogsFilters } from '../../../api/audit-logs.api';
 import { listUsers } from '../../../api/users.api.js';
-import { AdminShell } from '../../../components/layout/AdminShell.jsx';
-import { EmptyState } from '../../../components/ui/EmptyState.jsx';
+import { AdminShell } from '../../../components/layout/AdminShell';
+import { EmptyState } from '../../../components/ui/EmptyState';
 import { ErrorState } from '../../../components/ui/ErrorState.jsx';
 import { Spinner } from '../../../components/ui/Spinner.jsx';
 import { Toast } from '../../../components/ui/Toast.jsx';
