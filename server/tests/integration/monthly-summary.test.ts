@@ -336,7 +336,7 @@ describe('GET /monthly-summary — missingHoursToDate', () => {
     jest.useRealTimers();
   });
 
-  it('equals gap between expected-by-today and reported hours (mid-month gap)', async () => {
+  it('equals gap between full-month quota and reported hours', async () => {
     jest.useFakeTimers({
       now: new Date('2026-01-15T12:00:00.000Z'),
       doNotFake: [
@@ -380,11 +380,11 @@ describe('GET /monthly-summary — missingHoursToDate', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.reportedHours).toBe(54);
-    // 11 elapsed working days × 9h = 99h expected; 54h reported → 99 − 54 = 45h
-    expect(res.body.missingHoursToDate).toBe(45);
+    // quotaHours = 189h (21 working days × 9h); 54h reported → 189 − 54 = 135h
+    expect(res.body.missingHoursToDate).toBe(135);
   });
 
-  it('returns 0 when user over-reports (extra hours carry over, result is clamped to 0)', async () => {
+  it('returns 0 when user reports more than full quota (clamped to 0)', async () => {
     jest.useFakeTimers({
       now: new Date('2026-01-15T12:00:00.000Z'),
       doNotFake: [
@@ -403,8 +403,7 @@ describe('GET /monthly-summary — missingHoursToDate', () => {
 
     const { user, client, project, task, token } = await scaffold();
 
-    // 11 × 10h = 110h — user logged 1h extra each day (standard is 9h)
-    // expected = 11 × 9h = 99h; reported = 110h → max(0, 99 − 110) = 0
+    // 11 × 10h = 110h reported; quotaHours = 189h (21 × 9h) → max(0, 189 − 110) = 79h
     for (const date of [
       '2026-01-01',
       '2026-01-04',
@@ -434,19 +433,20 @@ describe('GET /monthly-summary — missingHoursToDate', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.reportedHours).toBe(110);
-    expect(res.body.missingHoursToDate).toBe(0); // never negative even when over-reported
+    expect(res.body.missingHoursToDate).toBe(79); // max(0, 189 − 110)
   });
 
-  it('returns 0 for a future month (no elapsed working days)', async () => {
+  it('returns full quota for a future month (no hours reported yet)', async () => {
     const { token } = await scaffold();
 
     // 2027-01 is entirely in the future from today (2026-05-12); no entries needed
+    // quotaHours = 189h (21 working days × 9h) → missingHoursToDate = 189 − 0 = 189
     const res = await request(app)
       .get('/monthly-summary?year=2027&month=1')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.missingHoursToDate).toBe(0);
+    expect(res.body.missingHoursToDate).toBe(189);
   });
 
   it('for a past month equals max(0, quotaHours − reportedHours)', async () => {
@@ -768,17 +768,18 @@ describe('GET /monthly-summary — edge cases (Phase 9)', () => {
     expect(febRes.body.reportedHours).toBe(2); // 00:00–02:00 = 120 min overflow
   });
 
-  it('T053 — future month returns 200 with reportedHours = 0 and missingHoursToDate = 0, no crash', async () => {
+  it('T053 — future month returns 200 with reportedHours = 0 and missingHoursToDate = full quota, no crash', async () => {
     const { token } = await scaffold();
 
     // 2027-06 is entirely in the future from today (2026-05-12)
+    // quotaHours = 198h (22 working days × 9h) → missingHoursToDate = 198 − 0 = 198
     const res = await request(app)
       .get('/monthly-summary?year=2027&month=6')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.reportedHours).toBe(0);
-    expect(res.body.missingHoursToDate).toBe(0);
+    expect(res.body.missingHoursToDate).toBe(198);
   });
 });
 

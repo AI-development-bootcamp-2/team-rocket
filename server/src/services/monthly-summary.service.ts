@@ -509,9 +509,11 @@ export async function getMonthlySummary(params: {
   ]);
   const completionPercentage = quotaHours > 0 ? Math.floor((reportedHours / quotaHours) * 100) : 0;
   const missingHoursToDate = Math.max(0, round2(quotaHours - reportedHours));
-  const daysWithoutReport = await computeDaysWithoutReport(userId, year, month);
-  const absenceHours = await computeAbsenceHours(userId, year, month, dailyStandard);
-  const projectBreakdown = await computeProjectBreakdown(userId, year, month);
+  const [daysWithoutReport, absenceHours, projectBreakdown] = await Promise.all([
+    computeDaysWithoutReport(userId, year, month),
+    computeAbsenceHours(userId, year, month, dailyStandard),
+    computeProjectBreakdown(userId, year, month),
+  ]);
 
   return {
     year,
