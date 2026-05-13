@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getDailySummary, getDropdownData, getMonthlySummary, listTimeEntries } from '../../api/timeEntries.api';
+import { getMonthStatus } from '../../api/monthLocks.api.js';
 import { AppHeader } from '../../components/AppHeader';
 import { ExistingEntriesList } from './ExistingEntriesList';
 import { ReportForm } from './ReportForm';
@@ -79,6 +80,7 @@ export function DailyReportPage() {
   const [formDirty, setFormDirty] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [monthlySummary, setMonthlySummary] = useState(null);
+  const [isMonthLocked, setIsMonthLocked] = useState(false);
 
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
@@ -173,6 +175,13 @@ export function DailyReportPage() {
     fetchDropdownData();
   }, [fetchDropdownData]);
 
+  useEffect(() => {
+    const [year, month] = currentMonth.split('-').map(Number);
+    getMonthStatus(year, month)
+      .then((data) => setIsMonthLocked((data.data ?? data).is_locked ?? false))
+      .catch(() => setIsMonthLocked(false));
+  }, [currentMonth]);
+
   const standardHours = summary?.standard_hours ?? 9;
 
   const handleMonthChange = useCallback((nextDate) => {
@@ -209,6 +218,7 @@ export function DailyReportPage() {
     <div className={styles.page} dir="rtl" lang="he">
       <AppHeader
         onManualReport={() => {
+          if (isMonthLocked) return;
           setFormEntry(null);
           setFormOpen(true);
         }}
@@ -278,6 +288,13 @@ export function DailyReportPage() {
           </button>
         </div>
 
+        {isMonthLocked && (
+          <div className={styles.lockedBanner} role="alert" aria-live="polite">
+            <span aria-hidden="true">🔒</span>
+            החודש נעול — קריאה בלבד
+          </div>
+        )}
+
         <section className={styles.entriesSection} aria-label="רשימת דיווחים חודשית">
           <ExistingEntriesList
             entries={entries}
@@ -286,12 +303,15 @@ export function DailyReportPage() {
             currentMonth={currentMonth}
             selectedDate={selectedDate}
             standardHours={standardHours}
+            isLocked={isMonthLocked}
             onAddEntry={(date) => {
+              if (isMonthLocked) return;
               setSelectedDate(date);
               setFormEntry(null);
               setFormOpen(true);
             }}
             onEdit={(entry) => {
+              if (isMonthLocked) return;
               setSelectedDate(entry.date);
               setFormEntry(entry);
               setFormOpen(true);

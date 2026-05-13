@@ -1556,3 +1556,126 @@ button:disabled {
 .user-modal__cancel:hover {
   color: var(--color-text-primary);
 }
+
+/* ── Month Lock ─────────────────────────────────────────────────── */
+.month-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  min-height: 26px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.month-status-badge--open {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.month-status-badge--locked {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.month-status-badge--partial {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.month-lock-table {
+  width: 100%;
+  border-collapse: collapse;
+  direction: rtl;
+}
+
+.month-lock-table th,
+.month-lock-table td {
+  padding: 12px 16px;
+  text-align: right;
+  font-size: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.month-lock-table th {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  background: #f9fafb;
+}
+
+.month-lock-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.month-lock-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.month-lock-table__month-cell {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.month-lock-table__actor {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.month-lock-table__count {
+  font-weight: 600;
+  text-align: center;
+}
+
+.month-lock-table__count--approved {
+  color: var(--color-success);
+}
+
+.month-lock-table__count--unapproved {
+  color: var(--color-danger);
+}
+
+.month-lock-action-btn {
+  height: 32px;
+  min-width: 56px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  border: none;
+  padding: 0 14px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.month-lock-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.month-lock-action-btn--lock {
+  background: var(--color-danger);
+}
+
+.month-lock-action-btn--lock:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.month-lock-action-btn--unlock {
+  background: var(--color-success);
+}
+
+.month-lock-action-btn--unlock:hover:not(:disabled) {
+  background: #15803d;
+}
+
+.month-lock-unlock-btn {
+  background: var(--color-success) !important;
+  color: #ffffff !important;
+}
+
+.month-lock-unlock-btn:hover:not(:disabled) {
+  background: #15803d !important;
+}

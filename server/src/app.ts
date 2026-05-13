@@ -7,6 +7,7 @@ import config from './config';
 import { errorMiddleware } from './middleware/error.middleware';
 import { authenticate } from './middleware/auth.middleware';
 import authRouter from './routes/auth.routes';
+import adminRouter from './routes/admin.routes';
 import absencesRouter from './routes/absences.routes';
 import clientsRouter from './routes/clients.routes';
 import assignmentsRouter from './routes/assignments.routes';
@@ -17,6 +18,7 @@ import timeEntriesRouter from './routes/time-entries.routes';
 import monthlySummaryRouter from './routes/monthly-summary.routes';
 import timerRouter from './routes/timer.routes';
 import monthLocksRouter from './routes/month-locks.routes';
+import auditLogsRouter from './routes/audit-logs.routes';
 
 const app = express();
 
@@ -35,6 +37,7 @@ app.get('/healthz', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.use('/admin', adminRouter);
 app.use('/absences', absencesRouter);
 app.use('/assignments', assignmentsRouter);
 app.use('/auth', authRouter);
@@ -46,6 +49,7 @@ app.use('/admin/months', monthLocksRouter);
 app.use('/time-entries', timeEntriesRouter);
 app.use('/timer', timerRouter);
 app.use('/users', usersRouter);
+app.use('/audit-logs', auditLogsRouter);
 
 // Serve uploaded files — auth required; path is validated against uploads/ root
 // to prevent directory traversal (CWE-22).
