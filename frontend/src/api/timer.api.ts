@@ -1,18 +1,17 @@
-// @ts-nocheck
 import axiosClient from './axiosClient';
+import type { TimerActionResponse, TimerStatus } from './contracts';
 
-export async function getTimerStatus() {
-  const response = await axiosClient.get('/timer/status');
+export async function getTimerStatus(): Promise<TimerStatus> {
+  const response = await axiosClient.get<TimerStatus>('/timer/status');
   return response.data;
 }
 
-export async function startTimer() {
-  const response = await axiosClient.post('/timer/start');
+export async function startTimer(): Promise<TimerActionResponse> {
+  const response = await axiosClient.post<TimerActionResponse>('/timer/start');
   return response.data;
 }
 
-export async function quickStopTimer() {
-  const response = await axiosClient.post('/timer/stop');
+export async function quickStopTimer(): Promise<TimerActionResponse> {
+  const response = await axiosClient.post<TimerActionResponse>('/timer/stop');
   return response.data;
 }
-

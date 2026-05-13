@@ -1,16 +1,25 @@
-// @ts-nocheck
 import axiosClient from './axiosClient';
+import type {
+  ClientListResponse,
+  ClientMutationResponse,
+  ClientRecord,
+  ClientWritePayload,
+} from './contracts';
 
-export async function listClients({ isActive } = {}) {
+interface ListClientsParams {
+  isActive?: boolean;
+}
+
+export async function listClients({ isActive }: ListClientsParams = {}): Promise<ClientListResponse> {
   const params = new URLSearchParams();
   if (isActive != null) params.set('is_active', String(isActive));
   const query = params.toString();
-  const response = await axiosClient.get(`/clients${query ? `?${query}` : ''}`);
+  const response = await axiosClient.get<ClientListResponse>(`/clients${query ? `?${query}` : ''}`);
   return response.data;
 }
 
-export async function createClient({ name, contact_info, is_active } = {}) {
-  const response = await axiosClient.post('/clients', {
+export async function createClient({ name, contact_info, is_active }: ClientWritePayload): Promise<ClientMutationResponse> {
+  const response = await axiosClient.post<ClientMutationResponse>('/clients', {
     name,
     contact_info: contact_info ?? null,
     is_active: is_active ?? true,
@@ -18,8 +27,8 @@ export async function createClient({ name, contact_info, is_active } = {}) {
   return response.data;
 }
 
-export async function updateClient(id, { name, contact_info, is_active } = {}) {
-  const response = await axiosClient.put(`/clients/${id}`, {
+export async function updateClient(id: number, { name, contact_info, is_active }: ClientWritePayload): Promise<ClientRecord> {
+  const response = await axiosClient.put<ClientRecord>(`/clients/${id}`, {
     name,
     contact_info: contact_info ?? null,
     is_active,
@@ -27,8 +36,7 @@ export async function updateClient(id, { name, contact_info, is_active } = {}) {
   return response.data;
 }
 
-export async function archiveClient(id) {
-  const response = await axiosClient.delete(`/clients/${id}`);
+export async function archiveClient(id: number): Promise<ClientMutationResponse> {
+  const response = await axiosClient.delete<ClientMutationResponse>(`/clients/${id}`);
   return response.data;
 }
-

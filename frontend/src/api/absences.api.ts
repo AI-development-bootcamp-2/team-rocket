@@ -1,7 +1,21 @@
-// @ts-nocheck
 import axiosClient from './axiosClient';
+import type {
+  AbsenceDocument,
+  AbsenceMutationResponse,
+  AbsenceRecord,
+  AbsenceType,
+  CreateAbsencePayload,
+} from './contracts';
 
-export async function listAbsences({ userId, month, dateFrom, dateTo, type } = {}) {
+interface ListAbsencesParams {
+  userId?: number;
+  month?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  type?: AbsenceType;
+}
+
+export async function listAbsences({ userId, month, dateFrom, dateTo, type }: ListAbsencesParams = {}): Promise<AbsenceRecord[]> {
   const params = new URLSearchParams();
 
   if (userId) params.set('user_id', String(userId));
@@ -11,20 +25,20 @@ export async function listAbsences({ userId, month, dateFrom, dateTo, type } = {
   if (type) params.set('type', type);
 
   const query = params.toString();
-  const response = await axiosClient.get(`/absences${query ? `?${query}` : ''}`);
+  const response = await axiosClient.get<AbsenceRecord[]>(`/absences${query ? `?${query}` : ''}`);
   return response.data;
 }
 
-export async function createAbsence(payload) {
-  const response = await axiosClient.post('/absences', payload);
+export async function createAbsence(payload: CreateAbsencePayload): Promise<AbsenceMutationResponse> {
+  const response = await axiosClient.post<AbsenceMutationResponse>('/absences', payload);
   return response.data;
 }
 
-export async function uploadAbsenceDocument(absenceId, file) {
+export async function uploadAbsenceDocument(absenceId: number, file: File): Promise<AbsenceDocument> {
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await axiosClient.post(`/absences/${absenceId}/documents`, formData, {
+  const response = await axiosClient.post<AbsenceDocument>(`/absences/${absenceId}/documents`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -32,4 +46,3 @@ export async function uploadAbsenceDocument(absenceId, file) {
 
   return response.data;
 }
-

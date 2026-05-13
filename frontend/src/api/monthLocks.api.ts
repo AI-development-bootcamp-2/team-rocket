@@ -1,23 +1,22 @@
-// @ts-nocheck
 import axiosClient from './axiosClient';
+import type { MonthLockListItem, MonthLockStatus } from './contracts';
 
-export async function listMonths() {
-  const response = await axiosClient.get('/admin/months');
+export async function listMonths(): Promise<MonthLockListItem[]> {
+  const response = await axiosClient.get<MonthLockListItem[]>('/admin/months');
   return response.data;
 }
 
-export async function getMonthStatus(year, month) {
-  const response = await axiosClient.get(`/admin/months/${year}/${month}/status`);
+export async function getMonthStatus(year: number, month: number): Promise<MonthLockStatus> {
+  const response = await axiosClient.get<MonthLockStatus>(`/admin/months/${year}/${month}/status`);
   return response.data;
 }
 
-export async function lockMonth(year, month) {
-  const response = await axiosClient.post(`/admin/months/${year}/${month}/lock`);
+export async function lockMonth(year: number, month: number): Promise<MonthLockListItem> {
+  const response = await axiosClient.post<MonthLockListItem>(`/admin/months/${year}/${month}/lock`);
   return response.data;
 }
 
-export async function unlockMonth(year, month, reason) {
-  const response = await axiosClient.post(`/admin/months/${year}/${month}/unlock`, { reason });
+export async function unlockMonth(year: number, month: number, reason: string): Promise<MonthLockListItem> {
+  const response = await axiosClient.post<MonthLockListItem>(`/admin/months/${year}/${month}/unlock`, { reason });
   return response.data;
 }
-

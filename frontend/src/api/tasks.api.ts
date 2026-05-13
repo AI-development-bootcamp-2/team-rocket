@@ -1,32 +1,36 @@
-// @ts-nocheck
 import axiosClient from './axiosClient';
+import type { TaskRecord } from './contracts';
 
-export async function listTasks({ projectId, status } = {}) {
+interface ListTasksParams {
+  projectId?: number;
+  status?: string;
+}
+
+export async function listTasks({ projectId, status }: ListTasksParams = {}): Promise<TaskRecord[]> {
   const params = new URLSearchParams();
   if (projectId != null) params.set('project_id', String(projectId));
   if (status != null) params.set('status', String(status));
   const query = params.toString();
-  const response = await axiosClient.get(`/tasks${query ? `?${query}` : ''}`);
+  const response = await axiosClient.get<TaskRecord[]>(`/tasks${query ? `?${query}` : ''}`);
   return response.data;
 }
 
-export async function getTask(id) {
-  const response = await axiosClient.get(`/tasks/${id}`);
+export async function getTask(id: number): Promise<TaskRecord> {
+  const response = await axiosClient.get<TaskRecord>(`/tasks/${id}`);
   return response.data;
 }
 
-export async function createTask(payload) {
-  const response = await axiosClient.post('/tasks', payload);
+export async function createTask(payload: Record<string, unknown>): Promise<TaskRecord> {
+  const response = await axiosClient.post<TaskRecord>('/tasks', payload);
   return response.data;
 }
 
-export async function updateTask(id, payload) {
-  const response = await axiosClient.put(`/tasks/${id}`, payload);
+export async function updateTask(id: number, payload: Record<string, unknown>): Promise<TaskRecord> {
+  const response = await axiosClient.put<TaskRecord>(`/tasks/${id}`, payload);
   return response.data;
 }
 
-export async function archiveTask(id) {
-  const response = await axiosClient.delete(`/tasks/${id}`);
+export async function archiveTask(id: number): Promise<TaskRecord> {
+  const response = await axiosClient.delete<TaskRecord>(`/tasks/${id}`);
   return response.data;
 }
-
