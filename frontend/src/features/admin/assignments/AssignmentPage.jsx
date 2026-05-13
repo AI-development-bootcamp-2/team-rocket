@@ -75,14 +75,16 @@ export function AssignmentPage() {
 
   const loadMeta = useCallback(async () => {
     const promises = [
-      listProjects(),
+      listProjects({ isActive: true }),
       listTasks({ status: 'open' }),
       listClients({}),
     ];
     if (isAdmin || canMutate) promises.push(listUsers({ isActive: 'active' }));
     const [projectsRes, tasksRes, clientsRes, usersRes] = await Promise.all(promises);
-    setProjects(projectsRes.data ?? []);
-    setTasks(tasksRes.data ?? []);
+    const activeProjects = projectsRes.data ?? [];
+    const activeProjectIds = new Set(activeProjects.map((p) => p.id));
+    setProjects(activeProjects);
+    setTasks((tasksRes.data ?? []).filter((t) => activeProjectIds.has(t.projectId)));
     setClients(clientsRes.data ?? []);
     if (usersRes) setUsers(usersRes.data ?? []);
   }, [isAdmin, canMutate]);
@@ -168,88 +170,103 @@ export function AssignmentPage() {
     setDialogLoading(true);
     try {
       await updateClient(dialog.entity.id, form);
-      showToast('פרטי הלקוח עודכנו בהצלחה');
-      setDialog(null);
-      await loadMeta();
     } catch {
       showToast('שגיאה בעדכון הלקוח', 'error');
-    } finally {
       setDialogLoading(false);
+      return;
     }
+    showToast('פרטי הלקוח עודכנו בהצלחה');
+    setDialog(null);
+    setDialogLoading(false);
+    await loadMeta().catch(() => {});
   }
 
   async function handleSaveProject(form) {
     setDialogLoading(true);
     try {
       await updateProject(dialog.entity.id, form);
-      showToast('פרטי הפרויקט עודכנו בהצלחה');
-      setDialog(null);
-      await loadMeta();
     } catch {
       showToast('שגיאה בעדכון הפרויקט', 'error');
-    } finally {
       setDialogLoading(false);
+      return;
     }
+    showToast('פרטי הפרויקט עודכנו בהצלחה');
+    setDialog(null);
+    setDialogLoading(false);
+    await loadMeta().catch(() => {});
   }
 
   async function handleSaveTask(form) {
     setDialogLoading(true);
     try {
       await updateTask(dialog.entity.id, form);
-      showToast('פרטי המשימה עודכנו בהצלחה');
-      setDialog(null);
-      await loadMeta();
-      await loadAssignments();
     } catch {
       showToast('שגיאה בעדכון המשימה', 'error');
-    } finally {
       setDialogLoading(false);
+      return;
     }
+    showToast('פרטי המשימה עודכנו בהצלחה');
+    setDialog(null);
+    setDialogLoading(false);
+    await loadMeta().catch(() => {});
+    await loadAssignments();
   }
 
   async function handleConfirmArchiveClient() {
     setDialogLoading(true);
+    const id = dialog.entity.id;
     try {
-      await archiveClient(dialog.entity.id);
-      showToast('הלקוח הועבר לארכיון בהצלחה');
-      setDialog(null);
-      await loadMeta();
-      await loadAssignments();
+      await archiveClient(id);
     } catch {
       showToast('שגיאה בהעברת הלקוח לארכיון', 'error');
-    } finally {
       setDialogLoading(false);
+      return;
     }
+    setClients((prev) => prev.filter((c) => c.id !== id));
+    setProjects((prev) => prev.filter((p) => p.clientId !== id));
+    setTasks((prev) => prev.filter((t) => t.clientId !== id));
+    showToast('הלקוח הועבר לארכיון בהצלחה');
+    setDialog(null);
+    setDialogLoading(false);
+    await loadMeta().catch(() => {});
+    await loadAssignments();
   }
 
   async function handleConfirmArchiveProject() {
     setDialogLoading(true);
+    const id = dialog.entity.id;
     try {
-      await archiveProject(dialog.entity.id);
-      showToast('הפרויקט הועבר לארכיון בהצלחה');
-      setDialog(null);
-      await loadMeta();
-      await loadAssignments();
+      await archiveProject(id);
     } catch {
       showToast('שגיאה בהעברת הפרויקט לארכיון', 'error');
-    } finally {
       setDialogLoading(false);
+      return;
     }
+    setProjects((prev) => prev.filter((p) => p.id !== id));
+    setTasks((prev) => prev.filter((t) => t.projectId !== id));
+    showToast('הפרויקט הועבר לארכיון בהצלחה');
+    setDialog(null);
+    setDialogLoading(false);
+    await loadMeta().catch(() => {});
+    await loadAssignments();
   }
 
   async function handleConfirmCloseTask() {
     setDialogLoading(true);
+    const id = dialog.entity.id;
     try {
-      await archiveTask(dialog.entity.id);
-      showToast('המשימה נסגרה בהצלחה');
-      setDialog(null);
-      await loadMeta();
-      await loadAssignments();
+      await archiveTask(id);
     } catch {
       showToast('שגיאה בסגירת המשימה', 'error');
-    } finally {
       setDialogLoading(false);
+      return;
     }
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+    showToast('המשימה נסגרה בהצלחה');
+    setDialog(null);
+    setDialogLoading(false);
+    await loadMeta().catch(() => {});
+    await loadAssignments();
   }
 
   async function handleCreate({ task_id, user_ids }) {

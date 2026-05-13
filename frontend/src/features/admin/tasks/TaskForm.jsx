@@ -38,6 +38,11 @@ export function TaskForm({ id, initialValues, projects, onSubmit, mode, onNameCh
         <option value="" disabled>
           בחר פרויקט
         </option>
+        {mode === 'edit' && v.projectId != null && !projects.some((p) => p.id === v.projectId) ? (
+          <option value={String(v.projectId)} disabled>
+            {v.projectName ?? `פרויקט #${v.projectId}`} (לא פעיל)
+          </option>
+        ) : null}
         {projects.map((project) => (
           <option key={project.id} value={String(project.id)}>
             {project.clientName ? `${project.clientName} / ${project.name}` : project.name}

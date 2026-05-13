@@ -48,14 +48,6 @@ export function TaskListPage() {
     setToast(createToast(message, tone));
   };
 
-  useEffect(() => {
-    listProjects()
-      .then((response) => {
-        setProjects(response.data ?? []);
-      })
-      .catch(() => {});
-  }, []);
-
   const loadTasks = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -64,8 +56,12 @@ export function TaskListPage() {
       const params = {};
       if (projectFilter !== 'all') params.projectId = Number(projectFilter);
       if (statusFilter !== 'all') params.status = statusFilter;
-      const response = await listTasks(params);
+      const [response, projectsRes] = await Promise.all([
+        listTasks(params),
+        listProjects({ isActive: true }),
+      ]);
       setTasks(response.data ?? []);
+      setProjects(projectsRes.data ?? []);
     } catch (err) {
       const status = getStatus(err);
       if (status === 401) setError('פג תוקף ההתחברות. צריך להיכנס שוב.');
@@ -99,17 +95,22 @@ export function TaskListPage() {
   async function handleUpdate(payload) {
     setDialogLoading(true);
     try {
-      await updateTask(dialog.task.id, payload);
+      const result = await updateTask(dialog.task.id, payload);
+      const updated = result?.data;
+      if (updated) {
+        setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      }
       showToast('המשימה עודכנה בהצלחה');
       setDialog(null);
-      await loadTasks();
     } catch (error) {
       if (shouldShowLocalErrorToast(error)) {
         showToast('שגיאה בעדכון המשימה', 'error');
       }
-    } finally {
       setDialogLoading(false);
+      return;
     }
+    setDialogLoading(false);
+    void loadTasks();
   }
 
   async function handleArchive() {
