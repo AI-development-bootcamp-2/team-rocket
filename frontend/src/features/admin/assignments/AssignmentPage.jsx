@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   createAssignment,
   getMyPermissions,
@@ -75,7 +75,7 @@ export function AssignmentPage() {
 
   const loadMeta = useCallback(async () => {
     const promises = [
-      listProjects({ isActive: true }),
+      listProjects(),
       listTasks({ status: 'open' }),
       listClients({}),
     ];
@@ -269,6 +269,11 @@ export function AssignmentPage() {
     }
   }
 
+  const visibleAssignments = useMemo(
+    () => assignments.filter((a) => a.task?.status === 'open'),
+    [assignments],
+  );
+
   if (error && !loading) {
     return (
       <AdminShell title="שיוך עובד למשימה" subtitle="כאן תוכל לשייך עובדים למשימות מתוך פרויקטים שונים של לקוחות.">
@@ -313,7 +318,7 @@ export function AssignmentPage() {
       }
     >
 
-      {!loading && assignments.length === 0 ? (
+      {!loading && visibleAssignments.length === 0 ? (
         <EmptyState
           title="אין שיוכים"
           description="לא נמצאו שיוכים במערכת."
@@ -322,7 +327,7 @@ export function AssignmentPage() {
         />
       ) : (
         <AssignmentTable
-          assignments={assignments}
+          assignments={visibleAssignments}
           tasks={tasks}
           loading={loading}
           canMutate={canMutate}

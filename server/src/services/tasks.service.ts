@@ -143,6 +143,7 @@ export async function createTask(input: TaskCreateInput): Promise<TaskRow> {
 
 export interface TaskUpdateInput {
   name?: string;
+  projectId?: number;
   status?: 'open' | 'closed';
   startDate?: string | null;
   endDate?: string | null;
@@ -156,7 +157,13 @@ export async function updateTask(
   const before = await getTaskById(taskId);
   if (!before) return null;
 
+  if (input.projectId !== undefined) {
+    const projectExists = await db('projects').where('id', input.projectId).first();
+    if (!projectExists) throw new AppError('project_id does not exist', 400);
+  }
+
   const patch: Record<string, unknown> = {};
+  if (input.projectId !== undefined) patch.project_id = input.projectId;
   if (input.name !== undefined) patch.name = input.name;
   if (input.status !== undefined) patch.status = input.status;
   if ('startDate' in input) patch.start_date = input.startDate ?? null;

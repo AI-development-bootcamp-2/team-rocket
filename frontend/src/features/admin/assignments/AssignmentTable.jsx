@@ -59,16 +59,35 @@ function Pagination({ page, totalPages, onChange }) {
 
 function useDropdown() {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
+  const wrapRef = useRef(null);
+  const menuRef = useRef(null);
+
   useEffect(() => {
     if (!open) return;
     function onDown(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (!wrapRef.current?.contains(e.target) && !menuRef.current?.contains(e.target)) {
+        setOpen(false);
+      }
     }
+    function onScroll() { setOpen(false); }
     document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
+    window.addEventListener('scroll', onScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      window.removeEventListener('scroll', onScroll, true);
+    };
   }, [open]);
-  return { open, setOpen, ref };
+
+  function toggle(e) {
+    if (!open) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+    }
+    setOpen((v) => !v);
+  }
+
+  return { open, setOpen, wrapRef, menuRef, pos, toggle };
 }
 
 function RowActionMenu({ row, onEditClient, onEditProject, onEditTask, onEditAssignment, onArchiveClient, onArchiveProject, onArchiveTask }) {
@@ -78,11 +97,11 @@ function RowActionMenu({ row, onEditClient, onEditProject, onEditTask, onEditAss
   return (
     <div className="assignment-row-actions">
       {/* Edit dropdown */}
-      <div className="assignment-edit-wrap" ref={edit.ref}>
+      <div className="assignment-edit-wrap" ref={edit.wrapRef}>
         <button
           type="button"
           className="assignment-action-btn assignment-action-btn--edit"
-          onClick={() => edit.setOpen((v) => !v)}
+          onClick={edit.toggle}
           title="עריכה"
           aria-label="עריכת שיוך"
           aria-expanded={edit.open}
@@ -92,7 +111,8 @@ function RowActionMenu({ row, onEditClient, onEditProject, onEditTask, onEditAss
           </svg>
         </button>
         {edit.open && (
-          <div className="assignment-dd-menu" role="menu">
+          <div className="assignment-dd-menu" ref={edit.menuRef} role="menu"
+            style={{ position: 'fixed', top: edit.pos.top, right: edit.pos.right }}>
             <button type="button" className="assignment-dd-item" role="menuitem"
               onClick={() => { edit.setOpen(false); onEditClient(row.taskId); }}>
               עריכת לקוח
@@ -114,11 +134,11 @@ function RowActionMenu({ row, onEditClient, onEditProject, onEditTask, onEditAss
       </div>
 
       {/* Delete dropdown */}
-      <div className="assignment-edit-wrap" ref={del.ref}>
+      <div className="assignment-edit-wrap" ref={del.wrapRef}>
         <button
           type="button"
           className="assignment-action-btn assignment-action-btn--delete"
-          onClick={() => del.setOpen((v) => !v)}
+          onClick={del.toggle}
           title="מחיקה"
           aria-label="מחיקת שיוך"
           aria-expanded={del.open}
@@ -128,7 +148,8 @@ function RowActionMenu({ row, onEditClient, onEditProject, onEditTask, onEditAss
           </svg>
         </button>
         {del.open && (
-          <div className="assignment-dd-menu assignment-dd-menu--delete" role="menu">
+          <div className="assignment-dd-menu assignment-dd-menu--delete" ref={del.menuRef} role="menu"
+            style={{ position: 'fixed', top: del.pos.top, right: del.pos.right }}>
             <button type="button" className="assignment-dd-item assignment-dd-item--delete" role="menuitem"
               onClick={() => { del.setOpen(false); onArchiveClient(row.taskId); }}>
               מחק לקוח

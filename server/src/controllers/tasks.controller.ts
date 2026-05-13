@@ -165,6 +165,14 @@ export async function updateTaskHandler(req: Request, res: Response): Promise<vo
   const body = req.body as Record<string, unknown>;
   const input: Parameters<typeof updateTask>[1] = {};
 
+  if (body.project_id !== undefined) {
+    const projectId = Number(body.project_id);
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      throw new AppError('project_id must be a positive integer', 400);
+    }
+    input.projectId = projectId;
+  }
+
   if (body.name !== undefined) {
     input.name = parseOptionalName(body.name);
   }

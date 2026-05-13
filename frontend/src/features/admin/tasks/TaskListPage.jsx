@@ -49,7 +49,7 @@ export function TaskListPage() {
   };
 
   useEffect(() => {
-    listProjects({ isActive: true })
+    listProjects()
       .then((response) => {
         setProjects(response.data ?? []);
       })
@@ -99,9 +99,7 @@ export function TaskListPage() {
   async function handleUpdate(payload) {
     setDialogLoading(true);
     try {
-      const updatePayload = { ...payload };
-      delete updatePayload.project_id;
-      await updateTask(dialog.task.id, updatePayload);
+      await updateTask(dialog.task.id, payload);
       showToast('המשימה עודכנה בהצלחה');
       setDialog(null);
       await loadTasks();
@@ -116,11 +114,12 @@ export function TaskListPage() {
 
   async function handleArchive() {
     setDialogLoading(true);
+    const taskId = dialog.task.id;
     try {
-      await archiveTask(dialog.task.id);
+      await archiveTask(taskId);
       showToast('המשימה נסגרה בהצלחה');
+      setTasks(prev => prev.filter(t => t.id !== taskId));
       setDialog(null);
-      await loadTasks();
     } catch (error) {
       if (shouldShowLocalErrorToast(error)) {
         showToast('שגיאה בסגירת המשימה', 'error');
