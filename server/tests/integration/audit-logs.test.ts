@@ -172,7 +172,7 @@ async function login(email: string, password: string): Promise<string> {
 }
 
 // Short pause for fire-and-forget audit inserts to land before we query.
-const waitForAudit = () => new Promise((r) => setTimeout(r, 60));
+const waitForAudit = () => new Promise((r) => setTimeout(r, 300));
 
 // ── Test lifecycle ────────────────────────────────────────────────────────────
 
