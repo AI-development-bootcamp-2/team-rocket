@@ -10,12 +10,21 @@
   background: #ffffff;
   border-bottom: 1px solid #ececec;
   display: flex;
+  align-items: center;
+  padding: 0;
+  z-index: 100;
+}
+
+.headerInner {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 46px;
+  display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 0 32px;
   gap: 20px;
-  z-index: 100;
 }
 
 /* Right (RTL start): Logo */
@@ -32,7 +41,15 @@
   object-fit: contain;
 }
 
-/* Center: Action buttons */
+/* Left (RTL end): Action buttons + logout grouped */
+.headerEnd {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Action buttons */
 .headerCenter {
   display: flex;
   flex-direction: row;
@@ -76,7 +93,7 @@
   text-align: right;
   color: #ffffff;
   white-space: nowrap;
-  order: 0;
+  order: 1;
 }
 
 .timerBtnIcon {
@@ -89,7 +106,7 @@
   background: linear-gradient(132.32deg, #FF92B1 13.16%, #E34170 87.63%);
   border-radius: 50%;
   flex-shrink: 0;
-  order: 1;
+  order: 0;
 }
 
 /* Running timer widget */
@@ -172,7 +189,7 @@
   text-align: right;
   color: #ffffff;
   white-space: nowrap;
-  order: 0;
+  order: 1;
 }
 
 .manualBtnIcon {
@@ -185,7 +202,7 @@
   background: linear-gradient(94.76deg, #FF9446 0.6%, #FFB741 98.94%);
   border-radius: 50%;
   flex-shrink: 0;
-  order: 1;
+  order: 0;
 }
 
 /* Left (RTL end): Logout button */
@@ -210,12 +227,11 @@
   color: #1d4ed8;
 }
 
-.logoutArrow {
+.logoutIcon {
   display: inline-flex;
   width: 20px;
   height: 20px;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
   flex-shrink: 0;
 }

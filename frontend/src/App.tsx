@@ -11,6 +11,7 @@ import { ClientListPage } from './features/admin/clients/ClientListPage';
 import { ProjectListPage } from './features/admin/projects/ProjectListPage';
 import { TaskListPage } from './features/admin/tasks/TaskListPage';
 import { AssignmentPage } from './features/admin/assignments/AssignmentPage';
+import { AuditLogPage } from './features/admin/audit-log/AuditLogPage';
 import { AdminDashboard } from './features/admin/dashboard/AdminDashboard';
 import { AdminReportsPage as AdminMonthlyReportsPage } from './features/admin/dashboard/AdminReportsPage';
 import { MonthLockPage } from './features/admin/month-lock/MonthLockPage';
@@ -152,6 +153,12 @@ function AdminAssignmentsPage() {
   return <AssignmentPage />;
 }
 
+function AdminAuditPage() {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <AccessDeniedPage />;
+  return <AuditLogPage />;
+}
+
 function AdminMonthLockPage() {
   const { user } = useAuth();
   if (user?.role !== 'admin') return <AccessDeniedPage />;
@@ -236,6 +243,14 @@ function App() {
             }
           />
           <Route
+            path="/admin/audit"
+            element={
+              <ProtectedRoute>
+                <AdminAuditPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/reports"
             element={
               <ProtectedRoute>
@@ -262,4 +277,3 @@ function App() {
 }
 
 export default App;
-

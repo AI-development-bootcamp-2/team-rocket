@@ -43,44 +43,41 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 8px;
+  margin-top: 20px;
+  margin-bottom: -10px;
 }
 
 .monthNavSection {
+  box-sizing: border-box;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  flex-shrink: 0;
+  justify-content: space-between;
+  padding: 4px 16px 8px;
+  gap: 8px;
   width: 192px;
   height: 44px;
-  padding: 4px 16px 8px;
   background: #ffffff;
-  border: 1px solid #ececec;
   border-radius: 1000px;
-  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .monthNavArrow {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  color: #6b7280;
-  font-size: 16px;
-  border-radius: 50%;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  background: none;
+  border: none;
   padding: 0;
+  cursor: pointer;
+  color: #141e3e;
   flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.15s;
 }
 
 .monthNavArrow:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
+  opacity: 1;
 }
 
 .currentMonthLabel {
@@ -439,11 +436,14 @@
   padding: 0;
   min-height: 80px;
   display: grid;
-  grid-template-columns: 1.12fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1.12fr;
   align-items: stretch;
   overflow: hidden;
-  cursor: pointer;
   text-align: right;
+}
+
+.monthlySummaryStrip > *:first-child {
+  border-inline-start: none;
 }
 
 .monthlySummaryLink,
@@ -453,17 +453,25 @@
   flex-direction: column;
   justify-content: center;
   padding: 16px 32px;
-}
-
-.monthlySummaryMetric {
   border-inline-start: 1px solid #e9edf5;
 }
 
 .monthlySummaryLink {
+  align-items: flex-end;
+  background: none;
+  border-top: none;
+  border-bottom: none;
+  border-inline-end: none;
+  cursor: pointer;
   color: #2368f5;
   font-size: 16px;
   font-weight: 700;
-  align-items: flex-start;
+  font-family: inherit;
+}
+
+.monthlySummaryLink:hover {
+  color: #1a54d4;
+  text-decoration: underline;
 }
 
 .monthlySummaryValue {
@@ -542,15 +550,53 @@
   cursor: pointer;
 }
 
-.summaryDrawerMonth {
-  align-self: flex-end;
-  padding: 8px 14px;
+.summaryDrawerMonthNav {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
   border-radius: 999px;
   background: #ffffff;
   border: 1px solid #e5eaf4;
+}
+
+.summaryDrawerMonthLabel {
   color: #20283d;
   font-size: 15px;
   font-weight: 700;
+  min-width: 72px;
+  text-align: center;
+}
+
+.summaryDrawerMonthArrow {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #ffffff;
+  color: #6b7280;
+  font-size: 15px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.summaryDrawerMonthArrow:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.arrowIconLeft {
+  transform: matrix(-1, 0, 0, 1, 0, 0);
+}
+
+.arrowIconRight {
+  transform: none;
 }
 
 .summaryDrawerCard {
@@ -570,12 +616,17 @@
   gap: 12px;
 }
 
+.summaryDrawerCardTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .summaryDrawerCardTitle {
   margin: 0;
   font-size: 21px;
   font-weight: 800;
   color: #141e3e;
-  flex: 1;
   text-align: right;
 }
 
@@ -640,6 +691,7 @@
   color: #67738b;
 }
 
+
 .summaryProgressMain {
   font-size: 17px;
   color: #1e293b;
@@ -692,9 +744,16 @@
   border-radius: 16px;
   padding: 16px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-direction: row;
   align-items: flex-start;
+  justify-content: space-between;
+}
+
+.summaryMiniContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
 }
 
 .summaryMiniIcon {
@@ -731,13 +790,11 @@
   line-height: 1;
   font-weight: 800;
   color: #141e3e;
-  align-self: flex-end;
 }
 
 .summaryMiniLabel {
   font-size: 16px;
   color: #67738b;
-  align-self: flex-end;
 }
 
 .summaryBreakdown {
