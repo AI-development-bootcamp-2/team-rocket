@@ -375,19 +375,17 @@ describe('GET /audit-logs — pagination', () => {
     const admin = await seedUser({ role: 'admin', email: 'admin@test.com' });
     const token = await login(admin.email, admin.plainPassword);
 
-    // Create 6 audit logs for pagination test
+    // Use CLIENT/CREATE so the fire-and-forget USER/LOGIN from login() cannot
+    // land between page queries and shift results, causing phantom duplicates.
     for (let i = 0; i < 6; i++) {
-      await seedAuditLog({ entityType: 'USER', action: 'LOGIN' });
+      await seedAuditLog({ entityType: 'CLIENT', action: 'CREATE' });
     }
 
-    // Wait for audit log inserts to complete
-    await waitForAudit();
-
     const p1 = await request(app)
-      .get('/audit-logs?limit=3&page=1')
+      .get('/audit-logs?limit=3&page=1&entity_type=CLIENT&action=CREATE')
       .set('Authorization', `Bearer ${token}`);
     const p2 = await request(app)
-      .get('/audit-logs?limit=3&page=2')
+      .get('/audit-logs?limit=3&page=2&entity_type=CLIENT&action=CREATE')
       .set('Authorization', `Bearer ${token}`);
 
     expect(p1.status).toBe(200);
