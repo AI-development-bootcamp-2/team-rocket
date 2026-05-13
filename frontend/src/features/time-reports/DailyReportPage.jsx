@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getDailySummary, getDropdownData, getMonthlySummary, listTimeEntries } from '../../api/timeEntries.api';
-import { getMonthStatus } from '../../api/monthLocks.api.js';
 import { AppHeader } from '../../components/AppHeader';
 import { ExistingEntriesList } from './ExistingEntriesList';
 import { ReportForm } from './ReportForm';
@@ -80,7 +79,6 @@ export function DailyReportPage() {
   const [formDirty, setFormDirty] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [monthlySummary, setMonthlySummary] = useState(null);
-  const [isMonthLocked, setIsMonthLocked] = useState(false);
 
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
@@ -357,7 +355,7 @@ export function DailyReportPage() {
           <div className={styles.summaryAlert}>
             <span className={styles.summaryAlertIcon}>!</span>
             <span>
-              חסרות לך <b>{monthlySummary?.missingHoursToDate ?? '—'} שעות</b> לפי התקן עד היום
+              חסרות לך <b>{monthlySummary?.missingHoursToDate ?? '—'} שעות</b> להשלמת החודש
             </span>
           </div>
         </section>

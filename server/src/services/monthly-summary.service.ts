@@ -209,31 +209,11 @@ export async function computeDaysWithoutReport(
   year: number,
   month: number,
 ): Promise<number> {
-  const now = new Date();
-  const todayYear = now.getUTCFullYear();
-  const todayMonth = now.getUTCMonth() + 1;
-  const todayDay = now.getUTCDate();
-
-  let cutoffDate: string;
-  if (todayYear < year || (todayYear === year && todayMonth < month)) {
-    return 0; // future month — no days have passed yet
-  } else if (todayYear > year || (todayYear === year && todayMonth > month)) {
-    cutoffDate = dateStr(year, month, totalDaysInMonth(year, month));
-  } else {
-    cutoffDate = dateStr(year, month, todayDay);
-  }
-
   const holidays = await fetchHolidaySet(year, month);
-  const allWorkingDayDates = listWorkingDays(year, month, holidays);
-  const workingDayDates = allWorkingDayDates.filter((d) => d <= cutoffDate);
+  const workingDayDates = listWorkingDays(year, month, holidays);
   const datesWithEntries = await fetchDatesWithEntries(userId, year, month);
   const fullAbsenceDates = await fetchFullAbsenceDates(userId, year, month, workingDayDates);
-  const daysWithoutReport = buildDaysWithoutReport(
-    workingDayDates,
-    datesWithEntries,
-    fullAbsenceDates,
-  );
-  return daysWithoutReport;
+  return buildDaysWithoutReport(workingDayDates, datesWithEntries, fullAbsenceDates);
 }
 
 // Pure: absence hours for the month — full-day × dailyStandard, partial × dailyStandard/2
@@ -524,7 +504,7 @@ export async function getMonthlySummary(params: {
 
   const dailyStandard = computeDailyStandard(user);
   const [quotaHours, reportedHours] = await Promise.all([
-    computeExpectedHoursToDate(userId, year, month, dailyStandard),
+    computeQuotaHours(userId, year, month, dailyStandard),
     computeReportedHours(userId, year, month),
   ]);
   const completionPercentage = quotaHours > 0 ? Math.floor((reportedHours / quotaHours) * 100) : 0;
