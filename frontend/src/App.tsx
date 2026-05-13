@@ -158,6 +158,7 @@ function AdminAuditPage() {
   const { user } = useAuth();
   if (user?.role !== 'admin') return <AccessDeniedPage />;
   return <AuditLogPage />;
+}
 
 function AdminMonthLockPage() {
   const { user } = useAuth();
@@ -249,7 +250,10 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminAuditPage />
-
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/reports"
             element={
               <ProtectedRoute>
