@@ -87,6 +87,7 @@ export function AppHeader({ onManualReport, onTimerToggle }) {
 
   return (
     <header className={styles.header} dir="rtl" lang="he">
+      <div className={styles.headerInner}>
       {/* Right (RTL start): Logo */}
       <div className={styles.headerBrand}>
         <img
@@ -144,9 +145,16 @@ export function AppHeader({ onManualReport, onTimerToggle }) {
         </div>
 
         <button className={styles.logoutBtn} onClick={logout} type="button">
+          <span className={styles.logoutIcon} aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17.4395 14.62L19.9995 12.06L17.4395 9.5" stroke="#0C69FF" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M9.75977 12.0601H19.9298" stroke="#0C69FF" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M11.7598 20C7.33977 20 3.75977 17 3.75977 12C3.75977 7 7.33977 4 11.7598 4" stroke="#0C69FF" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </span>
           יציאה
-          <span className={styles.logoutArrow} aria-hidden="true">→</span>
         </button>
+      </div>
       </div>
     </header>
   );

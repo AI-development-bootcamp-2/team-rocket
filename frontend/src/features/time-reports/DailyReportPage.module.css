@@ -29,44 +29,41 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 8px;
+  margin-top: 20px;
+  margin-bottom: -10px;
 }
 
 .monthNavSection {
+  box-sizing: border-box;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  flex-shrink: 0;
+  justify-content: space-between;
+  padding: 4px 16px 8px;
+  gap: 8px;
   width: 192px;
   height: 44px;
-  padding: 4px 16px 8px;
   background: #ffffff;
-  border: 1px solid #ececec;
   border-radius: 1000px;
-  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .monthNavArrow {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  color: #6b7280;
-  font-size: 16px;
-  border-radius: 50%;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  background: none;
+  border: none;
   padding: 0;
+  cursor: pointer;
+  color: #141e3e;
   flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.15s;
 }
 
 .monthNavArrow:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
+  opacity: 1;
 }
 
 .currentMonthLabel {
@@ -446,7 +443,7 @@
 }
 
 .monthlySummaryLink {
-  align-items: center;
+  align-items: flex-end;
   background: none;
   border-top: none;
   border-bottom: none;

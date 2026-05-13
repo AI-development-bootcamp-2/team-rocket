@@ -224,6 +224,32 @@ export function DailyReportPage() {
             <h1 className={styles.pageTitle}>דיווח שעות</h1>
             <p className={styles.pageSubtitle}>רשימת הדיווחים היומיים - לחודש {currentMonthLabel} {currentYearLabel}</p>
           </div>
+
+          <div className={styles.monthNavSection}>
+            <button
+              type="button"
+              className={styles.monthNavArrow}
+              aria-label="חודש קודם"
+              onClick={() => {
+                const [year, month] = currentMonth.split('-').map(Number);
+                handleMonthChange(new Date(year, month - 2, 1));
+              }}
+            >
+              <ArrowForwardIosIcon />
+            </button>
+            <span className={styles.currentMonthLabel}>{currentMonthLabel}</span>
+            <button
+              type="button"
+              className={styles.monthNavArrow}
+              aria-label="חודש הבא"
+              onClick={() => {
+                const [year, month] = currentMonth.split('-').map(Number);
+                handleMonthChange(new Date(year, month, 1));
+              }}
+            >
+              <ArrowForwardIosIcon className={styles.arrowIconLeft} />
+            </button>
+          </div>
         </div>
 
         <div className={styles.monthlySummaryStrip}>
