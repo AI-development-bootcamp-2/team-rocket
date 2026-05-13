@@ -39,3 +39,8 @@ export async function deleteTimeEntry(id) {
   await axiosClient.delete(`/time-entries/${id}`);
   return null;
 }
+
+export async function getMonthlySummary({ year, month } = {}) {
+  const response = await axiosClient.get('/monthly-summary', { params: { year, month } });
+  return response.data;
+}
