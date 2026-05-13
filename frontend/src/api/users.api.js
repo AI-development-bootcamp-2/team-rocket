@@ -1,6 +1,6 @@
 import axiosClient from './axiosClient';
 
-export async function listUsers({ search, role, isActive }) {
+export async function listUsers({ search = '', role = 'all', isActive = 'all' } = {}) {
   const params = new URLSearchParams();
 
   if (search) params.set('search', search);
