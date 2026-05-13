@@ -1,6 +1,5 @@
 import { randomUUID } from 'crypto';
 import { Request, Response, RequestHandler, CookieOptions } from 'express';
-import config from '../config';
 import { AppError } from '../middleware/error.middleware';
 import type { AuthenticatedUser } from '../middleware/auth.middleware';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt';
