@@ -207,7 +207,8 @@ button:disabled {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 24px;
+  gap: 40px;
+  min-height: 48px;
   margin-bottom: 24px;
 }
 
@@ -1178,16 +1179,23 @@ button:disabled {
 
 /* ── Assignment page ──────────────────────────────────── */
 
+.assignment-header-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+  height: 48px;
+}
+
 .assignment-filters {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 20px;
 }
 
 .assignment-search {
   position: relative;
-  width: 240px;
+  width: 370px;
 }
 
 .assignment-search__icon {

@@ -168,29 +168,31 @@ export function AssignmentPage() {
       title="שיוך עובד למשימה"
       subtitle="כאן תוכל לשייך עובדים למשימות מתוך פרויקטים שונים של לקוחות."
       actions={
-        canMutate ? (
-          <Button onClick={handleOpenCreate}>
-            יצירה
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              style={{ marginInlineStart: 6 }}
-              aria-hidden="true"
-            >
-              <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Button>
-        ) : null
+        <div className="assignment-header-actions">
+          <AssignmentFilters
+            search={search}
+            onSearchChange={setSearch}
+            isScopedUser={!isAdmin && canMutate}
+          />
+          {canMutate && (
+            <Button onClick={handleOpenCreate}>
+              יצירה
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                style={{ marginInlineStart: 6 }}
+                aria-hidden="true"
+              >
+                <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </Button>
+          )}
+        </div>
       }
     >
-      <AssignmentFilters
-        search={search}
-        onSearchChange={setSearch}
-        isScopedUser={!isAdmin && canMutate}
-      />
 
       {!loading && assignments.length === 0 ? (
         <EmptyState
