@@ -175,20 +175,7 @@ export function AssignmentPage() {
             isScopedUser={!isAdmin && canMutate}
           />
           {canMutate && (
-            <Button onClick={handleOpenCreate}>
-              יצירה
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 12 12"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                style={{ marginInlineStart: 6 }}
-                aria-hidden="true"
-              >
-                <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Button>
+            <Button onClick={handleOpenCreate} style={{ width: 144 }}>יצירה</Button>
           )}
         </div>
       }

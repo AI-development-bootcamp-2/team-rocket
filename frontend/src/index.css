@@ -200,7 +200,7 @@ button:disabled {
 .admin-main {
   flex: 1 1 auto;
   min-width: 0;
-  padding: 24px 32px 40px;
+  padding: 48px 50px 40px;
 }
 
 .admin-page-header {
@@ -209,7 +209,7 @@ button:disabled {
   justify-content: space-between;
   gap: 40px;
   min-height: 48px;
-  margin-bottom: 24px;
+  margin-bottom: 40px;
 }
 
 .admin-page-header__title {
