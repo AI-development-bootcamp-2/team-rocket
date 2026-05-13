@@ -139,10 +139,15 @@ export async function getStatus(year: number, month: number): Promise<MonthStatu
 
 // ── listMonths ────────────────────────────────────────────────────────────────
 
-export async function listMonths(): Promise<MonthLockRow[]> {
-  return db<MonthLockRow>('month_locks')
-    .orderBy('year', 'desc')
-    .orderBy('month', 'desc');
+export async function listMonths(): Promise<(MonthLockRow & { locked_by_name: string | null })[]> {
+  return db('month_locks')
+    .leftJoin('users', 'month_locks.locked_by', 'users.id')
+    .select(
+      'month_locks.*',
+      db.raw("CONCAT(users.first_name, ' ', users.last_name) as locked_by_name"),
+    )
+    .orderBy('month_locks.year', 'desc')
+    .orderBy('month_locks.month', 'desc');
 }
 
 // ── notification fan-out (private) ────────────────────────────────────────────

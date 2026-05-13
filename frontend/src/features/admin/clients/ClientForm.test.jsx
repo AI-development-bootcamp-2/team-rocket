@@ -42,8 +42,7 @@ describe('ClientForm', () => {
       const nameInput = screen.getByPlaceholderText('מה שם הלקוח');
       fireEvent.change(nameInput, { target: { value: 'Test Client' } });
 
-      const form = document.querySelector('form');
-      fireEvent.submit(form);
+      fireEvent.submit(nameInput.form);
 
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -144,8 +143,7 @@ describe('ClientForm', () => {
       const checkbox = screen.getByRole('checkbox');
       fireEvent.click(checkbox);
 
-      const form = document.querySelector('form');
-      fireEvent.submit(form);
+      fireEvent.submit(checkbox.form);
 
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({

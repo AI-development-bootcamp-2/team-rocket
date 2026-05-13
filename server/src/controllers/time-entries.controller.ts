@@ -58,14 +58,23 @@ export async function getTimeEntriesHandler(req: Request, res: Response): Promis
     week = val;
   }
 
-  // --- month filter (YYYY-MM) ---
+  // --- month filter: YYYY-MM string OR year+month integers ---
   let month: string | undefined;
   if (req.query.month != null && req.query.month !== '') {
     const val = String(req.query.month);
-    if (!/^\d{4}-\d{2}$/.test(val)) {
-      throw new AppError('month must be in YYYY-MM format', 400);
+    if (/^\d{4}-\d{2}$/.test(val)) {
+      month = val;
+    } else {
+      const monthInt = Number(val);
+      if (!Number.isInteger(monthInt) || monthInt < 1 || monthInt > 12) {
+        throw new AppError('month must be in YYYY-MM format or an integer between 1 and 12', 400);
+      }
+      const yearInt = Number(String(req.query.year ?? ''));
+      if (!Number.isInteger(yearInt) || yearInt < 1000 || yearInt > 9999) {
+        throw new AppError('year must be a 4-digit integer when month is provided as an integer', 400);
+      }
+      month = `${yearInt}-${String(monthInt).padStart(2, '0')}`;
     }
-    month = val;
   }
 
   const entries = await listTimeEntries({

@@ -17,6 +17,14 @@ export function AdminShell({ title, subtitle, actions, children }) {
 
         <nav className="admin-nav" aria-label="ניווט ראשי">
           <NavLink
+            to="/admin/dashboard"
+            className={({ isActive }) =>
+              `admin-nav__item ${isActive ? 'admin-nav__item--active' : ''}`.trim()
+            }
+          >
+            לוח בקרה
+          </NavLink>
+          <NavLink
             to="/admin/users"
             className={({ isActive }) =>
               `admin-nav__item ${isActive ? 'admin-nav__item--active' : ''}`.trim()
@@ -57,12 +65,20 @@ export function AdminShell({ title, subtitle, actions, children }) {
             שיוך עובדים
           </NavLink>
           <NavLink
+
             to="/admin/audit"
+
+            to="/admin/month-lock"
+
             className={({ isActive }) =>
               `admin-nav__item ${isActive ? 'admin-nav__item--active' : ''}`.trim()
             }
           >
+
             יומן ביקורת
+
+            נעילת חודש
+
           </NavLink>
         </nav>
 
