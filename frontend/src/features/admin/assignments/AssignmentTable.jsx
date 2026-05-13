@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 
 const PAGE_SIZE = 10;
 const MAX_PILLS = 4;
@@ -53,6 +53,97 @@ function Pagination({ page, totalPages, onChange }) {
       >
         ⊢
       </button>
+    </div>
+  );
+}
+
+function useDropdown() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [open]);
+  return { open, setOpen, ref };
+}
+
+function RowActionMenu({ row, onEdit, onDelete }) {
+  const edit = useDropdown();
+  const del = useDropdown();
+
+  return (
+    <div className="assignment-row-actions">
+      {/* Edit dropdown */}
+      <div className="assignment-edit-wrap" ref={edit.ref}>
+        <button
+          type="button"
+          className="assignment-action-btn assignment-action-btn--edit"
+          onClick={() => edit.setOpen((v) => !v)}
+          title="עריכה"
+          aria-label="עריכת שיוך"
+          aria-expanded={edit.open}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M11.333 2a1.886 1.886 0 0 1 2.667 2.667L4.889 13.778l-3.556.888.889-3.555L11.333 2Z" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+        {edit.open && (
+          <div className="assignment-dd-menu" role="menu">
+            <button type="button" className="assignment-dd-item" role="menuitem"
+              onClick={() => edit.setOpen(false)}>
+              עריכת לקוח
+            </button>
+            <button type="button" className="assignment-dd-item" role="menuitem"
+              onClick={() => edit.setOpen(false)}>
+              עריכת פרויקט
+            </button>
+            <button type="button" className="assignment-dd-item" role="menuitem"
+              onClick={() => edit.setOpen(false)}>
+              עריכת משימה
+            </button>
+            <button type="button" className="assignment-dd-item" role="menuitem"
+              onClick={() => { edit.setOpen(false); onEdit(row.taskId); }}>
+              עריכת שיוך עובדים
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Delete dropdown */}
+      <div className="assignment-edit-wrap" ref={del.ref}>
+        <button
+          type="button"
+          className="assignment-action-btn assignment-action-btn--delete"
+          onClick={() => del.setOpen((v) => !v)}
+          title="מחיקה"
+          aria-label="מחיקת שיוך"
+          aria-expanded={del.open}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M2 4h12M5.333 4V2.667a1.333 1.333 0 0 1 1.334-1.334h2.666a1.333 1.333 0 0 1 1.334 1.334V4M13.333 4l-.889 9.333A1.333 1.333 0 0 1 11.111 14.667H4.89a1.333 1.333 0 0 1-1.333-1.334L2.667 4" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+        {del.open && (
+          <div className="assignment-dd-menu assignment-dd-menu--delete" role="menu">
+            <button type="button" className="assignment-dd-item assignment-dd-item--delete" role="menuitem"
+              onClick={() => del.setOpen(false)}>
+              מחק לקוח
+            </button>
+            <button type="button" className="assignment-dd-item assignment-dd-item--delete" role="menuitem"
+              onClick={() => del.setOpen(false)}>
+              מחק פרויקט
+            </button>
+            <button type="button" className="assignment-dd-item assignment-dd-item--delete" role="menuitem"
+              onClick={() => { del.setOpen(false); onDelete(row); }}>
+              מחק משימה
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -162,34 +253,9 @@ export function AssignmentTable({ assignments, tasks = [], loading, canMutate, s
                     </div>
                   </td>
                   <td>
-                    <div className="assignment-row-actions">
-                      {canMutate && (
-                        <>
-                          <button
-                            type="button"
-                            className="assignment-action-btn assignment-action-btn--edit"
-                            onClick={() => onEdit(row.taskId)}
-                            title="עריכה"
-                            aria-label="עריכת שיוך"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                              <path d="M11.333 2a1.886 1.886 0 0 1 2.667 2.667L4.889 13.778l-3.556.888.889-3.555L11.333 2Z" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
-                          <button
-                            type="button"
-                            className="assignment-action-btn assignment-action-btn--delete"
-                            onClick={() => handleDeleteRow(row)}
-                            title="ביטול שיוכים"
-                            aria-label="ביטול כל שיוכי המשימה"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                              <path d="M2 4h12M5.333 4V2.667a1.333 1.333 0 0 1 1.334-1.334h2.666a1.333 1.333 0 0 1 1.334 1.334V4M13.333 4l-.889 9.333A1.333 1.333 0 0 1 11.111 14.667H4.89a1.333 1.333 0 0 1-1.333-1.334L2.667 4" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
-                        </>
-                      )}
-                    </div>
+                    {canMutate && (
+                      <RowActionMenu row={row} onEdit={onEdit} onDelete={handleDeleteRow} />
+                    )}
                   </td>
                 </tr>
               ))
