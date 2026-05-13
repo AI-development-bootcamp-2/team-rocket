@@ -5,15 +5,15 @@ import { LoginCard } from './LoginCard';
 import ChangePasswordCard from './ChangePasswordCard';
 import ProtectedRoute from './ProtectedRoute';
 import InactivityWarningModal from './InactivityWarningModal';
-import { AdminShell } from './layout/AdminShell.jsx';
-import { Button } from './ui/Button.jsx';
-import { Input } from './ui/Input.jsx';
-import { Select } from './ui/Select.jsx';
-import { Modal } from './ui/Modal.jsx';
-import { EmptyState } from './ui/EmptyState.jsx';
-import { ErrorState } from './ui/ErrorState.jsx';
-import { Spinner } from './ui/Spinner.jsx';
-import { Toast } from './ui/Toast.jsx';
+import { AdminShell } from './layout/AdminShell';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Select } from './ui/Select';
+import { Modal } from './ui/Modal';
+import { EmptyState } from './ui/EmptyState';
+import { ErrorState } from './ui/ErrorState';
+import { Spinner } from './ui/Spinner';
+import { Toast } from './ui/Toast';
 import axiosClient, { tokenStore } from '../api/axiosClient';
 
 const mockNavigate = jest.fn();
@@ -225,3 +225,4 @@ describe('auth and shared UI components', () => {
     expect(onSubmit).toHaveBeenCalledWith('valid@test.com', 'Password1!', true);
   });
 });
+

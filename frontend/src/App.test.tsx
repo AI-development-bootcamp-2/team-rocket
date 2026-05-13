@@ -48,7 +48,7 @@ jest.mock('./components/LoginCard', () => ({
 jest.mock('./components/ChangePasswordCard', () => () => <div>change-password-card</div>);
 jest.mock('./components/ProtectedRoute', () => ({ children }: any) => <>{children}</>);
 jest.mock('./components/InactivityWarningModal', () => () => <div>inactivity-warning-modal</div>);
-jest.mock('./components/ui/ErrorState.jsx', () => ({
+jest.mock('./components/ui/ErrorState', () => ({
   ErrorState: ({ title, description, actionLabel, onAction }: any) => (
     <div>
       <h1>{title}</h1>
@@ -59,10 +59,10 @@ jest.mock('./components/ui/ErrorState.jsx', () => ({
     </div>
   ),
 }));
-jest.mock('./features/admin/users/UserListPage.jsx', () => ({
+jest.mock('./features/admin/users/UserListPage', () => ({
   UserListPage: () => <div>user-list-page</div>,
 }));
-jest.mock('./features/admin/dashboard/AdminDashboard.jsx', () => ({
+jest.mock('./features/admin/dashboard/AdminDashboard', () => ({
   AdminDashboard: () => <div>admin-dashboard-page</div>,
 }));
 jest.mock('./contexts/AuthContext', () => ({
@@ -228,3 +228,4 @@ describe('App routing and shell', () => {
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
   });
 });
+
