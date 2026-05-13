@@ -1,7 +1,15 @@
+import { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
-export function AdminShell({ title, subtitle, actions, children }) {
+interface AdminShellProps {
+  title: string;
+  subtitle: string;
+  actions?: ReactNode;
+  children: ReactNode;
+}
+
+export function AdminShell({ title, subtitle, actions = null, children }: AdminShellProps) {
   const { logout, user } = useAuth();
 
   return (
@@ -63,6 +71,14 @@ export function AdminShell({ title, subtitle, actions, children }) {
             }
           >
             שיוך עובדים
+          </NavLink>
+          <NavLink
+            to="/admin/audit"
+            className={({ isActive }) =>
+              `admin-nav__item ${isActive ? 'admin-nav__item--active' : ''}`.trim()
+            }
+          >
+            יומן ביקורת
           </NavLink>
           <NavLink
             to="/admin/month-lock"

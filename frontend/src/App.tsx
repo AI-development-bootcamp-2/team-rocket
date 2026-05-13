@@ -11,6 +11,7 @@ import { ClientListPage } from './features/admin/clients/ClientListPage.jsx';
 import { ProjectListPage } from './features/admin/projects/ProjectListPage.jsx';
 import { TaskListPage } from './features/admin/tasks/TaskListPage.jsx';
 import { AssignmentPage } from './features/admin/assignments/AssignmentPage.jsx';
+import { AuditLogPage } from './features/admin/audit-log/AuditLogPage';
 import { AdminDashboard } from './features/admin/dashboard/AdminDashboard.jsx';
 import { AdminReportsPage as AdminMonthlyReportsPage } from './features/admin/dashboard/AdminReportsPage.jsx';
 import { MonthLockPage } from './features/admin/month-lock/MonthLockPage.jsx';
@@ -152,6 +153,13 @@ function AdminAssignmentsPage() {
   return <AssignmentPage />;
 }
 
+
+function AdminAuditPage() {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <AccessDeniedPage />;
+  return <AuditLogPage />;
+}
+
 function AdminMonthLockPage() {
   const { user } = useAuth();
   if (user?.role !== 'admin') return <AccessDeniedPage />;
@@ -162,6 +170,7 @@ function AdminReportsPage() {
   const { user } = useAuth();
   if (user?.role !== 'admin') return <AccessDeniedPage />;
   return <AdminMonthlyReportsPage />;
+
 }
 
 function App() {
@@ -236,6 +245,15 @@ function App() {
             }
           />
           <Route
+
+            path="/admin/audit"
+            element={
+              <ProtectedRoute>
+                <AdminAuditPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/reports"
             element={
               <ProtectedRoute>
@@ -248,6 +266,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminMonthLockPage />
+
               </ProtectedRoute>
             }
           />

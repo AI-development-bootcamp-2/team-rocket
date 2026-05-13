@@ -11,9 +11,9 @@ import {
   updateUser,
 } from '../../../api/users.api.js';
 import { useAuth } from '../../../contexts/AuthContext';
-import { AdminShell } from '../../../components/layout/AdminShell.jsx';
+import { AdminShell } from '../../../components/layout/AdminShell';
 import { Button } from '../../../components/ui/Button.jsx';
-import { EmptyState } from '../../../components/ui/EmptyState.jsx';
+import { EmptyState } from '../../../components/ui/EmptyState';
 import { ErrorState } from '../../../components/ui/ErrorState.jsx';
 import { Spinner } from '../../../components/ui/Spinner.jsx';
 import { Toast } from '../../../components/ui/Toast.jsx';
