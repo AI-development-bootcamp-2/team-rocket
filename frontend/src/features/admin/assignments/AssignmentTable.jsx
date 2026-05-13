@@ -71,7 +71,7 @@ function useDropdown() {
   return { open, setOpen, ref };
 }
 
-function RowActionMenu({ row, onEdit, onDelete }) {
+function RowActionMenu({ row, onEditClient, onEditProject, onEditTask, onEditAssignment, onArchiveClient, onArchiveProject, onArchiveTask }) {
   const edit = useDropdown();
   const del = useDropdown();
 
@@ -94,19 +94,19 @@ function RowActionMenu({ row, onEdit, onDelete }) {
         {edit.open && (
           <div className="assignment-dd-menu" role="menu">
             <button type="button" className="assignment-dd-item" role="menuitem"
-              onClick={() => edit.setOpen(false)}>
+              onClick={() => { edit.setOpen(false); onEditClient(row.taskId); }}>
               עריכת לקוח
             </button>
             <button type="button" className="assignment-dd-item" role="menuitem"
-              onClick={() => edit.setOpen(false)}>
+              onClick={() => { edit.setOpen(false); onEditProject(row.taskId); }}>
               עריכת פרויקט
             </button>
             <button type="button" className="assignment-dd-item" role="menuitem"
-              onClick={() => edit.setOpen(false)}>
+              onClick={() => { edit.setOpen(false); onEditTask(row.taskId); }}>
               עריכת משימה
             </button>
             <button type="button" className="assignment-dd-item" role="menuitem"
-              onClick={() => { edit.setOpen(false); onEdit(row.taskId); }}>
+              onClick={() => { edit.setOpen(false); onEditAssignment(row.taskId); }}>
               עריכת שיוך עובדים
             </button>
           </div>
@@ -130,15 +130,15 @@ function RowActionMenu({ row, onEdit, onDelete }) {
         {del.open && (
           <div className="assignment-dd-menu assignment-dd-menu--delete" role="menu">
             <button type="button" className="assignment-dd-item assignment-dd-item--delete" role="menuitem"
-              onClick={() => del.setOpen(false)}>
+              onClick={() => { del.setOpen(false); onArchiveClient(row.taskId); }}>
               מחק לקוח
             </button>
             <button type="button" className="assignment-dd-item assignment-dd-item--delete" role="menuitem"
-              onClick={() => del.setOpen(false)}>
+              onClick={() => { del.setOpen(false); onArchiveProject(row.taskId); }}>
               מחק פרויקט
             </button>
             <button type="button" className="assignment-dd-item assignment-dd-item--delete" role="menuitem"
-              onClick={() => { del.setOpen(false); onDelete(row); }}>
+              onClick={() => { del.setOpen(false); onArchiveTask(row.taskId); }}>
               מחק משימה
             </button>
           </div>
@@ -148,7 +148,7 @@ function RowActionMenu({ row, onEdit, onDelete }) {
   );
 }
 
-export function AssignmentTable({ assignments, tasks = [], loading, canMutate, search = '', onToggle, onEdit }) {
+export function AssignmentTable({ assignments, tasks = [], loading, canMutate, search = '', onEditClient, onEditProject, onEditTask, onEditAssignment, onArchiveClient, onArchiveProject, onArchiveTask }) {
   const [page, setPage] = useState(1);
 
   const rows = useMemo(() => {
@@ -206,12 +206,6 @@ export function AssignmentTable({ assignments, tasks = [], loading, canMutate, s
     );
   }
 
-  function handleDeleteRow(row) {
-    for (const a of row.assignments) {
-      if (a.isActive) onToggle(a.id, false);
-    }
-  }
-
   return (
     <div className="users-table-card">
       <div style={{ overflowX: 'auto' }}>
@@ -254,7 +248,16 @@ export function AssignmentTable({ assignments, tasks = [], loading, canMutate, s
                   </td>
                   <td>
                     {canMutate && (
-                      <RowActionMenu row={row} onEdit={onEdit} onDelete={handleDeleteRow} />
+                      <RowActionMenu
+                        row={row}
+                        onEditClient={onEditClient}
+                        onEditProject={onEditProject}
+                        onEditTask={onEditTask}
+                        onEditAssignment={onEditAssignment}
+                        onArchiveClient={onArchiveClient}
+                        onArchiveProject={onArchiveProject}
+                        onArchiveTask={onArchiveTask}
+                      />
                     )}
                   </td>
                 </tr>

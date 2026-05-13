@@ -3,10 +3,10 @@ import {
   createAssignment,
   getMyPermissions,
   listAssignments,
-  toggleAssignment,
 } from '../../../api/assignments.api.js';
-import { listProjects } from '../../../api/projects.api.js';
-import { listTasks } from '../../../api/tasks.api.js';
+import { listClients, updateClient, archiveClient } from '../../../api/clients.api.js';
+import { listProjects, updateProject, archiveProject } from '../../../api/projects.api.js';
+import { listTasks, updateTask, archiveTask } from '../../../api/tasks.api.js';
 import { listUsers } from '../../../api/users.api.js';
 import { useAuth } from '../../../contexts/AuthContext';
 import { AdminShell } from '../../../components/layout/AdminShell.jsx';
@@ -14,6 +14,12 @@ import { Button } from '../../../components/ui/Button.jsx';
 import { EmptyState } from '../../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../../components/ui/ErrorState.jsx';
 import { Toast } from '../../../components/ui/Toast.jsx';
+import { ArchiveClientDialog } from '../clients/ArchiveClientDialog.jsx';
+import { ClientFormDialog } from '../clients/ClientFormDialog.jsx';
+import { ArchiveProjectDialog } from '../projects/ArchiveProjectDialog.jsx';
+import { ProjectFormDialog } from '../projects/ProjectFormDialog.jsx';
+import { CloseTaskDialog } from '../tasks/CloseTaskDialog.jsx';
+import { TaskFormDialog } from '../tasks/TaskFormDialog.jsx';
 import { AssignmentFilters } from './AssignmentFilters.jsx';
 import { AssignmentTable } from './AssignmentTable.jsx';
 import { NewAssignmentModal } from './NewAssignmentModal.jsx';
@@ -38,6 +44,7 @@ export function AssignmentPage() {
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
+  const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -47,6 +54,8 @@ export function AssignmentPage() {
   const [showModal, setShowModal] = useState(false);
   const [editTaskId, setEditTaskId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [dialog, setDialog] = useState(null);
+  const [dialogLoading, setDialogLoading] = useState(false);
 
   const showToast = (message, tone = 'success') => setToast(createToast(message, tone));
 
@@ -64,22 +73,24 @@ export function AssignmentPage() {
       .catch(() => setScopeLoaded(true));
   }, [isAdmin]);
 
-  useEffect(() => {
+  const loadMeta = useCallback(async () => {
     const promises = [
       listProjects({ isActive: true }),
       listTasks({ status: 'open' }),
+      listClients({}),
     ];
     if (isAdmin || canMutate) promises.push(listUsers({ isActive: 'active' }));
+    const [projectsRes, tasksRes, clientsRes, usersRes] = await Promise.all(promises);
+    setProjects(projectsRes.data ?? []);
+    setTasks(tasksRes.data ?? []);
+    setClients(clientsRes.data ?? []);
+    if (usersRes) setUsers(usersRes.data ?? []);
+  }, [isAdmin, canMutate]);
 
-    Promise.all(promises)
-      .then(([projectsRes, tasksRes, usersRes]) => {
-        setProjects(projectsRes.data ?? []);
-        setTasks(tasksRes.data ?? []);
-        if (usersRes) setUsers(usersRes.data ?? []);
-      })
-      .catch(() => {});
+  useEffect(() => {
+    if (scopeLoaded) void loadMeta().catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin, scopeLoaded, canMutate]);
+  }, [scopeLoaded]);
 
   const loadAssignments = useCallback(async () => {
     setLoading(true);
@@ -100,16 +111,6 @@ export function AssignmentPage() {
     if (scopeLoaded) void loadAssignments();
   }, [loadAssignments, scopeLoaded]);
 
-  async function handleToggle(id, isActive) {
-    try {
-      await toggleAssignment(id, isActive);
-      showToast(isActive ? 'השיוך הופעל' : 'השיוך בוטל');
-      await loadAssignments();
-    } catch {
-      showToast('שגיאה בעדכון השיוך', 'error');
-    }
-  }
-
   function handleEdit(taskId) {
     setEditTaskId(taskId);
     setShowModal(true);
@@ -118,6 +119,137 @@ export function AssignmentPage() {
   function handleOpenCreate() {
     setEditTaskId(null);
     setShowModal(true);
+  }
+
+  function getAncestors(taskId) {
+    const task = tasks.find((t) => t.id === taskId);
+    const project = task ? projects.find((p) => p.id === task.projectId) : null;
+    const client = project ? clients.find((c) => c.id === project.clientId) : null;
+    return { task, project, client };
+  }
+
+  function handleEditClient(taskId) {
+    const { client } = getAncestors(taskId);
+    if (client) setDialog({ type: 'edit-client', entity: client });
+    else showToast('לא ניתן למצוא את הלקוח', 'error');
+  }
+
+  function handleEditProject(taskId) {
+    const { project } = getAncestors(taskId);
+    if (project) setDialog({ type: 'edit-project', entity: project });
+    else showToast('לא ניתן למצוא את הפרויקט', 'error');
+  }
+
+  function handleEditTask(taskId) {
+    const task = tasks.find((t) => t.id === taskId);
+    if (task) setDialog({ type: 'edit-task', entity: task });
+    else showToast('לא ניתן למצוא את המשימה', 'error');
+  }
+
+  function handleArchiveClient(taskId) {
+    const { client } = getAncestors(taskId);
+    if (client) setDialog({ type: 'archive-client', entity: client });
+    else showToast('לא ניתן למצוא את הלקוח', 'error');
+  }
+
+  function handleArchiveProject(taskId) {
+    const { project } = getAncestors(taskId);
+    if (project) setDialog({ type: 'archive-project', entity: project });
+    else showToast('לא ניתן למצוא את הפרויקט', 'error');
+  }
+
+  function handleArchiveTask(taskId) {
+    const task = tasks.find((t) => t.id === taskId);
+    if (task) setDialog({ type: 'close-task', entity: task });
+    else showToast('לא ניתן למצוא את המשימה', 'error');
+  }
+
+  async function handleSaveClient(form) {
+    setDialogLoading(true);
+    try {
+      await updateClient(dialog.entity.id, form);
+      showToast('פרטי הלקוח עודכנו בהצלחה');
+      setDialog(null);
+      await loadMeta();
+    } catch {
+      showToast('שגיאה בעדכון הלקוח', 'error');
+    } finally {
+      setDialogLoading(false);
+    }
+  }
+
+  async function handleSaveProject(form) {
+    setDialogLoading(true);
+    try {
+      await updateProject(dialog.entity.id, form);
+      showToast('פרטי הפרויקט עודכנו בהצלחה');
+      setDialog(null);
+      await loadMeta();
+    } catch {
+      showToast('שגיאה בעדכון הפרויקט', 'error');
+    } finally {
+      setDialogLoading(false);
+    }
+  }
+
+  async function handleSaveTask(form) {
+    setDialogLoading(true);
+    try {
+      await updateTask(dialog.entity.id, form);
+      showToast('פרטי המשימה עודכנו בהצלחה');
+      setDialog(null);
+      await loadMeta();
+      await loadAssignments();
+    } catch {
+      showToast('שגיאה בעדכון המשימה', 'error');
+    } finally {
+      setDialogLoading(false);
+    }
+  }
+
+  async function handleConfirmArchiveClient() {
+    setDialogLoading(true);
+    try {
+      await archiveClient(dialog.entity.id);
+      showToast('הלקוח הועבר לארכיון בהצלחה');
+      setDialog(null);
+      await loadMeta();
+      await loadAssignments();
+    } catch {
+      showToast('שגיאה בהעברת הלקוח לארכיון', 'error');
+    } finally {
+      setDialogLoading(false);
+    }
+  }
+
+  async function handleConfirmArchiveProject() {
+    setDialogLoading(true);
+    try {
+      await archiveProject(dialog.entity.id);
+      showToast('הפרויקט הועבר לארכיון בהצלחה');
+      setDialog(null);
+      await loadMeta();
+      await loadAssignments();
+    } catch {
+      showToast('שגיאה בהעברת הפרויקט לארכיון', 'error');
+    } finally {
+      setDialogLoading(false);
+    }
+  }
+
+  async function handleConfirmCloseTask() {
+    setDialogLoading(true);
+    try {
+      await archiveTask(dialog.entity.id);
+      showToast('המשימה נסגרה בהצלחה');
+      setDialog(null);
+      await loadMeta();
+      await loadAssignments();
+    } catch {
+      showToast('שגיאה בסגירת המשימה', 'error');
+    } finally {
+      setDialogLoading(false);
+    }
   }
 
   async function handleCreate({ task_id, user_ids }) {
@@ -195,8 +327,13 @@ export function AssignmentPage() {
           loading={loading}
           canMutate={canMutate}
           search={search}
-          onToggle={handleToggle}
-          onEdit={handleEdit}
+          onEditClient={handleEditClient}
+          onEditProject={handleEditProject}
+          onEditTask={handleEditTask}
+          onEditAssignment={handleEdit}
+          onArchiveClient={handleArchiveClient}
+          onArchiveProject={handleArchiveProject}
+          onArchiveTask={handleArchiveTask}
         />
       )}
 
@@ -213,6 +350,66 @@ export function AssignmentPage() {
           onSubmit={handleCreate}
         />
       ) : null}
+
+      {dialog?.type === 'edit-client' && (
+        <ClientFormDialog
+          mode="edit"
+          client={dialog.entity}
+          saving={dialogLoading}
+          onClose={() => !dialogLoading && setDialog(null)}
+          onSubmit={handleSaveClient}
+        />
+      )}
+
+      {dialog?.type === 'edit-project' && (
+        <ProjectFormDialog
+          mode="edit"
+          project={dialog.entity}
+          clients={clients}
+          users={users}
+          saving={dialogLoading}
+          onClose={() => !dialogLoading && setDialog(null)}
+          onSubmit={handleSaveProject}
+        />
+      )}
+
+      {dialog?.type === 'edit-task' && (
+        <TaskFormDialog
+          mode="edit"
+          task={dialog.entity}
+          projects={projects}
+          saving={dialogLoading}
+          onClose={() => !dialogLoading && setDialog(null)}
+          onSubmit={handleSaveTask}
+        />
+      )}
+
+      {dialog?.type === 'archive-client' && (
+        <ArchiveClientDialog
+          client={dialog.entity}
+          loading={dialogLoading}
+          onClose={() => !dialogLoading && setDialog(null)}
+          onConfirm={handleConfirmArchiveClient}
+        />
+      )}
+
+      {dialog?.type === 'archive-project' && (
+        <ArchiveProjectDialog
+          project={dialog.entity}
+          loading={dialogLoading}
+          onClose={() => !dialogLoading && setDialog(null)}
+          onConfirm={handleConfirmArchiveProject}
+        />
+      )}
+
+      {dialog?.type === 'close-task' && (
+        <CloseTaskDialog
+          task={dialog.entity}
+          loading={dialogLoading}
+          onClose={() => !dialogLoading && setDialog(null)}
+          onConfirm={handleConfirmCloseTask}
+        />
+      )}
 
       {toast ? (
         <Toast
