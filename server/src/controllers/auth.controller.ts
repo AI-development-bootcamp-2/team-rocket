@@ -53,8 +53,8 @@ function setCookie(res: Response, token: string, rememberMe: boolean): void {
   // rememberMe=false → session cookie (no maxAge = deleted when browser closes)
   const options: CookieOptions = {
     httpOnly: true,
-    secure: config.isProd,
-    sameSite: 'strict',
+    secure: true,
+    sameSite: 'none',
     path: '/auth',
   };
   if (rememberMe) {
@@ -67,8 +67,8 @@ function clearCookie(res: Response): void {
   // clearCookie must use the same options as the original set call.
   res.clearCookie('refreshToken', {
     httpOnly: true,
-    secure: config.isProd,
-    sameSite: 'strict',
+    secure: true,
+    sameSite: 'none',
     path: '/auth',
   });
 }
