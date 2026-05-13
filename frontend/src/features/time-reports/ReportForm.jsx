@@ -298,7 +298,7 @@ export function ReportForm({
   onDirtyChange,
   isOnline = true,
 }) {
-  const isEdit = Boolean(entry);
+  const isEdit = Boolean(entry?.id);
   const clients = useMemo(() => dropdownData?.clients ?? [], [dropdownData]);
 
   const [form, setForm] = useState(() => buildInitialForm(entry, dropdownData));

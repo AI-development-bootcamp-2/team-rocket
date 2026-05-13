@@ -347,6 +347,15 @@ export async function createTimeEntry(
 ): Promise<TimeEntryRow> {
   const { AppError } = await import('../middleware/error.middleware');
 
+  // Month lock guard
+  const { year, month } = getLocalDateParts(params.date);
+  const lock = await db('month_locks')
+    .where({ year, month, is_locked: true })
+    .first() as { id: number } | undefined;
+  if (lock) {
+    throw new AppError('Month is locked', 423);
+  }
+
   // Business-rule validations
   await validateTimeEntryInputs({
     userId: params.userId,
@@ -832,7 +841,7 @@ export async function checkQuotaWarning(userId: number, date: string): Promise<b
   }
 }
 
-// ── Daily summary ──────────────────────────────────────────────────────────────
+// ── Daily standard helpers ─────────────────────────────────────────────────────
 
 const DAILY_STANDARD_MINUTES = 9 * 60; // 9 hours default
 

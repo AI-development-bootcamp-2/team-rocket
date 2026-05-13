@@ -64,6 +64,27 @@
 
 ---
 
+## Story F11-BE — Monthly View Backend
+**Jira Story**: KAN-416  
+**Assignee**: Dev A  
+**Story Points**: 5
+
+### Tasks
+- [ ] **T** [KAN-417] Implement `GET /time-entries` with `year`+`month` filter — monthly list for user
+- [ ] **T** [KAN-418] Implement `GET /monthly-summary?userId=&year=&month=` — quota stats for a user/month (working days, holidays, absences, total quota hours, total reported hours, lock status)
+- [ ] **T** [KAN-419] Compute per-day status: מלא / חסר / חריג for each calendar day (non-working days and holidays marked accordingly)
+- [ ] **T** [KAN-420] Enforce permission: user sees own data only; Admin sees any user (both `GET /time-entries` and `GET /monthly-summary`)
+- [ ] **T** [KAN-421] Return month lock status (`isLocked: boolean`) in `GET /monthly-summary` response
+
+#### Subtasks
+- [ ] **ST** [KAN-422] Integration test: `GET /monthly-summary` returns correct quota for a standard month
+- [ ] **ST** [KAN-423] Integration test: `GET /monthly-summary` correctly deducts holidays and absences from quota (full-day −9h, partial −4.5h)
+- [ ] **ST** [KAN-424] Integration test: per-day status computed correctly (full / missing / irregular)
+- [ ] **ST** [KAN-425] Permission test: user cannot view another user's monthly summary (expect 403)
+- [ ] **ST** [KAN-426] Permission test: admin can view any user's monthly summary
+
+---
+
 ## Story F11 — Monthly View Frontend
 **Assignee**: Dev D  
 **Story Points**: 5
