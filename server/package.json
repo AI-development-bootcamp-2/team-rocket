@@ -16,15 +16,15 @@
     "test:coverage": "jest --coverage --runInBand",
     "test:coverage:unit": "jest --coverage --runInBand --testPathPattern=tests/unit",
     "test:coverage:integration": "jest --coverage --runInBand --testPathPattern=tests/integration",
-    "lint": "eslint src/ tests/",
-    "lint:fix": "eslint src/ tests/ --fix",
+    "lint": "ts-node scripts/run-eslint.ts",
+    "lint:fix": "ts-node scripts/run-eslint.ts --fix",
     "format": "prettier --write src",
-    "migrate": "knex migrate:latest",
-    "migrate:rollback": "knex migrate:rollback",
-    "migrate:make": "knex migrate:make",
-    "migrate:status": "knex migrate:status",
-    "seed": "knex seed:run",
-    "seed:make": "knex seed:make"
+    "migrate": "node -r ts-node/register ./node_modules/knex/bin/cli.js --knexfile knexfile.ts migrate:latest",
+    "migrate:rollback": "node -r ts-node/register ./node_modules/knex/bin/cli.js --knexfile knexfile.ts migrate:rollback",
+    "migrate:make": "node -r ts-node/register ./node_modules/knex/bin/cli.js --knexfile knexfile.ts migrate:make -x ts",
+    "migrate:status": "node -r ts-node/register ./node_modules/knex/bin/cli.js --knexfile knexfile.ts migrate:status",
+    "seed": "node -r ts-node/register ./node_modules/knex/bin/cli.js --knexfile knexfile.ts seed:run",
+    "seed:make": "node -r ts-node/register ./node_modules/knex/bin/cli.js --knexfile knexfile.ts seed:make -x ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

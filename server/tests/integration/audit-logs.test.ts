@@ -375,9 +375,13 @@ describe('GET /audit-logs — pagination', () => {
     const admin = await seedUser({ role: 'admin', email: 'admin@test.com' });
     const token = await login(admin.email, admin.plainPassword);
 
+    // Create 6 audit logs for pagination test
     for (let i = 0; i < 6; i++) {
       await seedAuditLog({ entityType: 'USER', action: 'LOGIN' });
     }
+
+    // Wait for audit log inserts to complete
+    await waitForAudit();
 
     const p1 = await request(app)
       .get('/audit-logs?limit=3&page=1')

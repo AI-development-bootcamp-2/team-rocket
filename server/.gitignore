@@ -11,6 +11,7 @@ dist/
 
 # Test output
 coverage/
+.tmp-eslint/
 
 # Local file uploads (dev storage)
 uploads/

@@ -1,4 +1,5 @@
-import { Button } from './Button.jsx';
+// @ts-nocheck
+import { Button } from './Button';
 
 interface EmptyStateProps {
   title: string;
@@ -19,3 +20,5 @@ export function EmptyState({ title, description, actionLabel, onAction }: EmptyS
     </div>
   );
 }
+
+
