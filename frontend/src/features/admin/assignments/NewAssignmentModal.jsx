@@ -26,11 +26,13 @@ export function NewAssignmentModal({
   saving,
   isScopedUser,
   scopedProjectIds,
+  defaultTaskId,
   onClose,
   onSubmit,
 }) {
-  const [projectId, setProjectId] = useState('');
-  const [taskId, setTaskId] = useState('');
+  const defaultTask = defaultTaskId != null ? tasks.find((t) => t.id === defaultTaskId) : null;
+  const [projectId, setProjectId] = useState(defaultTask ? String(defaultTask.projectId) : '');
+  const [taskId, setTaskId] = useState(defaultTask ? String(defaultTask.id) : '');
   const [selectedUserIds, setSelectedUserIds] = useState(new Set());
   const [search, setSearch] = useState('');
 

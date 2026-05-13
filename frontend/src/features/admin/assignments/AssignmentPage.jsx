@@ -30,12 +30,10 @@ export function AssignmentPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
-  // Scope state — null = no restriction, array = allowed project IDs for user+flag
   const [scopedProjectIds, setScopedProjectIds] = useState(null);
   const [canMutate, setCanMutate] = useState(isAdmin);
-  const [scopeLoaded, setScopeLoaded] = useState(isAdmin); // admins need no flag check
+  const [scopeLoaded, setScopeLoaded] = useState(isAdmin);
 
-  // Data
   const [assignments, setAssignments] = useState([]);
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -43,21 +41,17 @@ export function AssignmentPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Filters
-  const [projectFilter, setProjectFilter] = useState('all');
-  const [userFilter, setUserFilter] = useState('all');
+  const [search, setSearch] = useState('');
 
-  // UI
   const [toast, setToast] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [editTaskId, setEditTaskId] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const showToast = (message, tone = 'success') => setToast(createToast(message, tone));
 
-  // ── Scope resolution (non-admin only) ──────────────────────────────────────
   useEffect(() => {
     if (isAdmin) return;
-
     getMyPermissions()
       .then((res) => {
         const flag = (res.data ?? []).find((f) => f.flagName === 'canAssignProjectTasks');
@@ -70,19 +64,15 @@ export function AssignmentPage() {
       .catch(() => setScopeLoaded(true));
   }, [isAdmin]);
 
-  // ── Static data (projects, tasks, users) ───────────────────────────────────
   useEffect(() => {
     const promises = [
       listProjects({ isActive: true }),
       listTasks({ status: 'open' }),
     ];
-    // Load full user list for admin or any user with canAssignProjectTasks flag
     if (isAdmin || canMutate) promises.push(listUsers({ isActive: 'active' }));
 
     Promise.all(promises)
       .then(([projectsRes, tasksRes, usersRes]) => {
-        // Do NOT filter projects — the matrix shows all projects with out-of-scope
-        // ones greyed. The modal dropdown restricts via the scopedProjectIds prop.
         setProjects(projectsRes.data ?? []);
         setTasks(tasksRes.data ?? []);
         if (usersRes) setUsers(usersRes.data ?? []);
@@ -91,15 +81,11 @@ export function AssignmentPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, scopeLoaded, canMutate]);
 
-  // ── Assignments list ────────────────────────────────────────────────────────
   const loadAssignments = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const params = {};
-      if (projectFilter !== 'all') params.projectId = Number(projectFilter);
-      if (userFilter !== 'all') params.userId = Number(userFilter);
-      const res = await listAssignments(params);
+      const res = await listAssignments({});
       setAssignments(res.data ?? []);
     } catch (err) {
       const status = getStatus(err);
@@ -108,13 +94,12 @@ export function AssignmentPage() {
     } finally {
       setLoading(false);
     }
-  }, [projectFilter, userFilter]);
+  }, []);
 
   useEffect(() => {
     if (scopeLoaded) void loadAssignments();
   }, [loadAssignments, scopeLoaded]);
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
   async function handleToggle(id, isActive) {
     try {
       await toggleAssignment(id, isActive);
@@ -123,6 +108,16 @@ export function AssignmentPage() {
     } catch {
       showToast('שגיאה בעדכון השיוך', 'error');
     }
+  }
+
+  function handleEdit(taskId) {
+    setEditTaskId(taskId);
+    setShowModal(true);
+  }
+
+  function handleOpenCreate() {
+    setEditTaskId(null);
+    setShowModal(true);
   }
 
   async function handleCreate({ task_id, user_ids }) {
@@ -142,10 +137,9 @@ export function AssignmentPage() {
     }
   }
 
-  // ── Render ──────────────────────────────────────────────────────────────────
   if (error && !loading) {
     return (
-      <AdminShell title="שיוך עובדים למשימות" subtitle="ניהול שיוכי עובדים לפי פרויקט ומשימה.">
+      <AdminShell title="שיוך עובד למשימה" subtitle="כאן תוכל לשייך עובדים למשימות מתוך פרויקטים שונים של לקוחות.">
         <ErrorState
           title="שגיאה בטעינה"
           description={error}
@@ -156,10 +150,9 @@ export function AssignmentPage() {
     );
   }
 
-  // Non-admin without canAssignProjectTasks flag has no access to this page
   if (scopeLoaded && !isAdmin && !canMutate && !loading) {
     return (
-      <AdminShell title="שיוך עובדים למשימות" subtitle="">
+      <AdminShell title="שיוך עובד למשימה" subtitle="">
         <ErrorState
           title="אין הרשאה"
           description="עמוד זה זמין למנהלים ולמשתמשים עם הרשאת שיוך בלבד."
@@ -172,41 +165,49 @@ export function AssignmentPage() {
 
   return (
     <AdminShell
-      title="שיוך עובדים למשימות"
-      subtitle="ניהול שיוכי עובדים לפי פרויקט ומשימה."
+      title="שיוך עובד למשימה"
+      subtitle="כאן תוכל לשייך עובדים למשימות מתוך פרויקטים שונים של לקוחות."
       actions={
         canMutate ? (
-          <Button onClick={() => setShowModal(true)}>+ שיוך עובד חדש</Button>
+          <Button onClick={handleOpenCreate}>
+            יצירה
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ marginInlineStart: 6 }}
+              aria-hidden="true"
+            >
+              <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Button>
         ) : null
       }
     >
       <AssignmentFilters
-        projects={projects}
-        projectId={projectFilter}
-        users={users}
-        userId={userFilter}
-        isAdmin={isAdmin}
+        search={search}
+        onSearchChange={setSearch}
         isScopedUser={!isAdmin && canMutate}
-        onProjectChange={setProjectFilter}
-        onUserChange={setUserFilter}
       />
 
       {!loading && assignments.length === 0 ? (
         <EmptyState
           title="אין שיוכים"
-          description="לא נמצאו שיוכים תואמים לסינון הנוכחי."
-          actionLabel={canMutate ? '+ שיוך עובד חדש' : undefined}
-          onAction={canMutate ? () => setShowModal(true) : undefined}
+          description="לא נמצאו שיוכים במערכת."
+          actionLabel={canMutate ? 'יצירת שיוך חדש' : undefined}
+          onAction={canMutate ? handleOpenCreate : undefined}
         />
       ) : (
         <AssignmentTable
           assignments={assignments}
-          users={users}
           tasks={tasks}
           loading={loading}
           canMutate={canMutate}
-          scopedProjectIds={scopedProjectIds}
+          search={search}
           onToggle={handleToggle}
+          onEdit={handleEdit}
         />
       )}
 
@@ -218,7 +219,8 @@ export function AssignmentPage() {
           saving={saving}
           isScopedUser={!isAdmin && canMutate}
           scopedProjectIds={scopedProjectIds}
-          onClose={() => setShowModal(false)}
+          defaultTaskId={editTaskId}
+          onClose={() => { setShowModal(false); setEditTaskId(null); }}
           onSubmit={handleCreate}
         />
       ) : null}

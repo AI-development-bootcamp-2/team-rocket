@@ -1176,6 +1176,143 @@ button:disabled {
   background: #f9fafb;
 }
 
+/* ── Assignment page ──────────────────────────────────── */
+
+.assignment-filters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.assignment-search {
+  position: relative;
+  width: 240px;
+}
+
+.assignment-search__icon {
+  position: absolute;
+  inset-inline-end: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.assignment-search__input {
+  width: 100%;
+  height: 40px;
+  padding: 0 36px 0 12px;
+  border: 1px solid var(--color-input-border);
+  border-radius: 8px;
+  background: var(--color-input-bg);
+  font-size: 14px;
+  color: var(--color-text-primary);
+  transition: var(--transition-fast);
+  box-sizing: border-box;
+}
+
+.assignment-search__input:focus {
+  outline: none;
+  border-color: var(--color-brand-purple);
+  box-shadow: 0 0 0 3px rgba(107, 47, 170, 0.1);
+}
+
+/* Employee pill tags */
+.assignment-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.assignment-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  background: #F1F3F5;
+  border-radius: 14px;
+  font-size: 12px;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.assignment-pill--overflow {
+  background: #E5E7EB;
+  color: #374151;
+  font-weight: 600;
+}
+
+/* Row action buttons */
+.assignment-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.assignment-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.assignment-action-btn--edit:hover {
+  background: #EFF6FF;
+}
+
+.assignment-action-btn--delete:hover {
+  background: #FEF2F2;
+}
+
+/* Pagination */
+.assignment-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  padding: 16px;
+  border-top: 1px solid #E5E7EB;
+}
+
+.assignment-pagination__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.assignment-pagination__btn:hover:not(:disabled) {
+  background: #F3F4F6;
+  border-color: #D1D5DB;
+}
+
+.assignment-pagination__btn--active {
+  background: #142A3F;
+  color: #fff;
+  border-color: #142A3F;
+}
+
+.assignment-pagination__btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 @media (max-width: 1100px) {
   .admin-shell {
     display: block;
