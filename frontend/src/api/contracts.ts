@@ -181,6 +181,24 @@ export interface AdminDashboardResponse {
   summary: AdminDashboardSummary;
 }
 
+export interface MonthlySummaryProjectBreakdown {
+  projectId: number;
+  projectName: string;
+  hours: number;
+}
+
+export interface MonthlySummary {
+  year: number;
+  month: number;
+  reportedHours: number;
+  quotaHours: number;
+  completionPercentage: number;
+  missingHoursToDate: number;
+  absenceHours: number;
+  daysWithoutReport: number;
+  projectBreakdown: MonthlySummaryProjectBreakdown[];
+}
+
 export interface MonthLockStatus {
   year: number;
   month: number;

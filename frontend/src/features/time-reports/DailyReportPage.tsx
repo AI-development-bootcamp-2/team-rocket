@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getDailySummary, getDropdownData, getMonthlySummary, listTimeEntries } from '../../api/timeEntries.api';
-import { getMonthStatus } from '../../api/monthLocks.api.js';
+import type { DailySummary, DropdownData, MonthlySummary, TimeEntry } from '../../api/contracts';
+import { getMonthStatus } from '../../api/monthLocks.api';
 import { AppHeader } from '../../components/AppHeader';
 import { ExistingEntriesList } from './ExistingEntriesList';
 import { ReportForm } from './ReportForm';
 import styles from './DailyReportPage.module.css';
 
-function toLocalDateString(date) {
+function toLocalDateString(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -39,7 +40,7 @@ function CalendarIcon() {
   );
 }
 
-function ArrowForwardIosIcon({ className }) {
+function ArrowForwardIosIcon({ className = '' }: { className?: string }) {
   return (
     <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" fill="#141E3E" />
@@ -69,17 +70,17 @@ function ChartIcon() {
 
 export function DailyReportPage() {
   const [selectedDate, setSelectedDate] = useState(() => toLocalDateString(new Date()));
-  const [summary, setSummary] = useState(null);
-  const [entries, setEntries] = useState([]);
+  const [summary, setSummary] = useState<DailySummary | null>(null);
+  const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(false);
-  const [dropdownData, setDropdownData] = useState(null);
+  const [dropdownData, setDropdownData] = useState<DropdownData | null>(null);
   const [forbidden, setForbidden] = useState(false);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
-  const [formEntry, setFormEntry] = useState(null);
+  const [formEntry, setFormEntry] = useState<TimeEntry | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [formDirty, setFormDirty] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
-  const [monthlySummary, setMonthlySummary] = useState(null);
+  const [monthlySummary, setMonthlySummary] = useState<MonthlySummary | null>(null);
   const [isMonthLocked, setIsMonthLocked] = useState(false);
 
   useEffect(() => {
@@ -94,7 +95,7 @@ export function DailyReportPage() {
   }, []);
 
   useEffect(() => {
-    const handleBeforeUnload = (event) => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (!formOpen || !formDirty) return;
       event.preventDefault();
       event.returnValue = '';
@@ -107,7 +108,7 @@ export function DailyReportPage() {
   useEffect(() => {
     if (!summaryOpen) return undefined;
 
-    const handleEscape = (event) => {
+    const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setSummaryOpen(false);
       }
@@ -122,24 +123,24 @@ export function DailyReportPage() {
   const currentMonthLabel = HE_MONTHS[selectedDateObject.getMonth()];
   const currentYearLabel = selectedDateObject.getFullYear();
 
-  const fetchSummary = useCallback(async (date) => {
+  const fetchSummary = useCallback(async (date: string) => {
     try {
       const data = await getDailySummary({ date });
       setSummary(data);
-    } catch (err) {
-      if (err?.response?.status === 403) {
+    } catch (err: unknown) {
+      if ((err as { response?: { status?: number } })?.response?.status === 403) {
         setForbidden(true);
       }
     }
   }, []);
 
-  const fetchEntries = useCallback(async (month) => {
+  const fetchEntries = useCallback(async (month: string) => {
     setLoadingEntries(true);
     try {
       const data = await listTimeEntries({ month });
-      setEntries(Array.isArray(data) ? data : data?.data ?? []);
-    } catch (err) {
-      if (err?.response?.status === 403) {
+      setEntries(data);
+    } catch (err: unknown) {
+      if ((err as { response?: { status?: number } })?.response?.status === 403) {
         setForbidden(true);
       }
     } finally {
@@ -156,7 +157,7 @@ export function DailyReportPage() {
     }
   }, []);
 
-  const fetchMonthlySummary = useCallback(async (month) => {
+  const fetchMonthlySummary = useCallback(async (month: string) => {
     const [year, monthNum] = month.split('-').map(Number);
     const data = await getMonthlySummary({ year, month: monthNum });
     setMonthlySummary(data);
@@ -178,13 +179,13 @@ export function DailyReportPage() {
   useEffect(() => {
     const [year, month] = currentMonth.split('-').map(Number);
     getMonthStatus(year, month)
-      .then((data) => setIsMonthLocked((data.data ?? data).is_locked ?? false))
+      .then((data) => setIsMonthLocked(data.is_locked ?? false))
       .catch(() => setIsMonthLocked(false));
   }, [currentMonth]);
 
   const standardHours = summary?.standard_hours ?? 9;
 
-  const handleMonthChange = useCallback((nextDate) => {
+  const handleMonthChange = useCallback((nextDate: Date) => {
     const year = nextDate.getFullYear();
     const month = String(nextDate.getMonth() + 1).padStart(2, '0');
     setSelectedDate(`${year}-${month}-01`);
@@ -198,8 +199,8 @@ export function DailyReportPage() {
             setFormEntry(null);
             setFormOpen(true);
           }}
-          onTimerToggle={(timerData) => {
-            setFormEntry(timerData ?? null);
+          onTimerToggle={(timerData: Partial<TimeEntry>) => {
+            setFormEntry((timerData as TimeEntry) ?? null);
             setFormOpen(true);
           }}
         />
@@ -222,8 +223,8 @@ export function DailyReportPage() {
           setFormEntry(null);
           setFormOpen(true);
         }}
-        onTimerToggle={(timerData) => {
-          setFormEntry(timerData ?? null);
+        onTimerToggle={(timerData: Partial<TimeEntry>) => {
+          setFormEntry((timerData as TimeEntry) ?? null);
           setFormOpen(true);
         }}
       />
@@ -304,21 +305,17 @@ export function DailyReportPage() {
             selectedDate={selectedDate}
             standardHours={standardHours}
             isLocked={isMonthLocked}
-            onAddEntry={(date) => {
+            onAddEntry={(date: string) => {
               if (isMonthLocked) return;
               setSelectedDate(date);
               setFormEntry(null);
               setFormOpen(true);
             }}
-            onEdit={(entry) => {
+            onEdit={(entry: TimeEntry) => {
               if (isMonthLocked) return;
               setSelectedDate(entry.date);
               setFormEntry(entry);
               setFormOpen(true);
-            }}
-            onRefresh={() => {
-              fetchEntries(currentMonth);
-              fetchSummary(selectedDate);
             }}
           />
         </section>
