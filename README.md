@@ -7,6 +7,7 @@ A comprehensive time reporting system for managing work hours, projects, absence
 ## 📋 Table of Contents
 
 - [Quick Start](#-quick-start)
+- [Live Deployment](#-live-deployment)
 - [Overview](#overview)
 - [Tech Stack](#tech-stack)
 - [Installation](#installation)
@@ -78,10 +79,19 @@ cd server && npm run migrate && npm run seed && cd ..
 # 6. Start development server
 cd server && npm run dev
 
-# Access at http://localhost:5000
+# Access at http://localhost:3001
 # Login: Check seeded users in seeds/
-# Swagger: http://localhost:5000/api/docs (admin only)
+# Swagger: http://localhost:3001/api/docs (admin only)
 ```
+
+---
+
+## 🌐 Live Deployment
+
+| Service | URL |
+| ------- | --- |
+| Frontend (App) | https://time-reporting-flame.vercel.app/login |
+| Backend API Docs (Swagger) | https://team-rocket-server.onrender.com/docs |
 
 ---
 
@@ -176,7 +186,7 @@ Edit `server/.env`:
 ```bash
 # Server Configuration
 NODE_ENV=development
-PORT=5000
+PORT=3001
 
 # Database
 DB_HOST=localhost
@@ -190,7 +200,7 @@ JWT_ACCESS_SECRET=your-super-secret-access-key-here-min-32-chars
 JWT_REFRESH_SECRET=your-super-secret-refresh-key-here-min-32-chars
 
 # CORS
-CORS_ORIGIN=http://localhost:5173
+CORS_ORIGIN=http://localhost:3002
 
 # File Uploads
 UPLOAD_DIR=./uploads
@@ -241,7 +251,7 @@ cd server
 npm run dev
 ```
 
-Server runs on: `http://localhost:5000`
+Server runs on: `http://localhost:3001`
 
 **Terminal 3 - Start Frontend:**
 
@@ -250,7 +260,7 @@ cd frontend
 npm start
 ```
 
-Frontend runs on: `http://localhost:3000`
+Frontend runs on: `http://localhost:3002`
 
 ### Production Build & Run
 
@@ -395,7 +405,7 @@ See full documentation in Swagger UI at `/api/docs`
 **Login:**
 
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@example.com",
@@ -412,7 +422,7 @@ curl -X POST http://localhost:5000/api/auth/login \
 **Refresh Token:**
 
 ```bash
-curl -X POST http://localhost:5000/api/auth/refresh \
+curl -X POST http://localhost:3001/api/auth/refresh \
   -H "Cookie: refreshToken=<refresh_token>"
 
 # Response: { "accessToken": "new_token..." }
@@ -421,7 +431,7 @@ curl -X POST http://localhost:5000/api/auth/refresh \
 **Change Password:**
 
 ```bash
-curl -X POST http://localhost:5000/api/auth/change-password \
+curl -X POST http://localhost:3001/api/auth/change-password \
   -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -435,7 +445,7 @@ curl -X POST http://localhost:5000/api/auth/change-password \
 **Create Time Entry:**
 
 ```bash
-curl -X POST http://localhost:5000/api/time-entries \
+curl -X POST http://localhost:3001/api/time-entries \
   -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -450,14 +460,14 @@ curl -X POST http://localhost:5000/api/time-entries \
 **List Time Entries:**
 
 ```bash
-curl -X GET "http://localhost:5000/api/time-entries?date=2024-05-13" \
+curl -X GET "http://localhost:3001/api/time-entries?date=2024-05-13" \
   -H "Authorization: Bearer <access_token>"
 ```
 
 **Update Time Entry:**
 
 ```bash
-curl -X PUT http://localhost:5000/api/time-entries/42 \
+curl -X PUT http://localhost:3001/api/time-entries/42 \
   -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -469,7 +479,7 @@ curl -X PUT http://localhost:5000/api/time-entries/42 \
 **Delete Time Entry:**
 
 ```bash
-curl -X DELETE http://localhost:5000/api/time-entries/42 \
+curl -X DELETE http://localhost:3001/api/time-entries/42 \
   -H "Authorization: Bearer <access_token>"
 ```
 
@@ -478,7 +488,7 @@ curl -X DELETE http://localhost:5000/api/time-entries/42 \
 **Start Timer:**
 
 ```bash
-curl -X POST http://localhost:5000/api/timer/start \
+curl -X POST http://localhost:3001/api/timer/start \
   -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -492,7 +502,7 @@ curl -X POST http://localhost:5000/api/timer/start \
 **Stop Timer:**
 
 ```bash
-curl -X POST http://localhost:5000/api/timer/stop \
+curl -X POST http://localhost:3001/api/timer/stop \
   -H "Authorization: Bearer <access_token>"
 
 # Response: { "id": 42, "hours": 2.5, "created_at": "2024-05-13T10:30:00Z" }
@@ -501,7 +511,7 @@ curl -X POST http://localhost:5000/api/timer/stop \
 **Check Timer Status:**
 
 ```bash
-curl -X GET http://localhost:5000/api/timer/status \
+curl -X GET http://localhost:3001/api/timer/status \
   -H "Authorization: Bearer <access_token>"
 
 # Response: { "is_running": true, "started_at": "...", "elapsed_seconds": 3600 }
@@ -512,7 +522,7 @@ curl -X GET http://localhost:5000/api/timer/status \
 **Request Absence:**
 
 ```bash
-curl -X POST http://localhost:5000/api/absences \
+curl -X POST http://localhost:3001/api/absences \
   -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -526,7 +536,7 @@ curl -X POST http://localhost:5000/api/absences \
 **Upload Absence Document:**
 
 ```bash
-curl -X POST http://localhost:5000/api/absences/1/documents \
+curl -X POST http://localhost:3001/api/absences/1/documents \
   -H "Authorization: Bearer <access_token>" \
   -F "file=@/path/to/document.pdf"
 ```
@@ -536,7 +546,7 @@ curl -X POST http://localhost:5000/api/absences/1/documents \
 **Create User:**
 
 ```bash
-curl -X POST http://localhost:5000/api/users \
+curl -X POST http://localhost:3001/api/users \
   -H "Authorization: Bearer <admin_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -550,14 +560,14 @@ curl -X POST http://localhost:5000/api/users \
 **List All Users:**
 
 ```bash
-curl -X GET http://localhost:5000/api/users \
+curl -X GET http://localhost:3001/api/users \
   -H "Authorization: Bearer <admin_token>"
 ```
 
 **Update User:**
 
 ```bash
-curl -X PUT http://localhost:5000/api/users/3 \
+curl -X PUT http://localhost:3001/api/users/3 \
   -H "Authorization: Bearer <admin_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -569,7 +579,7 @@ curl -X PUT http://localhost:5000/api/users/3 \
 **Reset User Password:**
 
 ```bash
-curl -X POST http://localhost:5000/api/users/3/reset-password \
+curl -X POST http://localhost:3001/api/users/3/reset-password \
   -H "Authorization: Bearer <admin_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -582,7 +592,7 @@ curl -X POST http://localhost:5000/api/users/3/reset-password \
 **Lock a Month:**
 
 ```bash
-curl -X POST http://localhost:5000/api/admin/months/2024/5/lock \
+curl -X POST http://localhost:3001/api/admin/months/2024/5/lock \
   -H "Authorization: Bearer <admin_token>"
 
 # Response: { "is_locked": true, "locked_at": "2024-05-31T17:00:00Z" }
@@ -591,14 +601,14 @@ curl -X POST http://localhost:5000/api/admin/months/2024/5/lock \
 **Unlock a Month:**
 
 ```bash
-curl -X POST http://localhost:5000/api/admin/months/2024/5/unlock \
+curl -X POST http://localhost:3001/api/admin/months/2024/5/unlock \
   -H "Authorization: Bearer <admin_token>"
 ```
 
 **List All Months:**
 
 ```bash
-curl -X GET http://localhost:5000/api/admin/months \
+curl -X GET http://localhost:3001/api/admin/months \
   -H "Authorization: Bearer <admin_token>"
 ```
 
@@ -607,7 +617,7 @@ curl -X GET http://localhost:5000/api/admin/months \
 **Get Monthly Summary:**
 
 ```bash
-curl -X GET "http://localhost:5000/api/monthly-summary?year=2024&month=5" \
+curl -X GET "http://localhost:3001/api/monthly-summary?year=2024&month=5" \
   -H "Authorization: Bearer <access_token>"
 
 # Response:
@@ -624,7 +634,7 @@ curl -X GET "http://localhost:5000/api/monthly-summary?year=2024&month=5" \
 **Get Audit Logs (Admin):**
 
 ```bash
-curl -X GET "http://localhost:5000/api/audit-logs?limit=50&offset=0" \
+curl -X GET "http://localhost:3001/api/audit-logs?limit=50&offset=0" \
   -H "Authorization: Bearer <admin_token>"
 ```
 
@@ -875,7 +885,7 @@ npm run migrate:rollback
 | `DB_PASSWORD`        | -                       | Database password                           |
 | `JWT_ACCESS_SECRET`  | -                       | JWT access token secret (min 32 chars)      |
 | `JWT_REFRESH_SECRET` | -                       | JWT refresh token secret (min 32 chars)     |
-| `CORS_ORIGIN`        | `http://localhost:5173` | Frontend URL for CORS                       |
+| `CORS_ORIGIN`        | `http://localhost:3002` | Frontend URL for CORS                       |
 
 ### Optional Variables
 
@@ -1218,7 +1228,7 @@ Access tokens expire in **15 minutes**. Refresh tokens are stored in secure HTTP
 **Example Login Flow:**
 
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"user@example.com","password":"password"}'
 
@@ -1310,7 +1320,7 @@ RateLimit-Reset: 1684069200
 **Upload Example:**
 
 ```bash
-curl -X POST http://localhost:5000/api/absences/1/documents \
+curl -X POST http://localhost:3001/api/absences/1/documents \
   -H "Authorization: Bearer <token>" \
   -F "file=@medical_cert.pdf"
 
@@ -1388,34 +1398,34 @@ curl -X POST http://localhost:5000/api/absences/1/documents \
 
 ```bash
 # 400 - Invalid JSON
-curl -X POST http://localhost:5000/api/time-entries \
+curl -X POST http://localhost:3001/api/time-entries \
   -H "Authorization: Bearer <token>" \
   -d "{ invalid json" # → 400 Bad Request
 
 # 401 - Missing token
-curl -X GET http://localhost:5000/api/time-entries
+curl -X GET http://localhost:3001/api/time-entries
 # Response: 401 Unauthorized { "message": "Authentication required" }
 
 # 403 - Month locked
-curl -X POST http://localhost:5000/api/time-entries \
+curl -X POST http://localhost:3001/api/time-entries \
   -H "Authorization: Bearer <token>" \
   -d '{"project_id": 1, "date": "2024-04-13", "hours": 8}'
 # Response: 403 Forbidden { "message": "Month is locked" }
 
 # 404 - Not found
-curl -X GET http://localhost:5000/api/time-entries/999 \
+curl -X GET http://localhost:3001/api/time-entries/999 \
   -H "Authorization: Bearer <token>"
 # Response: 404 Not Found { "message": "Time entry not found" }
 
 # 409 - Email exists
-curl -X POST http://localhost:5000/api/users \
+curl -X POST http://localhost:3001/api/users \
   -H "Authorization: Bearer <admin_token>" \
   -d '{"email": "existing@example.com", ...}'
 # Response: 409 Conflict { "message": "Email already in use" }
 
 # 429 - Rate limited
 for i in {1..101}; do
-  curl -X GET http://localhost:5000/api/time-entries
+  curl -X GET http://localhost:3001/api/time-entries
 done
 # Response: 429 Too Many Requests { "message": "Too many requests" }
 ```
@@ -1533,7 +1543,7 @@ A:
 A: Use the refresh token to get a new one:
 
 ```bash
-curl -X POST http://localhost:5000/api/auth/refresh \
+curl -X POST http://localhost:3001/api/auth/refresh \
   -H "Cookie: refreshToken=<your_refresh_token>"
 ```
 
@@ -1541,7 +1551,7 @@ curl -X POST http://localhost:5000/api/auth/refresh \
 A: Login first:
 
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST http://localhost:3001/api/auth/login \
   -d '{"email":"admin@example.com","password":"password"}'
 ```
 
@@ -1568,7 +1578,7 @@ npm run migrate         # Try again
 A: Admin only:
 
 ```bash
-curl -X POST "http://localhost:5000/api/admin/months/2024/5/unlock" \
+curl -X POST "http://localhost:3001/api/admin/months/2024/5/unlock" \
   -H "Authorization: Bearer <admin_token>"
 ```
 
@@ -1651,7 +1661,7 @@ LOG_LEVEL=debug npm run dev
 ### Health Check
 
 ```bash
-curl http://localhost:5000/healthz
+curl http://localhost:3001/healthz
 # Response: { "status": "ok", "timestamp": "2024-05-13T10:30:00Z" }
 ```
 
@@ -1659,7 +1669,7 @@ curl http://localhost:5000/healthz
 
 ```bash
 # Check for unusual activity
-curl -X GET "http://localhost:5000/api/audit-logs?limit=100" \
+curl -X GET "http://localhost:3001/api/audit-logs?limit=100" \
   -H "Authorization: Bearer <admin_token>" | jq '.[] | select(.action=="DELETE")'
 ```
 
@@ -1686,8 +1696,8 @@ docker-compose up --build
 This starts:
 
 - PostgreSQL database (port 5432)
-- Backend server (port 5000)
-- Frontend (port 5173 or built into backend)
+- Backend server (port 3001)
+- Frontend (port 3002 or built into backend)
 
 ### Environment Setup for Production
 
@@ -1704,7 +1714,7 @@ This starts:
 ### Health Check
 
 ```bash
-curl http://localhost:5000/healthz
+curl http://localhost:3001/healthz
 # Response: { "status": "ok", "timestamp": "2024-05-13T10:30:00.000Z" }
 ```
 
