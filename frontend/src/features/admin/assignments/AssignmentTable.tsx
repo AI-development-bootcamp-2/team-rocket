@@ -1,22 +1,273 @@
-// @ts-nocheck
-/**
- * AssignmentTable
- *
- * Matrix view: rows = users, column groups = projects, leaf columns = tasks.
- * Each cell shows a checkbox to toggle/create the assignment for (user, task).
- * Out-of-scope project columns are greyed and cells show a disabled dash.
- *
- * props:
- *   assignments      – array of assignment response objects
- *   users            – array of user objects (rows). Falls back to assignment-derived list.
- *   tasks            – array of open task objects (defines columns). Falls back to
- *                      tasks inferred from assignments.
- *   loading          – show skeleton
- *   canMutate        – admin or user+flag (controls checkbox vs badge)
- *   scopedProjectIds – null = no restriction; number[] = only those project IDs allowed
- *   onToggle(assignmentId, newIsActive)
- */
-export function AssignmentTable({ assignments, users = [], tasks = [], loading, canMutate, scopedProjectIds, onToggle }) {
+import { useMemo, useState, useEffect, useRef } from 'react';
+
+const PAGE_SIZE = 10;
+const MAX_PILLS = 4;
+
+interface PaginationProps {
+  page: number;
+  totalPages: number;
+  onChange: (p: number) => void;
+}
+
+function Pagination({ page, totalPages, onChange }: PaginationProps) {
+  if (totalPages <= 1) return null;
+
+  const pages: number[] = [];
+  for (let i = 1; i <= totalPages; i++) pages.push(i);
+
+  return (
+    <div className="assignment-pagination">
+      <button
+        className="assignment-pagination__btn"
+        onClick={() => onChange(1)}
+        disabled={page === 1}
+        aria-label="עמוד ראשון"
+      >
+        ⊣
+      </button>
+      <button
+        className="assignment-pagination__btn"
+        onClick={() => onChange(page - 1)}
+        disabled={page === 1}
+        aria-label="עמוד קודם"
+      >
+        ‹
+      </button>
+      {pages.map((p) => (
+        <button
+          key={p}
+          className={`assignment-pagination__btn${p === page ? ' assignment-pagination__btn--active' : ''}`}
+          onClick={() => onChange(p)}
+          aria-current={p === page ? 'page' : undefined}
+        >
+          {p}
+        </button>
+      ))}
+      <button
+        className="assignment-pagination__btn"
+        onClick={() => onChange(page + 1)}
+        disabled={page === totalPages}
+        aria-label="עמוד הבא"
+      >
+        ›
+      </button>
+      <button
+        className="assignment-pagination__btn"
+        onClick={() => onChange(totalPages)}
+        disabled={page === totalPages}
+        aria-label="עמוד אחרון"
+      >
+        ⊢
+      </button>
+    </div>
+  );
+}
+
+function useDropdown() {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (
+        !wrapRef.current?.contains(e.target as Node) &&
+        !menuRef.current?.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+    function onScroll() { setOpen(false); }
+    document.addEventListener('mousedown', onDown);
+    window.addEventListener('scroll', onScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      window.removeEventListener('scroll', onScroll, true);
+    };
+  }, [open]);
+
+  function toggle(e: React.MouseEvent<HTMLButtonElement>) {
+    if (!open) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+    }
+    setOpen((v) => !v);
+  }
+
+  return { open, setOpen, wrapRef, menuRef, pos, toggle };
+}
+
+interface RowActionMenuProps {
+  row: any;
+  onEditClient: (id: number) => void;
+  onEditProject: (id: number) => void;
+  onEditTask: (id: number) => void;
+  onEditAssignment: (id: number) => void;
+  onArchiveClient: (id: number) => void;
+  onArchiveProject: (id: number) => void;
+  onArchiveTask: (id: number) => void;
+}
+
+function RowActionMenu({
+  row,
+  onEditClient,
+  onEditProject,
+  onEditTask,
+  onEditAssignment,
+  onArchiveClient,
+  onArchiveProject,
+  onArchiveTask,
+}: RowActionMenuProps) {
+  const edit = useDropdown();
+  const del = useDropdown();
+
+  return (
+    <div className="assignment-row-actions">
+      <div className="assignment-edit-wrap" ref={edit.wrapRef}>
+        <button
+          type="button"
+          className="assignment-action-btn assignment-action-btn--edit"
+          onClick={edit.toggle}
+          title="עריכה"
+          aria-label="עריכת שיוך"
+          aria-expanded={edit.open}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M11.333 2a1.886 1.886 0 0 1 2.667 2.667L4.889 13.778l-3.556.888.889-3.555L11.333 2Z" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+        {edit.open && (
+          <div className="assignment-dd-menu" ref={edit.menuRef} role="menu"
+            style={{ position: 'fixed', top: edit.pos.top, right: edit.pos.right }}>
+            <button type="button" className="assignment-dd-item" role="menuitem"
+              onClick={() => { edit.setOpen(false); onEditClient(row.taskId); }}>
+              עריכת לקוח
+            </button>
+            <button type="button" className="assignment-dd-item" role="menuitem"
+              onClick={() => { edit.setOpen(false); onEditProject(row.taskId); }}>
+              עריכת פרויקט
+            </button>
+            <button type="button" className="assignment-dd-item" role="menuitem"
+              onClick={() => { edit.setOpen(false); onEditTask(row.taskId); }}>
+              עריכת משימה
+            </button>
+            <button type="button" className="assignment-dd-item" role="menuitem"
+              onClick={() => { edit.setOpen(false); onEditAssignment(row.taskId); }}>
+              עריכת שיוך עובדים
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="assignment-edit-wrap" ref={del.wrapRef}>
+        <button
+          type="button"
+          className="assignment-action-btn assignment-action-btn--delete"
+          onClick={del.toggle}
+          title="מחיקה"
+          aria-label="מחיקת שיוך"
+          aria-expanded={del.open}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M2 4h12M5.333 4V2.667a1.333 1.333 0 0 1 1.334-1.334h2.666a1.333 1.333 0 0 1 1.334 1.334V4M13.333 4l-.889 9.333A1.333 1.333 0 0 1 11.111 14.667H4.89a1.333 1.333 0 0 1-1.333-1.334L2.667 4" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+        {del.open && (
+          <div className="assignment-dd-menu assignment-dd-menu--delete" ref={del.menuRef} role="menu"
+            style={{ position: 'fixed', top: del.pos.top, right: del.pos.right }}>
+            <button type="button" className="assignment-dd-item assignment-dd-item--delete" role="menuitem"
+              onClick={() => { del.setOpen(false); onArchiveClient(row.taskId); }}>
+              מחק לקוח
+            </button>
+            <button type="button" className="assignment-dd-item assignment-dd-item--delete" role="menuitem"
+              onClick={() => { del.setOpen(false); onArchiveProject(row.taskId); }}>
+              מחק פרויקט
+            </button>
+            <button type="button" className="assignment-dd-item assignment-dd-item--delete" role="menuitem"
+              onClick={() => { del.setOpen(false); onArchiveTask(row.taskId); }}>
+              מחק משימה
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface AssignmentTableProps {
+  assignments: any[];
+  tasks?: any[];
+  loading: boolean;
+  canMutate: boolean;
+  search?: string;
+  onEditClient: (id: number) => void;
+  onEditProject: (id: number) => void;
+  onEditTask: (id: number) => void;
+  onEditAssignment: (id: number) => void;
+  onArchiveClient: (id: number) => void;
+  onArchiveProject: (id: number) => void;
+  onArchiveTask: (id: number) => void;
+}
+
+export function AssignmentTable({
+  assignments,
+  tasks = [],
+  loading,
+  canMutate,
+  search = '',
+  onEditClient,
+  onEditProject,
+  onEditTask,
+  onEditAssignment,
+  onArchiveClient,
+  onArchiveProject,
+  onArchiveTask,
+}: AssignmentTableProps) {
+  const [page, setPage] = useState(1);
+
+  const rows = useMemo(() => {
+    const taskGroups = new Map<number, any>();
+    for (const a of assignments) {
+      if (!taskGroups.has(a.taskId)) {
+        const task = tasks.find((t: any) => t.id === a.taskId);
+        taskGroups.set(a.taskId, {
+          taskId: a.taskId,
+          taskName: a.task?.name ?? task?.name ?? '',
+          projectName: a.projectName ?? task?.projectName ?? '',
+          clientName: task?.clientName ?? a.clientName ?? '',
+          assignments: [],
+        });
+      }
+      taskGroups.get(a.taskId).assignments.push(a);
+    }
+    const result: any[] = [];
+    taskGroups.forEach((value) => result.push(value));
+    return result;
+  }, [assignments, tasks]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter(
+      (row) =>
+        row.taskName.toLowerCase().includes(q) ||
+        row.projectName.toLowerCase().includes(q) ||
+        row.clientName.toLowerCase().includes(q) ||
+        row.assignments.some((a: any) =>
+          `${a.user?.firstName ?? ''} ${a.user?.lastName ?? ''}`.toLowerCase().includes(q),
+        ),
+    );
+  }, [rows, search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const visibleRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   if (loading) {
     return (
       <div className="users-table-card">
@@ -25,168 +276,75 @@ export function AssignmentTable({ assignments, users = [], tasks = [], loading, 
     );
   }
 
-  // Build assignment lookup: Map<userId, Map<taskId, assignment>>
-  const lookup = new Map();
-  for (const a of assignments) {
-    if (!lookup.has(a.userId)) lookup.set(a.userId, new Map());
-    lookup.get(a.userId).set(a.taskId, a);
-  }
-
-  // Build project groups from tasks prop; fall back to deriving from assignments
-  const projectMap = new Map();
-  const taskSource = tasks.length > 0 ? tasks : [];
-  for (const t of taskSource) {
-    if (!projectMap.has(t.projectId)) {
-      projectMap.set(t.projectId, { projectId: t.projectId, projectName: t.projectName, tasks: [] });
-    }
-    projectMap.get(t.projectId).tasks.push(t);
-  }
-  if (taskSource.length === 0) {
-    for (const a of assignments) {
-      if (!projectMap.has(a.projectId)) {
-        projectMap.set(a.projectId, { projectId: a.projectId, projectName: a.projectName, tasks: [] });
-      }
-      const grp = projectMap.get(a.projectId);
-      if (!grp.tasks.find((t) => t.id === a.taskId)) {
-        grp.tasks.push({ id: a.taskId, name: a.task.name, projectId: a.projectId });
-      }
-    }
-  }
-  const projectGroups = [...projectMap.values()];
-
-  // Build user rows
-  const userRows =
-    users.length > 0
-      ? users
-      : [...new Set(assignments.map((a) => a.userId))].map((uid) => {
-          const a = assignments.find((x) => x.userId === uid);
-          return { id: uid, firstName: a.user.firstName, lastName: a.user.lastName };
-        });
-
-  if (projectGroups.length === 0) {
+  if (rows.length === 0) {
     return (
       <div className="users-table-card">
-        <p style={{ textAlign: 'center', color: '#9CA3AF', padding: 24 }}>
-          אין משימות פתוחות לתצוגת מטריצה
-        </p>
+        <p style={{ textAlign: 'center', color: '#9CA3AF', padding: 24 }}>אין שיוכים</p>
       </div>
     );
   }
 
   return (
-    <div className="users-table-card" style={{ overflowX: 'auto' }}>
-      <table className="users-table" style={{ minWidth: 'max-content' }}>
-        <thead>
-          {/* Row 1 — project group headers */}
-          <tr>
-            <th rowSpan={2} style={{ verticalAlign: 'bottom', whiteSpace: 'nowrap' }}>
-              עובד
-            </th>
-            {projectGroups.map(({ projectId, projectName, tasks: ptasks }) => {
-              const outOfScope =
-                scopedProjectIds != null && !scopedProjectIds.includes(Number(projectId));
-              return (
-                <th
-                  key={projectId}
-                  colSpan={ptasks.length}
-                  style={{
-                    textAlign: 'center',
-                    borderBottom: '1px solid #E5E7EB',
-                    ...(outOfScope
-                      ? { opacity: 0.45, background: '#F3F4F6', color: '#6B7280' }
-                      : {}),
-                  }}
-                  title={outOfScope ? 'מחוץ לפרויקטים המורשים לך' : undefined}
-                >
-                  {projectName}
-                </th>
-              );
-            })}
-          </tr>
-          {/* Row 2 — individual task name headers */}
-          <tr>
-            {projectGroups.flatMap(({ projectId, tasks: ptasks }) => {
-              const outOfScope =
-                scopedProjectIds != null && !scopedProjectIds.includes(Number(projectId));
-              return ptasks.map((t) => (
-                <th
-                  key={t.id}
-                  style={{
-                    fontWeight: 400,
-                    fontSize: 12,
-                    textAlign: 'center',
-                    maxWidth: 120,
-                    wordBreak: 'break-word',
-                    padding: '4px 6px',
-                    ...(outOfScope
-                      ? { opacity: 0.45, background: '#F3F4F6', color: '#9CA3AF' }
-                      : {}),
-                  }}
-                  title={outOfScope ? 'מחוץ לפרויקטים המורשים לך' : t.name}
-                >
-                  {t.name}
-                </th>
-              ));
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {userRows.map((u) => {
-            const userAssignments = lookup.get(u.id) ?? new Map();
-            return (
-              <tr key={u.id}>
-                <td style={{ whiteSpace: 'nowrap' }}>
-                  {u.firstName} {u.lastName}
+    <div className="users-table-card">
+      <div style={{ overflowX: 'auto' }}>
+        <table className="users-table">
+          <thead>
+            <tr>
+              <th>שם לקוח</th>
+              <th>שם פרויקט</th>
+              <th>שם המשימה</th>
+              <th>שמות העובדים המשויכים</th>
+              <th>פעולות</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleRows.length === 0 ? (
+              <tr>
+                <td colSpan={5} style={{ textAlign: 'center', color: '#9CA3AF', padding: 24 }}>
+                  לא נמצאו תוצאות לחיפוש
                 </td>
-                {projectGroups.flatMap(({ projectId, tasks: ptasks }) => {
-                  const outOfScope =
-                    scopedProjectIds != null && !scopedProjectIds.includes(Number(projectId));
-                  return ptasks.map((t) => {
-                    const a = userAssignments.get(t.id);
-                    return (
-                      <td
-                        key={t.id}
-                        style={{
-                          textAlign: 'center',
-                          ...(outOfScope ? { background: '#FAFAFA', opacity: 0.45 } : {}),
-                        }}
-                      >
-                        {outOfScope ? (
-                          <span
-                            title="מחוץ לפרויקטים המורשים לך"
-                            style={{ color: '#D1D5DB', fontSize: 16 }}
-                          >
-                            —
-                          </span>
-                        ) : a ? (
-                          canMutate ? (
-                            <input
-                              type="checkbox"
-                              checked={a.isActive}
-                              title={a.isActive ? 'בטל שיוך' : 'הפעל שיוך'}
-                              onChange={(e) => onToggle(a.id, e.target.checked)}
-                              style={{ cursor: 'pointer', width: 16, height: 16 }}
-                            />
-                          ) : (
-                            <span
-                              className={`task-status-badge task-status-badge--${a.isActive ? 'open' : 'closed'}`}
-                            >
-                              {a.isActive ? '✓' : '✗'}
-                            </span>
-                          )
-                        ) : (
-                          <span style={{ color: '#E5E7EB', fontSize: 16 }}>—</span>
-                        )}
-                      </td>
-                    );
-                  });
-                })}
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            ) : (
+              visibleRows.map((row) => (
+                <tr key={row.taskId}>
+                  <td>{row.clientName}</td>
+                  <td>{row.projectName}</td>
+                  <td>{row.taskName}</td>
+                  <td>
+                    <div className="assignment-pills">
+                      {row.assignments.slice(0, MAX_PILLS).map((a: any) => (
+                        <span key={a.id} className="assignment-pill">
+                          {a.user?.firstName} {a.user?.lastName}
+                        </span>
+                      ))}
+                      {row.assignments.length > MAX_PILLS && (
+                        <span className="assignment-pill assignment-pill--overflow">
+                          +{row.assignments.length - MAX_PILLS}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    {canMutate && (
+                      <RowActionMenu
+                        row={row}
+                        onEditClient={onEditClient}
+                        onEditProject={onEditProject}
+                        onEditTask={onEditTask}
+                        onEditAssignment={onEditAssignment}
+                        onArchiveClient={onArchiveClient}
+                        onArchiveProject={onArchiveProject}
+                        onArchiveTask={onArchiveTask}
+                      />
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
     </div>
   );
 }
-

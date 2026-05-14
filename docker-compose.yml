@@ -48,6 +48,8 @@ services:
       HOST: 0.0.0.0
       PORT: 5173
       REACT_APP_API_URL: http://localhost:3001
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
     ports:
       - '3002:5173'
     volumes:
