@@ -1,24 +1,36 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, FormEvent } from 'react';
 import { Modal } from '../../../components/ui/Modal';
 import { Select } from '../../../components/ui/Select';
 
 const ROWS_PER_PAGE = 12;
 
 
-function buildPageNumbers(current, total) {
+function buildPageNumbers(current: number, total: number): (number | string)[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
   const pages = new Set([1, total, current]);
   for (let d = -1; d <= 1; d++) {
     const p = current + d;
     if (p > 1 && p < total) pages.add(p);
   }
-  const sorted = [...pages].sort((a, b) => a - b);
-  const result = [];
+  const sorted = Array.from(pages).sort((a, b) => a - b);
+  const result: (number | string)[] = [];
   for (let i = 0; i < sorted.length; i++) {
     if (i > 0 && sorted[i] - sorted[i - 1] > 1) result.push('…');
     result.push(sorted[i]);
   }
   return result;
+}
+
+interface NewAssignmentModalProps {
+  projects: any[];
+  tasks: any[];
+  users: any[];
+  saving: boolean;
+  isScopedUser: boolean;
+  scopedProjectIds: number[] | null;
+  defaultTaskId: number | null;
+  onClose: () => void;
+  onSubmit: (payload: { task_id: number; user_ids: number[] }) => void;
 }
 
 export function NewAssignmentModal({
@@ -31,11 +43,11 @@ export function NewAssignmentModal({
   defaultTaskId,
   onClose,
   onSubmit,
-}) {
+}: NewAssignmentModalProps) {
   const defaultTask = defaultTaskId != null ? tasks.find((t) => t.id === defaultTaskId) : null;
   const [projectId, setProjectId] = useState(defaultTask ? String(defaultTask.projectId) : '');
   const [taskId, setTaskId] = useState(defaultTask ? String(defaultTask.id) : '');
-  const [selectedUserIds, setSelectedUserIds] = useState(new Set());
+  const [selectedUserIds, setSelectedUserIds] = useState(new Set<number>());
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
@@ -72,12 +84,12 @@ export function NewAssignmentModal({
   );
   const pageNums = buildPageNumbers(currentPage, totalPages);
 
-  function handleSearch(val) {
+  function handleSearch(val: string) {
     setSearch(val);
     setPage(1);
   }
 
-  function toggleUser(id) {
+  function toggleUser(id: number) {
     setSelectedUserIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -102,10 +114,10 @@ export function NewAssignmentModal({
   const allFiltered =
     filteredUsers.length > 0 && filteredUsers.every((u) => selectedUserIds.has(u.id));
 
-  function handleSubmit(e) {
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!taskId || selectedUserIds.size === 0) return;
-    onSubmit({ task_id: Number(taskId), user_ids: [...selectedUserIds] });
+    onSubmit({ task_id: Number(taskId), user_ids: Array.from(selectedUserIds) });
   }
 
   const canSubmit = taskId !== '' && selectedUserIds.size > 0 && !saving;
@@ -320,7 +332,7 @@ export function NewAssignmentModal({
                 <button
                   key={n}
                   className={`assignment-pagination__btn${n === currentPage ? ' assignment-pagination__btn--active' : ''}`}
-                  onClick={() => setPage(n)}
+                  onClick={() => setPage(n as number)}
                 >
                   {n}
                 </button>
