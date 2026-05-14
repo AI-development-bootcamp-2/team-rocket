@@ -3,6 +3,7 @@ import type {
   CreateTimeEntryPayload,
   DailySummary,
   DropdownData,
+  MonthlySummary,
   TimeEntry,
   TimeEntryMutationResponse,
   UpdateTimeEntryPayload,
@@ -42,6 +43,19 @@ export async function listTimeEntries({ date, userId, week, month }: ListTimeEnt
   if (month) params.set('month', month);
   const query = params.toString();
   const response = await axiosClient.get<TimeEntry[]>(`/time-entries${query ? `?${query}` : ''}`);
+  return response.data;
+}
+
+export async function getMonthlySummary({
+  year,
+  month,
+}: {
+  year: number;
+  month: number;
+}): Promise<MonthlySummary> {
+  const response = await axiosClient.get<MonthlySummary>(
+    `/monthly-summary?year=${year}&month=${month}`,
+  );
   return response.data;
 }
 

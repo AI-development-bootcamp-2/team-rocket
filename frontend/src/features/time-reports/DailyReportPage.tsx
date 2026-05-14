@@ -1,13 +1,13 @@
-// @ts-nocheck
 import { useCallback, useEffect, useState } from 'react';
-import { getDailySummary, getDropdownData, listTimeEntries } from '../../api/timeEntries.api';
+import { getDailySummary, getDropdownData, getMonthlySummary, listTimeEntries } from '../../api/timeEntries.api';
+import type { DailySummary, DropdownData, MonthlySummary, TimeEntry } from '../../api/contracts';
 import { getMonthStatus } from '../../api/monthLocks.api';
 import { AppHeader } from '../../components/AppHeader';
 import { ExistingEntriesList } from './ExistingEntriesList';
 import { ReportForm } from './ReportForm';
 import styles from './DailyReportPage.module.css';
 
-function toLocalDateString(date) {
+function toLocalDateString(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -19,21 +19,6 @@ const HE_MONTHS = [
   'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
 ];
 
-const MONTHLY_SUMMARY_PLACEHOLDER = {
-  reportedHours: 141,
-  targetHours: 181,
-  completionRate: 78,
-  missingHours: 36,
-  absenceHours: 32,
-  missingDays: 4,
-  projectBreakdown: [
-    { name: 'El Al Cargo', hours: '55 ש\'' },
-    { name: 'פרויקט ב\'', hours: '35.2 ש\'' },
-    { name: 'פרויקט ג\'', hours: '26.8 ש\'' },
-    { name: 'פרויקט ד\'', hours: '15.5 ש\'' },
-    { name: 'פרויקט ה\'', hours: '8.5 ש\'' },
-  ],
-};
 
 function HoursIcon() {
   return (
@@ -55,6 +40,25 @@ function CalendarIcon() {
   );
 }
 
+function ArrowForwardIosIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" fill="#141E3E" />
+    </svg>
+  );
+}
+
+function DangerCircleIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="32" height="32" rx="8" fill="#FEE2E2" />
+      <path d="M15.9993 24.3337C20.5827 24.3337 24.3327 20.5837 24.3327 16.0003C24.3327 11.417 20.5827 7.66699 15.9993 7.66699C11.416 7.66699 7.66602 11.417 7.66602 16.0003C7.66602 20.5837 11.416 24.3337 15.9993 24.3337Z" stroke="#FF1D21" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 12.667V16.8337" stroke="#FF1D21" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M15.9961 19.333H16.0036" stroke="#FF1D21" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function ChartIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -66,16 +70,17 @@ function ChartIcon() {
 
 export function DailyReportPage() {
   const [selectedDate, setSelectedDate] = useState(() => toLocalDateString(new Date()));
-  const [summary, setSummary] = useState(null);
-  const [entries, setEntries] = useState([]);
+  const [summary, setSummary] = useState<DailySummary | null>(null);
+  const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(false);
-  const [dropdownData, setDropdownData] = useState(null);
+  const [dropdownData, setDropdownData] = useState<DropdownData | null>(null);
   const [forbidden, setForbidden] = useState(false);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
-  const [formEntry, setFormEntry] = useState(null);
+  const [formEntry, setFormEntry] = useState<TimeEntry | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [formDirty, setFormDirty] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [monthlySummary, setMonthlySummary] = useState<MonthlySummary | null>(null);
   const [isMonthLocked, setIsMonthLocked] = useState(false);
 
   useEffect(() => {
@@ -90,7 +95,7 @@ export function DailyReportPage() {
   }, []);
 
   useEffect(() => {
-    const handleBeforeUnload = (event) => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (!formOpen || !formDirty) return;
       event.preventDefault();
       event.returnValue = '';
@@ -103,7 +108,7 @@ export function DailyReportPage() {
   useEffect(() => {
     if (!summaryOpen) return undefined;
 
-    const handleEscape = (event) => {
+    const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setSummaryOpen(false);
       }
@@ -118,24 +123,24 @@ export function DailyReportPage() {
   const currentMonthLabel = HE_MONTHS[selectedDateObject.getMonth()];
   const currentYearLabel = selectedDateObject.getFullYear();
 
-  const fetchSummary = useCallback(async (date) => {
+  const fetchSummary = useCallback(async (date: string) => {
     try {
       const data = await getDailySummary({ date });
       setSummary(data);
-    } catch (err) {
-      if (err?.response?.status === 403) {
+    } catch (err: unknown) {
+      if ((err as { response?: { status?: number } })?.response?.status === 403) {
         setForbidden(true);
       }
     }
   }, []);
 
-  const fetchEntries = useCallback(async (month) => {
+  const fetchEntries = useCallback(async (month: string) => {
     setLoadingEntries(true);
     try {
       const data = await listTimeEntries({ month });
-      setEntries(Array.isArray(data) ? data : data?.data ?? []);
-    } catch (err) {
-      if (err?.response?.status === 403) {
+      setEntries(data);
+    } catch (err: unknown) {
+      if ((err as { response?: { status?: number } })?.response?.status === 403) {
         setForbidden(true);
       }
     } finally {
@@ -152,13 +157,20 @@ export function DailyReportPage() {
     }
   }, []);
 
+  const fetchMonthlySummary = useCallback(async (month: string) => {
+    const [year, monthNum] = month.split('-').map(Number);
+    const data = await getMonthlySummary({ year, month: monthNum });
+    setMonthlySummary(data);
+  }, []);
+
   useEffect(() => {
     fetchSummary(selectedDate);
   }, [selectedDate, fetchSummary]);
 
   useEffect(() => {
     fetchEntries(currentMonth);
-  }, [currentMonth, fetchEntries]);
+    fetchMonthlySummary(currentMonth);
+  }, [currentMonth, fetchEntries, fetchMonthlySummary]);
 
   useEffect(() => {
     fetchDropdownData();
@@ -167,13 +179,13 @@ export function DailyReportPage() {
   useEffect(() => {
     const [year, month] = currentMonth.split('-').map(Number);
     getMonthStatus(year, month)
-      .then((data) => setIsMonthLocked((data.data ?? data).is_locked ?? false))
+      .then((data) => setIsMonthLocked(data.is_locked ?? false))
       .catch(() => setIsMonthLocked(false));
   }, [currentMonth]);
 
   const standardHours = summary?.standard_hours ?? 9;
 
-  const handleMonthChange = useCallback((nextDate) => {
+  const handleMonthChange = useCallback((nextDate: Date) => {
     const year = nextDate.getFullYear();
     const month = String(nextDate.getMonth() + 1).padStart(2, '0');
     setSelectedDate(`${year}-${month}-01`);
@@ -187,8 +199,8 @@ export function DailyReportPage() {
             setFormEntry(null);
             setFormOpen(true);
           }}
-          onTimerToggle={(timerData) => {
-            setFormEntry(timerData ?? null);
+          onTimerToggle={(timerData: Partial<TimeEntry>) => {
+            setFormEntry((timerData as TimeEntry) ?? null);
             setFormOpen(true);
           }}
         />
@@ -211,69 +223,71 @@ export function DailyReportPage() {
           setFormEntry(null);
           setFormOpen(true);
         }}
-        onTimerToggle={(timerData) => {
-          setFormEntry(timerData ?? null);
+        onTimerToggle={(timerData: Partial<TimeEntry>) => {
+          setFormEntry((timerData as TimeEntry) ?? null);
           setFormOpen(true);
         }}
       />
 
       <main className={styles.main}>
         <div className={styles.topSectionHeader}>
+          <div className={styles.titleSection}>
+            <h1 className={styles.pageTitle}>דיווח שעות</h1>
+            <p className={styles.pageSubtitle}>רשימת הדיווחים היומיים - לחודש {currentMonthLabel} {currentYearLabel}</p>
+          </div>
+
           <div className={styles.monthNavSection}>
             <button
-              className={styles.monthNavArrow}
               type="button"
+              className={styles.monthNavArrow}
               aria-label="חודש קודם"
               onClick={() => {
                 const [year, month] = currentMonth.split('-').map(Number);
                 handleMonthChange(new Date(year, month - 2, 1));
               }}
             >
-              ‹
+              <ArrowForwardIosIcon />
             </button>
             <span className={styles.currentMonthLabel}>{currentMonthLabel}</span>
             <button
-              className={styles.monthNavArrow}
               type="button"
+              className={styles.monthNavArrow}
               aria-label="חודש הבא"
               onClick={() => {
                 const [year, month] = currentMonth.split('-').map(Number);
                 handleMonthChange(new Date(year, month, 1));
               }}
             >
-              ›
+              <ArrowForwardIosIcon className={styles.arrowIconLeft} />
             </button>
-          </div>
-
-          <div className={styles.titleSection}>
-            <h1 className={styles.pageTitle}>דיווח שעות</h1>
-            <p className={styles.pageSubtitle}>רשימת הדיווחים היומיים - לחודש {currentMonthLabel} {currentYearLabel}</p>
           </div>
         </div>
 
-        <button
-          type="button"
-          className={styles.monthlySummaryStrip}
-          onClick={() => setSummaryOpen(true)}
-          aria-label="פתח סיכום חודשי"
-        >
-          <span className={styles.monthlySummaryLink}>סיכום חודשי</span>
-
+        <div className={styles.monthlySummaryStrip}>
           <div className={styles.monthlySummaryMetric}>
-            <strong className={styles.monthlySummaryValue}>{MONTHLY_SUMMARY_PLACEHOLDER.reportedHours} ש'</strong>
+            <strong className={styles.monthlySummaryValue}>{monthlySummary?.reportedHours ?? '—'} ש'</strong>
             <span className={styles.monthlySummaryLabel}>דיווחת עד כה</span>
           </div>
 
           <div className={styles.monthlySummaryMetric}>
-            <strong className={styles.monthlySummaryValue}>{MONTHLY_SUMMARY_PLACEHOLDER.targetHours} ש'</strong>
+            <strong className={styles.monthlySummaryValue}>{monthlySummary?.quotaHours ?? '—'} ש'</strong>
             <span className={styles.monthlySummaryLabel}>היעד החודשי</span>
           </div>
 
           <div className={styles.monthlySummaryMetric}>
-            <strong className={styles.monthlySummaryValue}>{MONTHLY_SUMMARY_PLACEHOLDER.completionRate}%</strong>
+            <strong className={styles.monthlySummaryValue}>{monthlySummary?.completionPercentage ?? '—'}%</strong>
             <span className={styles.monthlySummaryLabel}>הושלמו</span>
           </div>
-        </button>
+
+          <button
+            type="button"
+            className={styles.monthlySummaryLink}
+            onClick={() => setSummaryOpen(true)}
+            aria-label="פתח סיכום חודשי"
+          >
+            סיכום חודשי ›
+          </button>
+        </div>
 
         {isMonthLocked && (
           <div className={styles.lockedBanner} role="alert" aria-live="polite">
@@ -291,21 +305,17 @@ export function DailyReportPage() {
             selectedDate={selectedDate}
             standardHours={standardHours}
             isLocked={isMonthLocked}
-            onAddEntry={(date) => {
+            onAddEntry={(date: string) => {
               if (isMonthLocked) return;
               setSelectedDate(date);
               setFormEntry(null);
               setFormOpen(true);
             }}
-            onEdit={(entry) => {
+            onEdit={(entry: TimeEntry) => {
               if (isMonthLocked) return;
               setSelectedDate(entry.date);
               setFormEntry(entry);
               setFormOpen(true);
-            }}
-            onRefresh={() => {
-              fetchEntries(currentMonth);
-              fetchSummary(selectedDate);
             }}
           />
         </section>
@@ -322,6 +332,7 @@ export function DailyReportPage() {
         aria-hidden={!summaryOpen}
       >
         <div className={styles.summaryDrawerHeader}>
+          <h2 className={styles.summaryDrawerTitle}>סיכום חודשי</h2>
           <button
             type="button"
             className={styles.summaryDrawerClose}
@@ -330,15 +341,40 @@ export function DailyReportPage() {
           >
             ×
           </button>
-          <h2 className={styles.summaryDrawerTitle}>סיכום חודשי</h2>
         </div>
 
-        <div className={styles.summaryDrawerMonth}>{currentMonthLabel} {currentYearLabel}</div>
+        <div className={styles.summaryDrawerMonthNav}>
+          <button
+            type="button"
+            className={styles.summaryDrawerMonthArrow}
+            aria-label="חודש קודם"
+            onClick={() => {
+              const [year, month] = currentMonth.split('-').map(Number);
+              handleMonthChange(new Date(year, month - 2, 1));
+            }}
+          >
+            <ArrowForwardIosIcon className={styles.arrowIconRight} />
+          </button>
+          <span className={styles.summaryDrawerMonthLabel}>{currentMonthLabel} {currentYearLabel}</span>
+          <button
+            type="button"
+            className={styles.summaryDrawerMonthArrow}
+            aria-label="חודש הבא"
+            onClick={() => {
+              const [year, month] = currentMonth.split('-').map(Number);
+              handleMonthChange(new Date(year, month, 1));
+            }}
+          >
+            <ArrowForwardIosIcon className={styles.arrowIconLeft} />
+          </button>
+        </div>
 
         <section className={styles.summaryDrawerCard}>
           <div className={styles.summaryDrawerCardHeader}>
-            <span className={styles.summaryDrawerMeta}>{MONTHLY_SUMMARY_PLACEHOLDER.completionRate}% הושלמו</span>
-            <h3 className={styles.summaryDrawerCardTitle}>שעות חודשיות</h3>
+            <div className={styles.summaryDrawerCardTitleGroup}>
+              <h3 className={styles.summaryDrawerCardTitle}>שעות חודשיות</h3>
+              <span className={styles.summaryDrawerMeta}>{monthlySummary?.completionPercentage ?? '—'}% הושלמו</span>
+            </div>
             <span className={`${styles.summaryDrawerIcon} ${styles.summaryDrawerIconBlue}`}>
               <HoursIcon />
             </span>
@@ -347,41 +383,43 @@ export function DailyReportPage() {
           <div className={styles.summaryProgressTrack}>
             <div
               className={styles.summaryProgressFill}
-              style={{ width: `${MONTHLY_SUMMARY_PLACEHOLDER.completionRate}%` }}
+              style={{ width: `${monthlySummary?.completionPercentage ?? 0}%` }}
             />
           </div>
 
           <div className={styles.summaryProgressFoot}>
-            <span className={styles.summaryProgressMuted}>מתוך {MONTHLY_SUMMARY_PLACEHOLDER.targetHours} ש' תקן</span>
             <span className={styles.summaryProgressMain}>
-              <strong>{MONTHLY_SUMMARY_PLACEHOLDER.reportedHours}</strong>
+              <strong>{monthlySummary?.reportedHours ?? '—'}</strong>
               ש' דווחו
             </span>
+            <span className={styles.summaryProgressMuted}>מתוך {monthlySummary?.quotaHours ?? '—'} ש' תקן</span>
           </div>
 
           <div className={styles.summaryAlert}>
             <span className={styles.summaryAlertIcon}>!</span>
             <span>
-              חסרות לך <b>{MONTHLY_SUMMARY_PLACEHOLDER.missingHours} שעות</b> לפי התקן עד היום
+              חסרות לך <b>{monthlySummary?.missingHoursToDate ?? '—'} שעות</b> להשלמת החודש
             </span>
           </div>
         </section>
 
         <div className={styles.summaryMiniGrid}>
-          <section className={`${styles.summaryMiniCard} ${styles.summaryMiniWarn}`}>
-            <span className={styles.summaryMiniIcon}>
-              <CalendarIcon />
-            </span>
-            <strong className={styles.summaryMiniValue}>{MONTHLY_SUMMARY_PLACEHOLDER.absenceHours}</strong>
-            <span className={styles.summaryMiniLabel}>שעות היעדרות</span>
+          <section className={`${styles.summaryMiniCard} ${styles.summaryMiniDanger}`}>
+            <div className={styles.summaryMiniContent}>
+              <strong className={styles.summaryMiniValue}>{monthlySummary?.daysWithoutReport ?? '—'}</strong>
+              <span className={styles.summaryMiniLabel}>ימים ללא דיווח</span>
+            </div>
+            <DangerCircleIcon />
           </section>
 
-          <section className={`${styles.summaryMiniCard} ${styles.summaryMiniDanger}`}>
+          <section className={`${styles.summaryMiniCard} ${styles.summaryMiniWarn}`}>
+            <div className={styles.summaryMiniContent}>
+              <strong className={styles.summaryMiniValue}>{monthlySummary?.absenceHours ?? '—'}</strong>
+              <span className={styles.summaryMiniLabel}>שעות היעדרות</span>
+            </div>
             <span className={styles.summaryMiniIcon}>
               <CalendarIcon />
             </span>
-            <strong className={styles.summaryMiniValue}>{MONTHLY_SUMMARY_PLACEHOLDER.missingDays}</strong>
-            <span className={styles.summaryMiniLabel}>ימים ללא דיווח</span>
           </section>
         </div>
 
@@ -394,10 +432,10 @@ export function DailyReportPage() {
           </div>
 
           <div className={styles.summaryBreakdown}>
-            {MONTHLY_SUMMARY_PLACEHOLDER.projectBreakdown.map((project) => (
-              <div key={project.name} className={styles.summaryBreakdownRow}>
-                <span className={styles.summaryBreakdownName}>{project.name}</span>
-                <span className={styles.summaryBreakdownHours}>{project.hours}</span>
+            {(monthlySummary?.projectBreakdown ?? []).map((project) => (
+              <div key={project.projectId} className={styles.summaryBreakdownRow}>
+                <span className={styles.summaryBreakdownName}>{project.projectName}</span>
+                <span className={styles.summaryBreakdownHours}>{project.hours} ש'</span>
               </div>
             ))}
           </div>
@@ -431,5 +469,3 @@ export function DailyReportPage() {
     </div>
   );
 }
-
-
