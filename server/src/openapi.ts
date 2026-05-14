@@ -7,7 +7,10 @@ export const openapiSpec: OpenAPIV3.Document = {
     version: '1.0.0',
     description: 'Backend API for the time-reporting system (F01–F19).',
   },
-  servers: [{ url: 'http://localhost:3001', description: 'Local dev server' }],
+  servers: [
+    { url: 'https://team-rocket-server.onrender.com', description: 'Production server' },
+    { url: 'http://localhost:3001', description: 'Local dev server' },
+  ],
   components: {
     securitySchemes: {
       bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
