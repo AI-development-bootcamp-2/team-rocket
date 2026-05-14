@@ -1,5 +1,14 @@
-// @ts-nocheck
-export function Select({ label, id, error, children, className = '', ...props }) {
+import { ReactNode, SelectHTMLAttributes } from 'react';
+
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  label?: string;
+  id?: string;
+  error?: string;
+  children?: ReactNode;
+  className?: string;
+}
+
+export function Select({ label, id, error, children, className = '', ...props }: SelectProps) {
   return (
     <label className="ui-field">
       {label ? <span className="ui-field__label">{label}</span> : null}
@@ -14,4 +23,3 @@ export function Select({ label, id, error, children, className = '', ...props })
     </label>
   );
 }
-

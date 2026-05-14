@@ -33,6 +33,10 @@ function toUserListItem(user: {
   role: 'admin' | 'user';
   is_active: boolean;
   must_change_password: boolean;
+  employee_number: string | null;
+  employment_type: 'full_time' | 'part_time' | 'contractor' | null;
+  employment_percentage: number;
+  department: string | null;
   created_at: Date;
   updated_at: Date;
 }) {
@@ -44,6 +48,10 @@ function toUserListItem(user: {
     role: user.role,
     isActive: user.is_active,
     mustChangePassword: user.must_change_password,
+    employeeNumber: user.employee_number,
+    employmentType: user.employment_type,
+    employmentPercentage: user.employment_percentage,
+    department: user.department,
     createdAt: user.created_at,
     updatedAt: user.updated_at,
   };
@@ -83,7 +91,7 @@ export async function getUsers(req: Request, res: Response): Promise<void> {
     if (!flag) throw new AppError('Forbidden', 403);
 
     const users = await listUsers({ isActive: true });
-    res.json({ data: users.map((u) => ({ id: u.id, firstName: u.first_name, lastName: u.last_name })) });
+    res.json({ data: users.map(toUserListItem) });
     return;
   }
 

@@ -1,44 +1,59 @@
-// @ts-nocheck
-import { Modal } from '../../../components/ui/Modal';
-import { Button } from '../../../components/ui/Button';
-
-function ArchiveIcon() {
+export function CloseTaskDialog({ onClose, onConfirm, loading }: {
+  task: any;
+  onClose: () => void;
+  onConfirm: () => void;
+  loading: boolean;
+}) {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="2" y="3" width="20" height="5" rx="1.5" stroke="white" strokeWidth="1.8"/>
-      <path d="M4 8v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-      <path d="M9.5 13h5" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-export function CloseTaskDialog({ task, onClose, onConfirm, loading }) {
-  return (
-    <Modal
-      title="סגירת משימה"
-      icon={<ArchiveIcon />}
-      size="narrow"
-      className="close-task-dialog"
-      onClose={onClose}
-      footer={(
-        <div className="dialog-actions">
-          <Button variant="secondary" onClick={onClose}>
-            ביטול
-          </Button>
-          <Button variant="danger" onClick={onConfirm} disabled={loading}>
-            {loading ? 'סוגר...' : 'סגור משימה'}
-          </Button>
-        </div>
-      )}
+    <div
+      className="ui-modal-backdrop"
+      role="presentation"
+      onClick={!loading ? onClose : undefined}
     >
-      <div className="dialog-copy">
-        <p>האם לסגור את המשימה <strong>{task?.name}</strong>?</p>
-        <p className="dialog-copy__subtext">
-          המשימה תוסר מכל תפריטי הדיווח. רשומות היסטוריות יישמרו.
-        </p>
+      <div
+        className="close-task-card"
+        role="dialog"
+        aria-modal="true"
+        aria-label="מחיקת משימה"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="close-task-card__header">
+          <div className="close-task-card__icon" aria-hidden="true">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="48" height="48" rx="8" fill="#FFDFE0"/>
+              <path d="M36 15.9733C31.56 15.5333 27.0933 15.3066 22.64 15.3066C20 15.3066 17.36 15.44 14.72 15.7066L12 15.9733" stroke="#FF2F32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M19.3335 14.627L19.6268 12.8803C19.8402 11.6137 20.0002 10.667 22.2535 10.667H25.7468C28.0002 10.667 28.1735 11.667 28.3735 12.8937L28.6668 14.627" stroke="#FF2F32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M33.1339 20.1865L32.2672 33.6132C32.1205 35.7065 32.0005 37.3332 28.2805 37.3332H19.7205C16.0005 37.3332 15.8805 35.7065 15.7339 33.6132L14.8672 20.1865" stroke="#FF2F32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M21.7734 30H26.2134" stroke="#FF2F32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M20.6665 24.667H27.3332" stroke="#FF2F32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div className="close-task-card__text">
+            <h2 className="close-task-card__title">מחיקת משימה</h2>
+            <div className="close-task-card__subtitle-row">
+              <span className="close-task-card__subtitle">האם אתה בטוח שברצונך למחוק משימה זו?</span>
+            </div>
+          </div>
+        </div>
+        <div className="close-task-card__actions">
+          <button
+            type="button"
+            className="close-task-card__btn close-task-card__btn--confirm"
+            onClick={onConfirm}
+            disabled={loading}
+          >
+            {loading ? 'מוחק...' : 'מחיקה'}
+          </button>
+          <button
+            type="button"
+            className="close-task-card__btn close-task-card__btn--cancel"
+            onClick={onClose}
+            disabled={loading}
+          >
+            ביטול
+          </button>
+        </div>
       </div>
-    </Modal>
+    </div>
   );
 }
-
-
