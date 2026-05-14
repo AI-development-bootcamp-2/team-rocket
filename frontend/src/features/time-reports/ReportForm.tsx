@@ -658,6 +658,7 @@ export function ReportForm({
             await uploadAbsenceDocument(savedAbsence.id, absenceForm.file);
           } catch {
             setSuccessMsg('ההיעדרות נשמרה, אך העלאת הקובץ נכשלה.');
+            onEntryCreated?.();
             return;
           }
         }
