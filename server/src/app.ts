@@ -4,9 +4,12 @@ import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import config from './config';
+import swaggerUi from 'swagger-ui-express';
 import { errorMiddleware } from './middleware/error.middleware';
 import { authenticate } from './middleware/auth.middleware';
+import { openapiSpec } from './openapi';
 import authRouter from './routes/auth.routes';
+import adminRouter from './routes/admin.routes';
 import absencesRouter from './routes/absences.routes';
 import clientsRouter from './routes/clients.routes';
 import assignmentsRouter from './routes/assignments.routes';
@@ -36,6 +39,7 @@ app.get('/healthz', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.use('/admin', adminRouter);
 app.use('/absences', absencesRouter);
 app.use('/assignments', assignmentsRouter);
 app.use('/auth', authRouter);
@@ -48,6 +52,20 @@ app.use('/time-entries', timeEntriesRouter);
 app.use('/timer', timerRouter);
 app.use('/users', usersRouter);
 app.use('/audit-logs', auditLogsRouter);
+app.get('/docs-auth.js', (_req, res) => res.sendFile(path.resolve(__dirname, 'docs-auth.js')));
+app.use(
+  '/docs',
+  // Helmet sets a strict Content-Security-Policy that blocks inline scripts and styles.
+  // Swagger UI requires both, so we override the CSP header for the /docs route only.
+  // All other routes keep helmet's strict policy.
+  (_req: express.Request, res: express.Response, next: express.NextFunction) => {
+    res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:;");
+    next();
+  },
+  swaggerUi.serve,
+  swaggerUi.setup(openapiSpec, { customJs: '/docs-auth.js' }),
+);
+app.get('/openapi.json', (_req, res) => res.json(openapiSpec));
 
 // Serve uploaded files — auth required; path is validated against uploads/ root
 // to prevent directory traversal (CWE-22).

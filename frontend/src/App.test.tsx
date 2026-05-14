@@ -48,7 +48,7 @@ jest.mock('./components/LoginCard', () => ({
 jest.mock('./components/ChangePasswordCard', () => () => <div>change-password-card</div>);
 jest.mock('./components/ProtectedRoute', () => ({ children }: any) => <>{children}</>);
 jest.mock('./components/InactivityWarningModal', () => () => <div>inactivity-warning-modal</div>);
-jest.mock('./components/ui/ErrorState.jsx', () => ({
+jest.mock('./components/ui/ErrorState', () => ({
   ErrorState: ({ title, description, actionLabel, onAction }: any) => (
     <div>
       <h1>{title}</h1>
@@ -59,8 +59,11 @@ jest.mock('./components/ui/ErrorState.jsx', () => ({
     </div>
   ),
 }));
-jest.mock('./features/admin/users/UserListPage.jsx', () => ({
+jest.mock('./features/admin/users/UserListPage', () => ({
   UserListPage: () => <div>user-list-page</div>,
+}));
+jest.mock('./features/admin/dashboard/AdminDashboard', () => ({
+  AdminDashboard: () => <div>admin-dashboard-page</div>,
 }));
 jest.mock('./contexts/AuthContext', () => ({
   useAuth: () => mockAuthState,
@@ -153,13 +156,22 @@ describe('App routing and shell', () => {
     expect(logout).toHaveBeenCalled();
   });
 
-  it('redirects admins from home to the admin users page', () => {
+  it('redirects admins from home to the admin dashboard page', () => {
     renderAppAt('/', {
       isAuthenticated: true,
       user: { fullName: 'Ada Admin', role: 'admin', mustChangePassword: false },
     });
 
-    expect(screen.getByText('navigate:/admin/users')).toBeInTheDocument();
+    expect(screen.getByText('navigate:/admin/dashboard')).toBeInTheDocument();
+  });
+
+  it('renders the admin dashboard page for admins', () => {
+    renderAppAt('/admin/dashboard', {
+      isAuthenticated: true,
+      user: { fullName: 'Ada Admin', role: 'admin', mustChangePassword: false },
+    });
+
+    expect(screen.getByText('admin-dashboard-page')).toBeInTheDocument();
   });
 
   it('renders the admin users page for admins', () => {
@@ -216,3 +228,4 @@ describe('App routing and shell', () => {
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
   });
 });
+

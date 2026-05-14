@@ -172,7 +172,7 @@ async function login(email: string, password: string): Promise<string> {
 }
 
 // Short pause for fire-and-forget audit inserts to land before we query.
-const waitForAudit = () => new Promise((r) => setTimeout(r, 60));
+const waitForAudit = () => new Promise((r) => setTimeout(r, 300));
 
 // ── Test lifecycle ────────────────────────────────────────────────────────────
 
@@ -375,15 +375,17 @@ describe('GET /audit-logs — pagination', () => {
     const admin = await seedUser({ role: 'admin', email: 'admin@test.com' });
     const token = await login(admin.email, admin.plainPassword);
 
+    // Use CLIENT/CREATE so the fire-and-forget USER/LOGIN from login() cannot
+    // land between page queries and shift results, causing phantom duplicates.
     for (let i = 0; i < 6; i++) {
-      await seedAuditLog({ entityType: 'USER', action: 'LOGIN' });
+      await seedAuditLog({ entityType: 'CLIENT', action: 'CREATE' });
     }
 
     const p1 = await request(app)
-      .get('/audit-logs?limit=3&page=1')
+      .get('/audit-logs?limit=3&page=1&entity_type=CLIENT&action=CREATE')
       .set('Authorization', `Bearer ${token}`);
     const p2 = await request(app)
-      .get('/audit-logs?limit=3&page=2')
+      .get('/audit-logs?limit=3&page=2&entity_type=CLIENT&action=CREATE')
       .set('Authorization', `Bearer ${token}`);
 
     expect(p1.status).toBe(200);

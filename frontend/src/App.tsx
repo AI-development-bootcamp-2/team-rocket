@@ -5,14 +5,17 @@ import { LoginCard } from './components/LoginCard';
 import ChangePasswordCard from './components/ChangePasswordCard';
 import ProtectedRoute from './components/ProtectedRoute';
 import InactivityWarningModal from './components/InactivityWarningModal';
-import { ErrorState } from './components/ui/ErrorState.jsx';
-import { UserListPage } from './features/admin/users/UserListPage.jsx';
-import { ClientListPage } from './features/admin/clients/ClientListPage.jsx';
-import { ProjectListPage } from './features/admin/projects/ProjectListPage.jsx';
-import { TaskListPage } from './features/admin/tasks/TaskListPage.jsx';
-import { AssignmentPage } from './features/admin/assignments/AssignmentPage.jsx';
-import { MonthLockPage } from './features/admin/month-lock/MonthLockPage.jsx';
-import { DailyReportPage } from './features/time-reports/DailyReportPage.jsx';
+import { ErrorState } from './components/ui/ErrorState';
+import { UserListPage } from './features/admin/users/UserListPage';
+import { ClientListPage } from './features/admin/clients/ClientListPage';
+import { ProjectListPage } from './features/admin/projects/ProjectListPage';
+import { TaskListPage } from './features/admin/tasks/TaskListPage';
+import { AssignmentPage } from './features/admin/assignments/AssignmentPage';
+import { AuditLogPage } from './features/admin/audit-log/AuditLogPage';
+import { AdminDashboard } from './features/admin/dashboard/AdminDashboard';
+import { AdminReportsPage as AdminMonthlyReportsPage } from './features/admin/dashboard/AdminReportsPage';
+import { MonthLockPage } from './features/admin/month-lock/MonthLockPage';
+import { DailyReportPage } from './features/time-reports/DailyReportPage';
 import { useAuth } from './contexts/AuthContext';
 
 const authBgStyle: CSSProperties = {
@@ -94,9 +97,15 @@ function ChangePasswordPage() {
 function HomePage() {
   const { user } = useAuth();
 
-  if (user?.role === 'admin') return <Navigate to="/admin/users" replace />;
+  if (user?.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
 
   return <DailyReportPage />;
+}
+
+function AdminDashboardPage() {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <AccessDeniedPage />;
+  return <AdminDashboard />;
 }
 
 function AccessDeniedPage() {
@@ -144,10 +153,22 @@ function AdminAssignmentsPage() {
   return <AssignmentPage />;
 }
 
+function AdminAuditPage() {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <AccessDeniedPage />;
+  return <AuditLogPage />;
+}
+
 function AdminMonthLockPage() {
   const { user } = useAuth();
   if (user?.role !== 'admin') return <AccessDeniedPage />;
   return <MonthLockPage />;
+}
+
+function AdminReportsPage() {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <AccessDeniedPage />;
+  return <AdminMonthlyReportsPage />;
 }
 
 function App() {
@@ -170,6 +191,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <HomePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute>
+                <AdminDashboardPage />
               </ProtectedRoute>
             }
           />
@@ -210,6 +239,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminAssignmentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/audit"
+            element={
+              <ProtectedRoute>
+                <AdminAuditPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/reports"
+            element={
+              <ProtectedRoute>
+                <AdminReportsPage />
               </ProtectedRoute>
             }
           />
