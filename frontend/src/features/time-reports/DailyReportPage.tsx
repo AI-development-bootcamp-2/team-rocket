@@ -454,10 +454,12 @@ export function DailyReportPage() {
             setFormDirty(false);
             fetchEntries(currentMonth);
             fetchSummary(selectedDate);
+            fetchMonthlySummary(currentMonth);
           }}
           onEntryCreated={() => {
             fetchEntries(currentMonth);
             fetchSummary(selectedDate);
+            fetchMonthlySummary(currentMonth);
           }}
           onDirtyChange={setFormDirty}
           onCancel={() => {
