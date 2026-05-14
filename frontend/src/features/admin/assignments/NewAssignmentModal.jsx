@@ -4,9 +4,6 @@ import { Select } from '../../../components/ui/Select.jsx';
 
 const ROWS_PER_PAGE = 12;
 
-function roleLabel(role) {
-  return role === 'admin' ? 'מנהל' : 'עובד';
-}
 
 function buildPageNumbers(current, total) {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
@@ -113,20 +110,28 @@ export function NewAssignmentModal({
 
   const canSubmit = taskId !== '' && selectedUserIds.size > 0 && !saving;
 
+  const breadcrumbArrow = (
+    <svg className="assignment-breadcrumb-arrow" width="11" height="8" viewBox="0 0 11 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10.5 4.18164C10.7761 4.18164 11 3.95778 11 3.68164C11 3.4055 10.7761 3.18164 10.5 3.18164V3.68164V4.18164ZM0.146446 3.32809C-0.0488157 3.52335 -0.0488157 3.83993 0.146446 4.03519L3.32843 7.21717C3.52369 7.41244 3.84027 7.41244 4.03553 7.21717C4.2308 7.02191 4.2308 6.70533 4.03553 6.51007L1.20711 3.68164L4.03553 0.853214C4.2308 0.657951 4.2308 0.341369 4.03553 0.146107C3.84027 -0.0491555 3.52369 -0.0491555 3.32843 0.146107L0.146446 3.32809ZM10.5 3.68164V3.18164L0.5 3.18164V3.68164V4.18164L10.5 4.18164V3.68164Z" fill="#181818" fillOpacity="0.24"/>
+    </svg>
+  );
+
   const breadcrumbSubtitle =
     breadcrumbParts.length > 0 ? (
       <>
         <span className="assignment-breadcrumb-text">כאן תוכל לשייך עובד חדש מהמאגר לטובת</span>
-        {breadcrumbParts.map((part, i) => (
-          <span
-            key={i}
-            className={`assignment-breadcrumb-pill assignment-breadcrumb-pill--${
-              i === 0 ? 'client' : i === 1 ? 'project' : 'task'
-            }`}
-          >
-            {part}
-          </span>
-        ))}
+        <span className="assignment-breadcrumb-pills">
+          {breadcrumbParts.map((part, i) => (
+            <span key={i} className="assignment-breadcrumb-pills__item">
+              {i > 0 && breadcrumbArrow}
+              <span className={`assignment-breadcrumb-pill assignment-breadcrumb-pill--${
+                i === 0 ? 'client' : i === 1 ? 'project' : 'task'
+              }`}>
+                {part}
+              </span>
+            </span>
+          ))}
+        </span>
       </>
     ) : null;
 
@@ -154,9 +159,16 @@ export function NewAssignmentModal({
           disabled={!canSubmit}
           className={`assignment-modal__submit-btn${canSubmit ? ' assignment-modal__submit-btn--active' : ''}`}
         >
-          {saving
-            ? 'שומר...'
-            : `שייך עובד למשימה ⊕${selectedUserIds.size > 1 ? ` (${selectedUserIds.size})` : ''}`}
+          {saving ? 'שומר...' : (
+            <>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M8 12H16" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 16V8" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              {`שייך עובד למשימה${selectedUserIds.size > 1 ? ` (${selectedUserIds.size})` : ''}`}
+            </>
+          )}
         </button>
       }
     >
@@ -232,18 +244,16 @@ export function NewAssignmentModal({
                     style={{ cursor: 'pointer' }}
                   />
                 </th>
-                <th>מ&quot;ע</th>
+                <th>מספר עובד</th>
                 <th>שם מלא</th>
-                <th>תפקיד</th>
                 <th>סוג</th>
                 <th>אחוז משרה</th>
-                <th>שיוך ארגוני</th>
               </tr>
             </thead>
             <tbody>
               {pageUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', color: '#9CA3AF', padding: 16 }}>
+                  <td colSpan={5} style={{ textAlign: 'center', color: '#9CA3AF', padding: 16 }}>
                     לא נמצאו עובדים
                   </td>
                 </tr>
@@ -266,14 +276,12 @@ export function NewAssignmentModal({
                           style={{ cursor: 'pointer', accentColor: '#142A3F' }}
                         />
                       </td>
-                      <td>{u.employeeNumber ?? '—'}</td>
+                      <td>{u.id}</td>
                       <td>{u.firstName} {u.lastName}</td>
-                      <td>{u.employmentType ?? '—'}</td>
-                      <td>{roleLabel(u.role)}</td>
+                      <td>{u.role === 'admin' ? 'מנהל' : 'עובד'}</td>
                       <td>
                         {u.employmentPercentage != null ? `${u.employmentPercentage}%` : '—'}
                       </td>
-                      <td>{u.department ?? '—'}</td>
                     </tr>
                   );
                 })

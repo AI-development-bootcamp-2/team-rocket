@@ -20,6 +20,10 @@ export interface UserListRow {
   role: 'admin' | 'user';
   is_active: boolean;
   must_change_password: boolean;
+  employee_number: string | null;
+  employment_type: 'full_time' | 'part_time' | 'contractor' | null;
+  employment_percentage: number;
+  department: string | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -55,6 +59,10 @@ export async function listUsers(filters: UserListFilters): Promise<UserListRow[]
       'role',
       'is_active',
       'must_change_password',
+      'employee_number',
+      'employment_type',
+      'employment_percentage',
+      'department',
       'created_at',
       'updated_at',
     )
@@ -96,6 +104,10 @@ export async function findUserForAdminById(id: number): Promise<UserListRow | un
       'role',
       'is_active',
       'must_change_password',
+      'employee_number',
+      'employment_type',
+      'employment_percentage',
+      'department',
       'created_at',
       'updated_at',
     )
@@ -286,6 +298,10 @@ export async function updateUserSortPreferences(
       'role',
       'is_active',
       'must_change_password',
+      'employee_number',
+      'employment_type',
+      'employment_percentage',
+      'department',
       'sort_prefs',
       'created_at',
       'updated_at',
@@ -310,6 +326,10 @@ export async function updateUserSortPreferences(
       'role',
       'is_active',
       'must_change_password',
+      'employee_number',
+      'employment_type',
+      'employment_percentage',
+      'department',
       'sort_prefs',
       'created_at',
       'updated_at',
