@@ -9,7 +9,7 @@ export function LockConfirmDialog({ month, year, unapprovedWeekCount, loading, o
   return (
     <Modal
       title={`לנעול את חודש ${monthName} ${year}?`}
-      icon="🔒"
+      icon={null}
       size="narrow"
       onClose={onClose}
       footer={

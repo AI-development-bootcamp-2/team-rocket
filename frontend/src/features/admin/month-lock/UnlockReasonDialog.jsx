@@ -19,7 +19,7 @@ export function UnlockReasonDialog({ month, year, loading, onClose, onConfirm })
   return (
     <Modal
       title={`לפתוח את חודש ${monthName} ${year}?`}
-      icon="🔓"
+      icon={null}
       size="narrow"
       onClose={onClose}
       footer={
