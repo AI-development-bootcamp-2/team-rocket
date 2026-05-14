@@ -197,16 +197,9 @@ export function NewAssignmentModal({
       </form>
 
       <div className="assignment-modal__employee-section">
-        <p className="assignment-modal__section-label">בחר עובד מהרשימה</p>
-
-        <div className="assignment-modal__search-wrap">
-          <input
-            type="text"
-            placeholder="חיפוש לפי שם עובד"
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="assignment-modal__search"
-          />
+        <div className="assignment-modal__employee-header">
+          <p className="assignment-modal__section-label">בחר עובד מהרשימה</p>
+          <div className="assignment-modal__search-wrap">
           <svg
             className="assignment-modal__search-icon"
             width="16"
@@ -217,6 +210,14 @@ export function NewAssignmentModal({
             <circle cx="6.5" cy="6.5" r="5" stroke="#9CA3AF" strokeWidth="1.5" />
             <path d="M10.5 10.5L14 14" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
+          <input
+            type="text"
+            placeholder="חיפוש לפי שם עובד"
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="assignment-modal__search"
+          />
+          </div>
         </div>
 
         <div className="assignment-modal__table-wrap">
